@@ -95,7 +95,7 @@ void test(AndGate gate) {
 
 ### Solution ###
 
-This is the solution using Inhibeans.
+This is the solution using InhiBeans. There are just two lines added (the ones with comments) to the naive (inefficient, in the above sense) implementation.
 
 ```java
 class AndGateImpl {
@@ -120,7 +120,7 @@ class AndGateImpl {
     @Override public ObservableBooleanValue a() { return a; }
     @Override public ObservableBooleanValue b() { return b; }
     @Override public ObservableBooleanValue output() { return output; }
-};
+}
 ```
 
 There is also [a runnable version](https://github.com/TomasMikula/InhiBeans/blob/master/src/demo/java/inhibeans/demo/AndGateDemo.java).

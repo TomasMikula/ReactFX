@@ -1,6 +1,9 @@
 package inhibeans.demo;
 
 import inhibeans.binding.BooleanBinding;
+
+import java.util.function.Predicate;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableBooleanValue;
@@ -14,13 +17,16 @@ public class AndGateDemo {
         ObservableBooleanValue output();
     }
 
-    static class Counter {
-        int count = 0;
-        public void inc() { count += 1; }
-        public int get() { return count; }
-    }
-
     static void test(AndGate gate) {
+        class Counter {
+            int count = 0;
+            public void inc() { count += 1; }
+            public int get() { return count; }
+        }
+
+        Predicate<AndGate> consistent = g ->
+            g.output().get() == (g.a().get() && g.b().get());
+
         gate.setInputs(false, false);
         assert gate.output().get() == false;
 
@@ -29,15 +35,15 @@ public class AndGateDemo {
         Counter no = new Counter();
 
         gate.a().addListener(observable -> {
-            assert consistent(gate);
+            assert consistent.test(gate);
             na.inc();
         });
         gate.b().addListener(observable -> {
-            assert consistent(gate);
+            assert consistent.test(gate);
             nb.inc();
         });
         gate.output().addListener(observable -> {
-            assert consistent(gate);
+            assert consistent.test(gate);
             no.inc();
         });
 
@@ -47,10 +53,6 @@ public class AndGateDemo {
         assert na.get() == 1;
         assert nb.get() == 1;
         assert no.get() == 1;
-    }
-
-    static boolean consistent(AndGate gate) {
-        return gate.output().get() == (gate.a().get() && gate.b().get());
     }
 
     public static void main(String[] args) {

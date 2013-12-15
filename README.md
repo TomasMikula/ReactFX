@@ -124,3 +124,9 @@ class AndGateImpl {
 ```
 
 There is also [a runnable version](https://github.com/TomasMikula/InhiBeans/blob/master/src/demo/java/inhibeans/demo/AndGateDemo.java).
+
+
+Download
+--------
+
+Download the JAR file from [here](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/).

@@ -130,3 +130,9 @@ Download
 --------
 
 Download the JAR file from [here](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/).
+
+
+License
+-------
+
+[BSD 2-Clause License](http://opensource.org/licenses/BSD-2-Clause)

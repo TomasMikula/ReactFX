@@ -55,32 +55,32 @@ public class AndGateDemo {
         assert no.get() == 1;
     }
 
-    public static void main(String[] args) {
-        AndGate gate = new AndGate() {
-            private final BooleanProperty a = new SimpleBooleanProperty();
-            private final BooleanProperty b = new SimpleBooleanProperty();
-            private final BooleanBinding output = new BooleanBinding() {
-                { bind(a, b); }
-                @Override
-                protected boolean computeValue() {
-                    return a.get() && b.get();
-                }
-            };
-
+    static class AndGateImpl implements AndGate {
+        private final BooleanProperty a = new SimpleBooleanProperty();
+        private final BooleanProperty b = new SimpleBooleanProperty();
+        private final BooleanBinding output = new BooleanBinding() {
+            { bind(a, b); }
             @Override
-            public void setInputs(boolean a, boolean b) {
-                output.block();
-                this.a.set(a);
-                this.b.set(b);
-                output.release();
+            protected boolean computeValue() {
+                return a.get() && b.get();
             }
-
-            @Override public ObservableBooleanValue a() { return a; }
-            @Override public ObservableBooleanValue b() { return b; }
-            @Override public ObservableBooleanValue output() { return output; }
         };
 
-        test(gate);
+        @Override
+        public void setInputs(boolean a, boolean b) {
+            output.block();
+            this.a.set(a);
+            this.b.set(b);
+            output.release();
+        }
+
+        @Override public ObservableBooleanValue a() { return a; }
+        @Override public ObservableBooleanValue b() { return b; }
+        @Override public ObservableBooleanValue output() { return output; }
+    }
+
+    public static void main(String[] args) {
+        test(new AndGateImpl());
         System.out.println("AndGate implementation passed the test.");
     }
 }

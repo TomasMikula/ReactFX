@@ -7,20 +7,58 @@ When there is a network of bound values, it often happens that a single user act
 API
 ---
 
-InhiBeans extend classes from `javafx.beans.property` and `javafx.beans.binding` and add these two methods:
+InhiBeans extend classes from `javafx.beans.property` and `javafx.beans.binding` and add these methods:
 
 ```java
-void block();
-void release();
+interface InhibitoryObservableValue<T> extends ObservableValue<T>, AutoCloseable {
+    AutoCloseable block();
+    void release();
+    void close();
+    void blockWhile(Runnable);
+}
 ```
 
-The `block()` method prevents invalidation and change listeners from being notified.
+The `block()` method prevents notification of invalidation and change listeners.
 
-The `release()` reenables invalidation and change notifications.
+The `release()` method reenables invalidation and change notifications.
+
+`close()` is equivalent to `release()`, it is there just to comply with the `AutoCloseable` interface.
+
+`blockWhile(runnable)` is equivalent to
+```java
+block();
+runnable.run();
+release();
+```
 
 Any number of notifications suppressed while blocked results in a single notification when released.
 
+For convenient use with try-with-resources, `block()` returns `this` (the object on which it was called). Then, to ensure that invalidation and change notifications on `p` are resumed even in case of an exception, you can write
+```java
+try(AutoCloseable a = p.block()) {
+    // stuff that causes multiple invalidations of p
+}
+```
+
 The implementation is quite straightforward, have a look at, e.g. [SimpleBooleanProperty.java](https://github.com/TomasMikula/InhiBeans/blob/master/src/main/java/inhibeans/property/SimpleBooleanProperty.java).
+
+
+### Bindings factory methods ###
+
+Inhibitory versions of bindings provide factory methods that wrap an _eager_ `ObservableValue` and return an inhibitory binding. For example:
+```java
+IntegerProperty a;
+IntegerProperty b;
+NumberBinding sum = a.add(b);
+IntegerBinding relaxedSum = inhibeans.binding.IntegerBinding.wrap(sum);
+```
+Now, in the following code, change listeners on `sum` fire twice, while change listeners on `relaxedSum` fire only once.
+```java
+relaxedSum.blockWhile(() -> {
+    a.set(1);
+    b.set(2);
+});
+```
 
 
 Motivational Example
@@ -98,16 +136,12 @@ void test(AndGate gate) {
 This is the solution using InhiBeans. There are just two lines added (the ones with comments) to the naive (inefficient, in the above sense) implementation.
 
 ```java
+import inhibeans.binding.BooleanBinding; // Note BooleanBinding imported from inhibeans.
+
 class AndGateImpl {
     private final BooleanProperty a = new SimpleBooleanProperty();
     private final BooleanProperty b = new SimpleBooleanProperty();
-    private final BooleanBinding output = new inhibeans.binding.BooleanBinding() {
-        { bind(a, b); }
-        @Override
-        protected boolean computeValue() {
-            return a.get() && b.get();
-        }
-    };
+    private final BooleanBinding output = BooleanBinding.wrap(a.and(b));
 
     @Override
     public void setInputs(boolean a, boolean b) {

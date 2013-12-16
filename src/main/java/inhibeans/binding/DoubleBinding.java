@@ -2,7 +2,7 @@ package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableDoubleValue;
+import javafx.beans.value.ObservableNumberValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -13,12 +13,12 @@ public abstract class DoubleBinding
 extends javafx.beans.binding.DoubleBinding
 implements InhibitoryBinding<Number> {
 
-    public static DoubleBinding wrap(ObservableDoubleValue source) {
+    public static DoubleBinding wrap(ObservableNumberValue source) {
         return new DoubleBinding() {
             { bind(source); }
 
             @Override
-            protected double computeValue() { return source.get(); }
+            protected double computeValue() { return source.doubleValue(); }
         };
     }
 

@@ -2,7 +2,7 @@ package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableIntegerValue;
+import javafx.beans.value.ObservableNumberValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -13,12 +13,12 @@ public abstract class IntegerBinding
 extends javafx.beans.binding.IntegerBinding
 implements InhibitoryBinding<Number> {
 
-    public static IntegerBinding wrap(ObservableIntegerValue source) {
+    public static IntegerBinding wrap(ObservableNumberValue source) {
         return new IntegerBinding() {
             { bind(source); }
 
             @Override
-            protected int computeValue() { return source.get(); }
+            protected int computeValue() { return source.intValue(); }
         };
     }
 

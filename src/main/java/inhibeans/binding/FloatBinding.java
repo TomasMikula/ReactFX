@@ -2,7 +2,7 @@ package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableFloatValue;
+import javafx.beans.value.ObservableNumberValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -13,12 +13,12 @@ public abstract class FloatBinding
 extends javafx.beans.binding.FloatBinding
 implements InhibitoryBinding<Number> {
 
-    public static FloatBinding wrap(ObservableFloatValue source) {
+    public static FloatBinding wrap(ObservableNumberValue source) {
         return new FloatBinding() {
             { bind(source); }
 
             @Override
-            protected float computeValue() { return source.get(); }
+            protected float computeValue() { return source.floatValue(); }
         };
     }
 

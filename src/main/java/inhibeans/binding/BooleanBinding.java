@@ -1,7 +1,6 @@
 package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Binding;
 import javafx.beans.value.ChangeListener;
 
 import com.sun.javafx.binding.ExpressionHelper;
@@ -9,17 +8,20 @@ import com.sun.javafx.binding.ExpressionHelper;
 /**
  * Inhibitory version of {@link javafx.beans.binding.BooleanBinding}.
  */
-public abstract class BooleanBinding extends javafx.beans.binding.BooleanBinding implements
-        Binding<Boolean> {
+public abstract class BooleanBinding
+extends javafx.beans.binding.BooleanBinding
+implements InhibitoryBinding<Boolean> {
 
     private ExpressionHelper<Boolean> helper = null;
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
+    @Override
     public void block() {
         blocked = true;
     }
 
+    @Override
     public void release() {
         blocked = false;
         if(fireOnRelease) {

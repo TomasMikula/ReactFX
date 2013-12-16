@@ -1,7 +1,6 @@
 package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
-import javafx.beans.binding.Binding;
 import javafx.beans.value.ChangeListener;
 
 import com.sun.javafx.binding.ExpressionHelper;
@@ -9,8 +8,9 @@ import com.sun.javafx.binding.ExpressionHelper;
 /**
  * Inhibitory version of {@link javafx.beans.binding.ObjectBinding}.
  */
-public abstract class ObjectBinding<T> extends javafx.beans.binding.ObjectBinding<T> implements
-        Binding<T> {
+public abstract class ObjectBinding<T>
+extends javafx.beans.binding.ObjectBinding<T>
+implements InhibitoryBinding<T> {
 
     private ExpressionHelper<T> helper = null;
     private boolean blocked = false;

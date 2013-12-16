@@ -80,7 +80,7 @@ interface AndGate {
 
 Provide an implementation with the following properties:
   1. _Correctness_: actually implement an AND gate.
-  2. _Consistency_: to any observer (within the same thread), the state of observable values has to appear consistent (i.e. `output = a & b`) at all times.
+  2. _Consistency_: the state of observable values has to appear consistent (i.e. `output = a & b`) at all times to any observer within the same thread.
   3. _Efficiency_: for a single call to `setInputs(a, b)`, the observer receives at most one invalidation notification.
 
 Now take a few minutes to think about how one would implement that.
@@ -133,7 +133,7 @@ void test(AndGate gate) {
 
 ### Solution ###
 
-This is the solution using InhiBeans. There are just two lines added (the ones with comments) to the naive (inefficient, in the above sense) implementation.
+This is the solution using InhiBeans. It is just two more lines (the ones with comments) compared to the naive (inefficient, in the above sense) implementation.
 
 ```java
 import inhibeans.binding.BooleanBinding; // Note BooleanBinding imported from inhibeans.
@@ -158,6 +158,8 @@ class AndGateImpl {
 ```
 
 There is also [a runnable version](https://github.com/TomasMikula/InhiBeans/blob/master/src/demo/java/inhibeans/demo/AndGateDemo.java).
+
+Note that consistency (in the above sense) is satisfied thanks to the property that invalidation listeners are executed in the order they were registered (and before any change listeners). This guarantees that, when any of the inputs changes, `output` is the first one to be notified, before any other invalidation listener registered on `a` or `b`.
 
 
 Download

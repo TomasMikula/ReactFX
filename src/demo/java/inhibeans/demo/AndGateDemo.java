@@ -58,13 +58,7 @@ public class AndGateDemo {
     static class AndGateImpl implements AndGate {
         private final BooleanProperty a = new SimpleBooleanProperty();
         private final BooleanProperty b = new SimpleBooleanProperty();
-        private final BooleanBinding output = new BooleanBinding() {
-            { bind(a, b); }
-            @Override
-            protected boolean computeValue() {
-                return a.get() && b.get();
-            }
-        };
+        private final BooleanBinding output = BooleanBinding.wrap(a.and(b));
 
         @Override
         public void setInputs(boolean a, boolean b) {

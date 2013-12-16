@@ -2,6 +2,7 @@ package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableDoubleValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -11,6 +12,15 @@ import com.sun.javafx.binding.ExpressionHelper;
 public abstract class DoubleBinding
 extends javafx.beans.binding.DoubleBinding
 implements InhibitoryBinding<Number> {
+
+    public static DoubleBinding wrap(ObservableDoubleValue source) {
+        return new DoubleBinding() {
+            { bind(source); }
+
+            @Override
+            protected double computeValue() { return source.get(); }
+        };
+    }
 
     private ExpressionHelper<Number> helper = null;
     private boolean blocked = false;

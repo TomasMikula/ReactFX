@@ -2,6 +2,7 @@ package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableObjectValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -11,6 +12,15 @@ import com.sun.javafx.binding.ExpressionHelper;
 public abstract class ObjectBinding<T>
 extends javafx.beans.binding.ObjectBinding<T>
 implements InhibitoryBinding<T> {
+
+    public static <T> ObjectBinding<T> wrap(ObservableObjectValue<T> source) {
+        return new ObjectBinding<T>() {
+            { bind(source); }
+
+            @Override
+            protected T computeValue() { return source.get(); }
+        };
+    }
 
     private ExpressionHelper<T> helper = null;
     private boolean blocked = false;

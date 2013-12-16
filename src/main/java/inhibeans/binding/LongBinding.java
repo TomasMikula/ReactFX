@@ -2,6 +2,7 @@ package inhibeans.binding;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableLongValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -11,6 +12,15 @@ import com.sun.javafx.binding.ExpressionHelper;
 public abstract class LongBinding
 extends javafx.beans.binding.LongBinding
 implements InhibitoryBinding<Number> {
+
+    public static LongBinding wrap(ObservableLongValue source) {
+        return new LongBinding() {
+            { bind(source); }
+
+            @Override
+            protected long computeValue() { return source.get(); }
+        };
+    }
 
     private ExpressionHelper<Number> helper = null;
     private boolean blocked = false;

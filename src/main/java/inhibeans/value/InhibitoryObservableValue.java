@@ -28,4 +28,19 @@ extends ObservableValue<T>, AutoCloseable {
     default void close() {
         release();
     }
+
+    /**
+     * Equivalent to
+     * <pre>
+     * {@code
+     * this.block();
+     * r.run();
+     * this.release();
+     * }</pre>
+     */
+    default void blockWhile(Runnable r) {
+        block();
+        r.run();
+        release();
+    }
 }

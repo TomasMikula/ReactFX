@@ -16,10 +16,13 @@ implements InhibitoryBinding<Number> {
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
-    public void block() {
+    @Override
+    public AutoCloseable block() {
         blocked = true;
+        return this;
     }
 
+    @Override
     public void release() {
         blocked = false;
         if(fireOnRelease) {

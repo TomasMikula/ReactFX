@@ -3,15 +3,20 @@ package inhibeans.property;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleStringProperty}.
  */
-public class SimpleStringProperty extends javafx.beans.property.SimpleStringProperty {
+public class SimpleStringProperty
+extends javafx.beans.property.SimpleStringProperty
+implements InhibitoryProperty<String> {
 
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
-    public void block() {
+    @Override
+    public AutoCloseable block() {
         blocked = true;
+        return this;
     }
 
+    @Override
     public void release() {
         blocked = false;
         if(fireOnRelease) {

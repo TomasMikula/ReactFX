@@ -3,15 +3,20 @@ package inhibeans.property;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleIntegerProperty}.
  */
-public class SimpleIntegerProperty extends javafx.beans.property.SimpleIntegerProperty {
+public class SimpleIntegerProperty
+extends javafx.beans.property.SimpleIntegerProperty
+implements InhibitoryProperty<Number> {
 
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
-    public void block() {
+    @Override
+    public AutoCloseable block() {
         blocked = true;
+        return this;
     }
 
+    @Override
     public void release() {
         blocked = false;
         if(fireOnRelease) {

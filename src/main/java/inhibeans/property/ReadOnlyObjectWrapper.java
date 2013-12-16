@@ -3,15 +3,20 @@ package inhibeans.property;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyObjectWrapper}.
  */
-public class ReadOnlyObjectWrapper<T> extends javafx.beans.property.ReadOnlyObjectWrapper<T> {
+public class ReadOnlyObjectWrapper<T>
+extends javafx.beans.property.ReadOnlyObjectWrapper<T>
+implements InhibitoryProperty<T> {
 
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
-    public void block() {
+    @Override
+    public AutoCloseable block() {
         blocked = true;
+        return this;
     }
 
+    @Override
     public void release() {
         blocked = false;
         if(fireOnRelease) {

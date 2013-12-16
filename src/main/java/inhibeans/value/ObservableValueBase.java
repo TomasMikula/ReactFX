@@ -2,14 +2,15 @@ package inhibeans.value;
 
 public abstract class ObservableValueBase<T>
 extends javafx.beans.value.ObservableValueBase<T>
-implements InhibitoryObservableValue<T> {
+implements InhibitoryObservableValue<T>, AutoCloseable {
 
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
     @Override
-    public void block() {
+    public AutoCloseable block() {
         blocked = true;
+        return this;
     }
 
     @Override

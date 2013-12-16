@@ -17,8 +17,9 @@ implements InhibitoryBinding<Boolean> {
     private boolean fireOnRelease = false;
 
     @Override
-    public void block() {
+    public AutoCloseable block() {
         blocked = true;
+        return this;
     }
 
     @Override

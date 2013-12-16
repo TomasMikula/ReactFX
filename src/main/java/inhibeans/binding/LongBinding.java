@@ -13,6 +13,33 @@ public abstract class LongBinding extends javafx.beans.binding.LongBinding imple
         NumberBinding {
 
     private ExpressionHelper<Number> helper = null;
+    private boolean blocked = false;
+    private boolean fireOnRelease = false;
+
+    public void block() {
+        blocked = true;
+    }
+
+    public void release() {
+        blocked = false;
+        if(fireOnRelease) {
+            fireOnRelease = false;
+            ExpressionHelper.fireValueChangedEvent(helper);
+        }
+    }
+
+    @Override
+    protected final void onInvalidating() {
+        if(blocked)
+            fireOnRelease = true;
+        else
+            ExpressionHelper.fireValueChangedEvent(helper);
+    }
+
+
+    /*******************************************
+     *** Override adding/removing listeners. ***
+     *******************************************/
 
     @Override
     public void addListener(InvalidationListener listener) {

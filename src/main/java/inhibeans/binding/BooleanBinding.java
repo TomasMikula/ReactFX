@@ -36,6 +36,11 @@ public abstract class BooleanBinding extends javafx.beans.binding.BooleanBinding
             ExpressionHelper.fireValueChangedEvent(helper);
     }
 
+
+    /*******************************************
+     *** Override adding/removing listeners. ***
+     *******************************************/
+
     @Override
     public void addListener(InvalidationListener listener) {
         helper = ExpressionHelper.addListener(helper, this, listener);

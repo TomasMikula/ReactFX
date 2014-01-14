@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class FloatBinding
 extends javafx.beans.binding.FloatBinding
-implements InhibitoryBinding<Number> {
+implements Binding<Number> {
 
     public static FloatBinding wrap(ObservableNumberValue source) {
         return new FloatBinding() {

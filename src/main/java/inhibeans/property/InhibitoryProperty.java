@@ -1,8 +1,6 @@
 package inhibeans.property;
 
-import inhibeans.value.InhibitoryObservableValue;
-import javafx.beans.property.Property;
+import inhibeans.value.ObservableValue;
 
 public interface InhibitoryProperty<T>
-extends Property<T>, InhibitoryObservableValue<T> {
-}
+extends javafx.beans.property.Property<T>, ObservableValue<T> {}

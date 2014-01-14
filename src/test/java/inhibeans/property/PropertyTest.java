@@ -1,7 +1,6 @@
 package inhibeans.property;
 
 import static org.junit.Assert.assertEquals;
-import inhibeans.CountingListener;
 import javafx.beans.property.Property;
 import javafx.beans.value.ObservableValue;
 

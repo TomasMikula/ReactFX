@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class LongBinding
 extends javafx.beans.binding.LongBinding
-implements InhibitoryBinding<Number> {
+implements Binding<Number> {
 
     public static LongBinding wrap(ObservableNumberValue source) {
         return new LongBinding() {

@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class DoubleBinding
 extends javafx.beans.binding.DoubleBinding
-implements InhibitoryBinding<Number> {
+implements Binding<Number> {
 
     public static DoubleBinding wrap(ObservableNumberValue source) {
         return new DoubleBinding() {

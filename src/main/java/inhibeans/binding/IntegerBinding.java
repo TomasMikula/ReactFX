@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class IntegerBinding
 extends javafx.beans.binding.IntegerBinding
-implements InhibitoryBinding<Number> {
+implements Binding<Number> {
 
     public static IntegerBinding wrap(ObservableNumberValue source) {
         return new IntegerBinding() {

@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class ObjectBinding<T>
 extends javafx.beans.binding.ObjectBinding<T>
-implements InhibitoryBinding<T> {
+implements Binding<T> {
 
     public static <T> ObjectBinding<T> wrap(ObservableObjectValue<T> source) {
         return new ObjectBinding<T>() {

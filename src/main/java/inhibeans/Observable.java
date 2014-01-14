@@ -1,9 +1,6 @@
-package inhibeans.value;
+package inhibeans;
 
-import javafx.beans.value.ObservableValue;
-
-public interface InhibitoryObservableValue<T>
-extends ObservableValue<T>, AutoCloseable {
+public interface Observable extends javafx.beans.Observable, AutoCloseable {
 
     /**
      * Prevents invalidation and change events from being emitted.

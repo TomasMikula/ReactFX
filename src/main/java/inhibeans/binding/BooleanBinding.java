@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class BooleanBinding
 extends javafx.beans.binding.BooleanBinding
-implements InhibitoryBinding<Boolean> {
+implements Binding<Boolean> {
 
     public static BooleanBinding wrap(ObservableBooleanValue source) {
         return new BooleanBinding() {

@@ -11,7 +11,7 @@ import com.sun.javafx.binding.ExpressionHelper;
  */
 public abstract class StringBinding
 extends javafx.beans.binding.StringBinding
-implements InhibitoryBinding<String> {
+implements Binding<String> {
 
     public static StringBinding wrap(ObservableStringValue source) {
         return new StringBinding() {

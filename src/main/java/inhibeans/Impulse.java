@@ -1,6 +1,5 @@
 package inhibeans;
 
-import reactfx.ObservableBase;
 
 public class Impulse extends ObservableBase implements Observable {
 

@@ -7,13 +7,16 @@ public class Impulse extends ObservableBase implements Observable {
     private boolean fireOnRelease = false;
 
     @Override
-    public AutoCloseable block() {
-        blocked = true;
-        return this;
+    public Block block() {
+        if(blocked) {
+            return Block.EMPTY_BLOCK;
+        } else {
+            blocked = true;
+            return this::release;
+        }
     }
 
-    @Override
-    public void release() {
+    private void release() {
         blocked = false;
         if(fireOnRelease) {
             fireOnRelease = false;

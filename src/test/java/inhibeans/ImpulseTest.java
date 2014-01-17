@@ -16,10 +16,10 @@ public class ImpulseTest {
 
         assertEquals(2, counter.getAndReset());
 
-        impulse.block();
+        Block b = impulse.block();
         impulse.trigger();
         impulse.trigger();
-        impulse.release();
+        b.close();
 
         assertEquals(1, counter.get());
     }

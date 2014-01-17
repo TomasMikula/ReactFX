@@ -1,6 +1,7 @@
 package inhibeans.property;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
+import inhibeans.Block;
 import javafx.beans.property.Property;
 import javafx.beans.value.ObservableValue;
 
@@ -19,10 +20,10 @@ public class PropertyTest {
         source.setValue(false);
         assertEquals(2, counter.getAndReset());
 
-        tested.block();
+        Block b = tested.block();
         source.setValue(true);
         source.setValue(false);
-        tested.release();
+        b.close();
         assertEquals(1, counter.get());
     }
 

@@ -1,5 +1,6 @@
 package inhibeans.demo;
 
+import inhibeans.Block;
 import inhibeans.binding.BooleanBinding;
 
 import java.util.function.Predicate;
@@ -62,10 +63,10 @@ public class AndGateDemo {
 
         @Override
         public void setInputs(boolean a, boolean b) {
-            output.block();
+            Block block = output.block();
             this.a.set(a);
             this.b.set(b);
-            output.release();
+            block.close();
         }
 
         @Override public ObservableBooleanValue a() { return a; }

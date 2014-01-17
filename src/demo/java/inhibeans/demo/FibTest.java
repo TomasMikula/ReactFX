@@ -1,4 +1,5 @@
 package inhibeans.demo;
+import inhibeans.Block;
 import javafx.beans.binding.NumberExpression;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
@@ -52,9 +53,9 @@ public class FibTest {
         double eagerTime = (t2-t1)/1000.0;
 
         t1 = System.currentTimeMillis();
-        lazyResult.block();
+        Block b = lazyResult.block();
         lazyTest.run();
-        lazyResult.release();
+        b.close();
         t2 = System.currentTimeMillis();
         double lazyTime = (t2-t1)/1000.0;
 

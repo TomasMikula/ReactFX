@@ -1,43 +1,32 @@
 package inhibeans;
 
-public interface Observable extends javafx.beans.Observable, AutoCloseable {
+public interface Observable extends javafx.beans.Observable {
 
     /**
-     * Prevents invalidation and change events from being emitted.
+     * Prevents invalidation and change events from being emitted,
+     * until the returned block is released.
      *
-     * @return {@code this}. This makes it convenient to use the return
-     * value of {@code block()} in try-with-resources.
+     * @return a {@code Block} instance that can be released to resume
+     * the delivery of invalidation and change events. If this observable
+     * has been invalidated one or more times before the block is released,
+     * a single notification is passed to invalidation and change listeners
+     * of this observable.
+     * The returned {@code Block} is {@code AutoCloseable}, which makes it
+     * convenient to use it in try-with-resources.
      */
-    AutoCloseable block();
-
-    /**
-     * Resumes the delivery of invalidation and change events.
-     * If this observable value has been invalidated multiple
-     * times since the call to {@link #block()}, invalidation
-     * and change listeners will only be executed once.
-     */
-    void release();
-
-    /**
-     * Equivalent to {@link #release()}.
-     */
-    @Override
-    default void close() {
-        release();
-    }
+    Block block();
 
     /**
      * Equivalent to
      * <pre>
-     * {@code
-     * this.block();
-     * r.run();
-     * this.release();
-     * }</pre>
+     * try(Block b = block()) {
+     *     r.run();
+     * }
+     * </pre>
      */
     default void blockWhile(Runnable r) {
-        block();
-        r.run();
-        release();
+        try(Block b = block()) {
+            r.run();
+        }
     }
 }

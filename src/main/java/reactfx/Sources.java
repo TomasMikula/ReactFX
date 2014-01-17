@@ -8,6 +8,10 @@ import javafx.beans.value.ObservableValue;
 
 public class Sources {
 
+    public static interface OnBuilder<T, R> {
+        R on(T t);
+    }
+
     public static Source<Void> fromInvalidations(Observable observable) {
         return new CombinedSourceBase<Void>() {
             private final InvalidationListener listener = obs -> emitValue(null);
@@ -47,6 +51,10 @@ public class Sources {
                 return Subscription.multi(subs);
             }
         };
+    }
+
+    public static <T> OnBuilder<Source<?>, Source<T>> release(Source<T> input) {
+        return impulse -> releaseOnImpulse(impulse, input);
     }
 
     public static <T> Source<T> releaseOnImpulse(Source<?> impulse, Source<T> input) {

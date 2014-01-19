@@ -1,6 +1,8 @@
 package reactfx;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Observable stream of values.
@@ -13,4 +15,12 @@ import java.util.function.Consumer;
  */
 public interface Source<T> {
     Subscription subscribe(Consumer<T> consumer);
+
+    default Source<T> filter(Predicate<T> predicate) {
+        return Sources.filter(this, predicate);
+    }
+
+    default <U> Source<U> map(Function<T, U> f) {
+        return Sources.map(this, f);
+    }
 }

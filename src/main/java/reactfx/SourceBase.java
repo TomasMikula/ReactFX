@@ -6,7 +6,7 @@ public abstract class SourceBase<T> implements Source<T> {
 
     private ListHelper<Consumer<T>> valueSubscribers = null;
 
-    protected void emitValue(T value) {
+    protected void emit(T value) {
         ListHelper.forEach(valueSubscribers, s -> s.accept(value));
     }
 

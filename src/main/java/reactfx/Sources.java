@@ -15,6 +15,10 @@ public class Sources {
         R on(T t);
     }
 
+    public static interface ByBuilder<T, R> {
+        R by(T t);
+    }
+
     public static interface Combinator2<A, B, R> {
         R combine(A a, B b);
     }
@@ -96,16 +100,14 @@ public class Sources {
             @Override
             protected Subscription subscribeToInputs() {
                 return Subscription.multi(
-                        obsA.subscribeTo(srcA),
-                        obsB.subscribeTo(srcB));
+                        obsA.fillFrom(srcA),
+                        obsB.fillFrom(srcB));
             }
 
             @Override
             protected void tryEmit() {
                 if(obsA.hasValue() && obsB.hasValue()) {
-                    emit(combinator.combine(obsA.getValue(), obsB.getValue()));
-                    obsA.clearValue();
-                    obsB.clearValue();
+                    emit(combinator.combine(obsA.extract(), obsB.extract()));
                 }
             }
         };
@@ -120,28 +122,73 @@ public class Sources {
             @Override
             protected Subscription subscribeToInputs() {
                 return Subscription.multi(
-                        obsA.subscribeTo(srcA),
-                        obsB.subscribeTo(srcB),
-                        obsC.subscribeTo(srcC));
+                        obsA.fillFrom(srcA),
+                        obsB.fillFrom(srcB),
+                        obsC.fillFrom(srcC));
             }
 
             @Override
             protected void tryEmit() {
                 if(obsA.hasValue() && obsB.hasValue() && obsC.hasValue()) {
-                    emit(combinator.combine(obsA.getValue(), obsB.getValue(), obsC.getValue()));
-                    obsA.clearValue();
-                    obsB.clearValue();
-                    obsC.clearValue();
+                    emit(combinator.combine(obsA.extract(), obsB.extract(), obsC.extract()));
+                }
+            }
+        };
+    }
+
+    public static <A, I, R> OnBuilder<Source<I>, ByBuilder<Combinator2<A, I, R>, Source<R>>> combine(Source<A> srcA) {
+        return impulse -> combinator -> combineOnImpulse(srcA, impulse, combinator);
+    }
+
+    public static <A, I, R> Source<R> combineOnImpulse(Source<A> srcA, Source<I> impulse, Combinator2<A, I, R> combinator) {
+        return new CombinedSource<R>() {
+            Pocket<A> pocketA = new OverwritingPocket<A>();
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                return Subscription.multi(
+                        pocketA.fillFrom(srcA),
+                        impulse.subscribe(i -> tryEmit(i)));
+            }
+
+            private void tryEmit(I i) {
+                if(pocketA.hasValue()) {
+                    emit(combinator.combine(pocketA.extract(), i));
+                }
+            }
+        };
+    }
+
+    public static <A, B, I, R> OnBuilder<Source<I>, ByBuilder<Combinator3<A, B, I, R>, Source<R>>> combine(Source<A> srcA, Source<B> srcB) {
+        return impulse -> combinator -> combineOnImpulse(srcA, srcB, impulse, combinator);
+    }
+
+    public static <A, B, I, R> Source<R> combineOnImpulse(Source<A> srcA, Source<B> srcB, Source<I> impulse, Combinator3<A, B, I, R> combinator) {
+        return new CombinedSource<R>() {
+            Pocket<A> pocketA = new OverwritingPocket<A>();
+            Pocket<B> pocketB = new OverwritingPocket<B>();
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                return Subscription.multi(
+                        pocketA.fillFrom(srcA),
+                        pocketB.fillFrom(srcB),
+                        impulse.subscribe(i -> tryEmit(i)));
+            }
+
+            private void tryEmit(I i) {
+                if(pocketA.hasValue() && pocketB.hasValue()) {
+                    emit(combinator.combine(pocketA.extract(), pocketB.extract(), i));
                 }
             }
         };
     }
 
     public static <T> OnBuilder<Source<?>, Source<T>> release(Source<T> input) {
-        return impulse -> releaseOnImpulse(impulse, input);
+        return impulse -> releaseOnImpulse(input, impulse);
     }
 
-    public static <T> Source<T> releaseOnImpulse(Source<?> impulse, Source<T> input) {
+    public static <T> Source<T> releaseOnImpulse(Source<T> input, Source<?> impulse) {
         return new CombinedSource<T>() {
             private boolean hasValue = false;
             private T value = null;
@@ -186,28 +233,57 @@ public class Sources {
 
     private static abstract class ZippedSource<T> extends CombinedSource<T> {
 
-        class SourceObserver<A> {
-            private boolean hasValue = false;
-            private A value = null;
-
-            public boolean hasValue() { return hasValue; }
-            public A getValue() { return value; }
-            public void clearValue() { hasValue = false; value = null; }
-
-            public Subscription subscribeTo(Source<A> src) {
-                clearValue();
-                return src.subscribe(a -> {
-                    if(hasValue) {
-                        throw new IllegalStateException("Value arrived out of order: " + a);
-                    } else {
-                        hasValue = true;
-                        value = a;
-                        tryEmit();
-                    }
-                });
+        class SourceObserver<A> extends ExclusivePocket<A> {
+            @Override
+            protected void valueUpdated(A value) {
+                tryEmit();
             }
         }
 
         abstract void tryEmit();
+    }
+
+    private static abstract class Pocket<T> implements Sink<T> {
+        private boolean hasValue = false;
+        private T value = null;
+
+        public boolean hasValue() { return hasValue; }
+        protected void setValue(T value) {
+            this.value = value;
+            hasValue = true;
+            valueUpdated(value);
+        }
+        public T extract() {
+            T res = value;
+            hasValue = false;
+            value = null;
+            return res;
+        }
+
+        public Subscription fillFrom(Source<T> src) {
+            hasValue = false;
+            value = null;
+            return src.subscribe(a -> push(a));
+        }
+
+        protected void valueUpdated(T value) {};
+    }
+
+    private static class ExclusivePocket<T> extends Pocket<T> {
+        @Override
+        public final void push(T a) {
+            if(hasValue()) {
+                throw new IllegalStateException("Value arrived out of order: " + a);
+            } else {
+                setValue(a);
+            }
+        };
+    }
+
+    private static class OverwritingPocket<T> extends Pocket<T> {
+        @Override
+        public final void push(T a) {
+            setValue(a);
+        };
     }
 }

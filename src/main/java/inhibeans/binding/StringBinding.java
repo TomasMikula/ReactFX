@@ -1,6 +1,6 @@
 package inhibeans.binding;
 
-import inhibeans.Block;
+import inhibeans.Hold;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableStringValue;
@@ -28,9 +28,9 @@ implements Binding<String> {
     private boolean fireOnRelease = false;
 
     @Override
-    public Block block() {
+    public Hold block() {
         if(blocked) {
-            return Block.EMPTY_BLOCK;
+            return Hold.EMPTY_HOLD;
         } else {
             blocked = true;
             return this::release;

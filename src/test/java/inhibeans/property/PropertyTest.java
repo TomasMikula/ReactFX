@@ -1,26 +1,25 @@
 package inhibeans.property;
 
 import static org.junit.Assert.*;
-import inhibeans.Block;
-import javafx.beans.property.Property;
+import inhibeans.Hold;
 import javafx.beans.value.ObservableValue;
 
 import org.junit.Test;
 
 public class PropertyTest {
 
-    private void testBooleanProperty(InhibitoryProperty<Boolean> tested) {
+    private void testBooleanProperty(Property<Boolean> tested) {
         testBooleanProperty(tested, tested);
     }
 
-    private void testBooleanProperty(InhibitoryProperty<Boolean> tested, Property<Boolean> source) {
+    private void testBooleanProperty(Property<Boolean> tested, javafx.beans.property.Property<Boolean> source) {
         CountingListener counter = new CountingListener(tested);
 
         source.setValue(true);
         source.setValue(false);
         assertEquals(2, counter.getAndReset());
 
-        Block b = tested.block();
+        Hold b = tested.block();
         source.setValue(true);
         source.setValue(false);
         b.close();
@@ -62,10 +61,10 @@ public class PropertyTest {
             }
 
             @Override public void bind(ObservableValue<? extends Boolean> o) {}
-            @Override public void bindBidirectional(Property<Boolean> arg0) {}
+            @Override public void bindBidirectional(javafx.beans.property.Property<Boolean> arg0) {}
             @Override public boolean isBound() { return false; }
             @Override public void unbind() {}
-            @Override public void unbindBidirectional(Property<Boolean> arg0) {}
+            @Override public void unbindBidirectional(javafx.beans.property.Property<Boolean> arg0) {}
             @Override public Object getBean() { return null; }
             @Override public String getName() { return null; }
             @Override public void setValue(Boolean arg0) {}

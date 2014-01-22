@@ -1,18 +1,18 @@
 package inhibeans.value;
 
-import inhibeans.Block;
+import inhibeans.Hold;
 
 public abstract class ObservableValueBase<T>
 extends javafx.beans.value.ObservableValueBase<T>
-implements ObservableValue<T>, AutoCloseable {
+implements ObservableValue<T> {
 
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
     @Override
-    public Block block() {
+    public Hold block() {
         if(blocked) {
-            return Block.EMPTY_BLOCK;
+            return Hold.EMPTY_HOLD;
         } else {
             blocked = true;
             return this::release;

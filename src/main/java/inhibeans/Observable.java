@@ -1,5 +1,7 @@
 package inhibeans;
 
+import java.util.function.Supplier;
+
 public interface Observable extends javafx.beans.Observable {
 
     /**
@@ -14,19 +16,45 @@ public interface Observable extends javafx.beans.Observable {
      * The returned {@code Block} is {@code AutoCloseable}, which makes it
      * convenient to use it in try-with-resources.
      */
-    Block block();
+    Hold block();
 
     /**
-     * Equivalent to
+     * Runs the given computation, making sure the invalidation and change
+     * events are blocked. When done, previous blocked state is restored.
+     *
+     * <p>Equivalent to
      * <pre>
-     * try(Block b = block()) {
+     * try(Hold h = block()) {
      *     r.run();
      * }
      * </pre>
      */
     default void blockWhile(Runnable r) {
-        try(Block b = block()) {
+        try(Hold b = block()) {
             r.run();
+        }
+    }
+
+    /**
+     * Runs the given computation, making sure the invalidation and change
+     * events are blocked. When done, previous blocked state is restored.
+     *
+     * <pre>
+     * T t = this.blockWhile(f);
+     * </pre>
+     *
+     * is equivalent to
+     *
+     * <pre>
+     * T t;
+     * try(Hold h = block()) {
+     *     t = f.get();
+     * }
+     * </pre>
+     */
+    default <T> T blockWhile(Supplier<T> f) {
+        try(Hold b = block()) {
+            return f.get();
         }
     }
 }

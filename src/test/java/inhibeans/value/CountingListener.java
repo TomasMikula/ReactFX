@@ -1,4 +1,4 @@
-package inhibeans;
+package inhibeans.value;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;

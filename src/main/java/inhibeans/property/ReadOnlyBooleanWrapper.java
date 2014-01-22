@@ -1,21 +1,21 @@
 package inhibeans.property;
 
-import inhibeans.Block;
+import inhibeans.Hold;
 
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyBooleanWrapper}.
  */
 public class ReadOnlyBooleanWrapper
 extends javafx.beans.property.ReadOnlyBooleanWrapper
-implements InhibitoryProperty<Boolean> {
+implements Property<Boolean> {
 
     private boolean blocked = false;
     private boolean fireOnRelease = false;
 
     @Override
-    public Block block() {
+    public Hold block() {
         if(blocked) {
-            return Block.EMPTY_BLOCK;
+            return Hold.EMPTY_HOLD;
         } else {
             blocked = true;
             return this::release;

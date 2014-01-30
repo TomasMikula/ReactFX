@@ -7,6 +7,10 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
+import javafx.scene.Node;
 
 
 public class EventStreams {
@@ -177,6 +181,17 @@ public class EventStreams {
                 ChangeListener<T> listener = (obs, old, val) -> emit(new Change<>(old, val));
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
+            }
+        };
+    }
+
+    public static <T extends Event> EventStream<T> eventsOf(Node node, EventType<T> eventType) {
+        return new CombinedStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                EventHandler<T> handler = event -> emit(event);
+                node.addEventHandler(eventType, handler);
+                return () -> node.removeEventHandler(eventType, handler);
             }
         };
     }

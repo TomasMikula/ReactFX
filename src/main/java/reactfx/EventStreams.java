@@ -161,13 +161,22 @@ public class EventStreams {
 
     public static <T> EventStream<T> valuesOf(ObservableValue<T> observable) {
         return new CombinedStream<T>() {
-            private final ChangeListener<T> listener = (obs, old, val) -> emit(val);
-            private final Subscription subscription = () -> observable.removeListener(listener);
-
             @Override
             protected Subscription subscribeToInputs() {
+                ChangeListener<T> listener = (obs, old, val) -> emit(val);
                 observable.addListener(listener);
-                return subscription;
+                return () -> observable.removeListener(listener);
+            }
+        };
+    }
+
+    public static <T> EventStream<Change<T>> changesOf(ObservableValue<T> observable) {
+        return new CombinedStream<Change<T>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                ChangeListener<T> listener = (obs, old, val) -> emit(new Change<>(old, val));
+                observable.addListener(listener);
+                return () -> observable.removeListener(listener);
             }
         };
     }

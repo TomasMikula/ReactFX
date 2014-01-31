@@ -426,8 +426,16 @@ public class EventStreams {
         };
     }
 
+    public static <T> InterceptableEventStream<T> interceptable(EventStream<T> input) {
+        if(input instanceof InterceptableEventStream) {
+            return (InterceptableEventStream<T>) input;
+        } else {
+            return new InterceptableEventStreamImpl<>(input);
+        }
+    }
 
-    private static abstract class CombinedStream<T> extends EventStreamBase<T> {
+
+    static abstract class CombinedStream<T> extends EventStreamBase<T> {
         private Subscription subscription = null;
 
         protected abstract Subscription subscribeToInputs();

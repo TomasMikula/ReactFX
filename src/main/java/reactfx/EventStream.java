@@ -29,4 +29,8 @@ public interface EventStream<T> {
     default <U> EventStream<U> map(Function<T, U> f) {
         return EventStreams.map(this, f);
     }
+
+    default InterceptableEventStream<T> interceptable() {
+        return EventStreams.interceptable(this);
+    }
 }

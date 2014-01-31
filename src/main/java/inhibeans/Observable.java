@@ -2,6 +2,8 @@ package inhibeans;
 
 import java.util.function.Supplier;
 
+import reactfx.Hold;
+
 public interface Observable extends javafx.beans.Observable {
 
     /**

@@ -1,4 +1,4 @@
-package inhibeans;
+package reactfx;
 
 public interface Hold extends AutoCloseable {
 

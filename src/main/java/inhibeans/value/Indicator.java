@@ -1,12 +1,11 @@
 package inhibeans.value;
 
-import inhibeans.Hold;
-
 import java.util.function.Supplier;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
+import reactfx.Hold;
 import reactfx.ListHelper;
 
 

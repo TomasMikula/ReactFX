@@ -1,6 +1,6 @@
 package inhibeans.binding;
 
-import inhibeans.Hold;
+import reactfx.Hold;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableStringValue;

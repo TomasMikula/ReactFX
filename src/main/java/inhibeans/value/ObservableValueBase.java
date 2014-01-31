@@ -1,6 +1,6 @@
 package inhibeans.value;
 
-import inhibeans.Hold;
+import reactfx.Hold;
 
 public abstract class ObservableValueBase<T>
 extends javafx.beans.value.ObservableValueBase<T>

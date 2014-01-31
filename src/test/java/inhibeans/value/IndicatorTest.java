@@ -1,9 +1,10 @@
 package inhibeans.value;
 
 import static org.junit.Assert.*;
-import inhibeans.Hold;
 
 import org.junit.Test;
+
+import reactfx.Hold;
 
 public class IndicatorTest {
 

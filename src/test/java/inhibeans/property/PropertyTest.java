@@ -1,10 +1,11 @@
 package inhibeans.property;
 
 import static org.junit.Assert.*;
-import inhibeans.Hold;
 import javafx.beans.value.ObservableValue;
 
 import org.junit.Test;
+
+import reactfx.Hold;
 
 public class PropertyTest {
 

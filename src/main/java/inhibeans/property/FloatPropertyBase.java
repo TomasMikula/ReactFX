@@ -1,6 +1,6 @@
 package inhibeans.property;
 
-import inhibeans.Hold;
+import reactfx.Hold;
 
 /**
  * Inhibitory version of {@link javafx.beans.property.DoublePropertyBase}.

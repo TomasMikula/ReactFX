@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="compile" name="inhibeans">
+<project basedir="." default="compile" name="reactfx">
     <property environment="env"/>
     <property name="debuglevel" value="source,lines,vars"/>
     <property name="target" value="1.8"/>
@@ -21,7 +21,7 @@
         <pathelement location="src/demo/java"/>
     </path>
 
-    <path id="inhibeans.classpath">
+    <path id="reactfx.classpath">
         <pathelement location="build/main"/>
         <pathelement location="build/test"/>
         <pathelement location="build/demo"/>
@@ -57,15 +57,15 @@
         <echo message="${ant.project.name}: ${ant.file}"/>
         <javac debug="true" debuglevel="${debuglevel}" destdir="build/main" includeantruntime="false" source="${source}" target="${target}">
             <src refid="src.main"/>
-            <classpath refid="inhibeans.classpath"/>
+            <classpath refid="reactfx.classpath"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="build/test" includeantruntime="false" source="${source}" target="${target}">
             <src refid="src.test"/>
-            <classpath refid="inhibeans.classpath"/>
+            <classpath refid="reactfx.classpath"/>
         </javac>
         <javac debug="true" debuglevel="${debuglevel}" destdir="build/demo" includeantruntime="false" source="${source}" target="${target}">
             <src refid="src.demo"/>
-            <classpath refid="inhibeans.classpath"/>
+            <classpath refid="reactfx.classpath"/>
         </javac>
     </target>
 
@@ -79,7 +79,7 @@
 
     <target name="test" depends="compile" description="Run tests.">
         <junit fork="yes">
-            <classpath refid="inhibeans.classpath"/>
+            <classpath refid="reactfx.classpath"/>
             <batchtest>
                 <fileset dir="src/test/java">
                     <include name="**/*Test*" />

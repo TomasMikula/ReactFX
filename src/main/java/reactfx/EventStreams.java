@@ -130,6 +130,42 @@ public class EventStreams {
         }
     }
 
+
+    /**
+     * Type returned from
+     * {@code zip(EventStream<A>, EventStream<B>)}.
+     */
+    public static final class Zip2<A, B> {
+        private final EventStream<A> srcA;
+        private final EventStream<B> srcB;
+        Zip2(EventStream<A> srcA, EventStream<B> srcB) {
+            this.srcA = srcA;
+            this.srcB = srcB;
+        }
+        public <R> EventStream<R> by(Combinator2<A, B, R> combinator) {
+            return zip(srcA, srcB, combinator);
+        }
+    }
+
+
+    /**
+     * Type returned from
+     * {@code zip(EventStream<A>, EventStream<B>, EventStream<C>)}.
+     */
+    public static final class Zip3<A, B, C> {
+        private final EventStream<A> srcA;
+        private final EventStream<B> srcB;
+        private final EventStream<C> srcC;
+        Zip3(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC) {
+            this.srcA = srcA;
+            this.srcB = srcB;
+            this.srcC = srcC;
+        }
+        public <R> EventStream<R> by(Combinator3<A, B, C, R> combinator) {
+            return zip(srcA, srcB, srcC, combinator);
+        }
+    }
+
     /**
      * Type returned from
      * {@code combine(EventStream<A>, EventStream<B>, EventStream<C>).on(EventStream<I>)}.
@@ -197,7 +233,7 @@ public class EventStreams {
         };
     }
 
-    public static <T> EventStream<T> filter(EventStream<? extends T> input, Predicate<T> predicate) {
+    static <T> EventStream<T> filter(EventStream<? extends T> input, Predicate<T> predicate) {
         return new CombinedStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
@@ -210,7 +246,7 @@ public class EventStreams {
         };
     }
 
-    public static <T, U> EventStream<U> map(EventStream<T> input, Function<T, U> f) {
+    static <T, U> EventStream<U> map(EventStream<T> input, Function<T, U> f) {
         return new CombinedStream<U>() {
             @Override
             protected Subscription subscribeToInputs() {
@@ -235,7 +271,11 @@ public class EventStreams {
         };
     }
 
-    public static <A, B, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, Combinator2<A, B, R> combinator) {
+    public static <A, B> Zip2<A, B> zip(EventStream<A> srcA, EventStream<B> srcB) {
+        return new Zip2<>(srcA, srcB);
+    }
+
+    static <A, B, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, Combinator2<A, B, R> combinator) {
         return new ZippedStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -256,7 +296,11 @@ public class EventStreams {
         };
     }
 
-    public static <A, B, C, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, Combinator3<A, B, C, R> combinator) {
+    public static <A, B, C> Zip3<A, B, C> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC) {
+        return new Zip3<>(srcA, srcB, srcC);
+    }
+
+    static <A, B, C, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, Combinator3<A, B, C, R> combinator) {
         return new ZippedStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -279,7 +323,7 @@ public class EventStreams {
         };
     }
 
-    public static <A, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<I> impulse, Combinator2<A, I, R> combinator) {
+    static <A, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<I> impulse, Combinator2<A, I, R> combinator) {
         return new CombinedStream<R>() {
             Pocket<A> pocketA = new OverwritingPocket<A>();
 
@@ -302,7 +346,7 @@ public class EventStreams {
         return new Combine1<A>(srcA);
     }
 
-    public static <A, B, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, Combinator2<A, B, R> combinator) {
+    static <A, B, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, Combinator2<A, B, R> combinator) {
         return new CombineLatestStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -323,7 +367,7 @@ public class EventStreams {
         };
     }
 
-    public static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, Combinator3<A, B, I, R> combinator) {
+    static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, Combinator3<A, B, I, R> combinator) {
         return new CombinedStream<R>() {
             Pocket<A> pocketA = new OverwritingPocket<A>();
             Pocket<B> pocketB = new OverwritingPocket<B>();
@@ -348,7 +392,7 @@ public class EventStreams {
         return new Combine2<A, B>(srcA, srcB);
     }
 
-    public static <A, B, C, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, Combinator3<A, B, C, R> combinator) {
+    static <A, B, C, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, Combinator3<A, B, C, R> combinator) {
         return new CombineLatestStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -402,7 +446,7 @@ public class EventStreams {
         return new Release<T>(input);
     }
 
-    public static <T> EventStream<T> releaseOnImpulse(EventStream<T> input, EventStream<?> impulse) {
+    static <T> EventStream<T> releaseOnImpulse(EventStream<T> input, EventStream<?> impulse) {
         return new CombinedStream<T>() {
             private boolean hasValue = false;
             private T value = null;

@@ -7,6 +7,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.beans.value.ObservableValueBase;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -434,6 +435,10 @@ public class EventStreams {
         }
     }
 
+    public static <T> StreamBoundValue<T> toObservableValue(EventStream<T> input, T initialValue) {
+        return new StreamBoundValueImpl<T>(input, initialValue);
+    }
+
 
     static abstract class CombinedStream<T> extends EventStreamBase<T> {
         private Subscription subscription = null;
@@ -521,5 +526,29 @@ public class EventStreams {
         public final void push(T a) {
             setValue(a);
         };
+    }
+
+    private static class StreamBoundValueImpl<T> extends ObservableValueBase<T> implements StreamBoundValue<T> {
+        private T value;
+        private final Subscription subscription;
+
+        public StreamBoundValueImpl(EventStream<T> input, T initialValue) {
+            value = initialValue;
+            subscription = input.subscribe(evt -> {
+                value = evt;
+                fireValueChangedEvent();
+            });
+        }
+
+        @Override
+        public T getValue() {
+            return value;
+        }
+
+        @Override
+        public void unsubscribe() {
+            subscription.unsubscribe();
+        }
+
     }
 }

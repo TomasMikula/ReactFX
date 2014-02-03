@@ -33,4 +33,8 @@ public interface EventStream<T> {
     default InterceptableEventStream<T> interceptable() {
         return EventStreams.interceptable(this);
     }
+
+    default StreamBoundValue<T> toObservableValue(T initialValue) {
+        return EventStreams.toObservableValue(this, initialValue);
+    }
 }

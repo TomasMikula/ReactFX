@@ -104,6 +104,9 @@ public class EventStreams {
             this.srcB = srcB;
             this.impulse = impulse;
         }
+        public <R> EventStream<R> by(Combinator2<A, B, R> combinator) {
+            return combineOnImpulse(srcA, srcB, impulse, combinator);
+        }
         public <R> EventStream<R> by(Combinator3<A, B, I, R> combinator) {
             return combineOnImpulse(srcA, srcB, impulse, combinator);
         }
@@ -130,6 +133,29 @@ public class EventStreams {
         }
     }
 
+    /**
+     * Type returned from
+     * {@code combine(EventStream<A>, EventStream<B>, EventStream<C>).on(EventStream<I>)}.
+     */
+    public static final class Combine3On<A, B, C, I> {
+        private final EventStream<A> srcA;
+        private final EventStream<B> srcB;
+        private final EventStream<C> srcC;
+        private final EventStream<I> impulse;
+        Combine3On(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse) {
+            this.srcA = srcA;
+            this.srcB = srcB;
+            this.srcC = srcC;
+            this.impulse = impulse;
+        }
+        public <R> EventStream<R> by(Combinator3<A, B, C, R> combinator) {
+            return combineOnImpulse(srcA, srcB, srcC, impulse, combinator);
+        }
+        public <R> EventStream<R> by(Combinator4<A, B, C, I, R> combinator) {
+            return combineOnImpulse(srcA, srcB, srcC, impulse, combinator);
+        }
+    }
+
 
     /**
      * Type returned from
@@ -146,7 +172,6 @@ public class EventStreams {
             return zip(srcA, srcB, combinator);
         }
     }
-
 
     /**
      * Type returned from
@@ -166,25 +191,6 @@ public class EventStreams {
         }
     }
 
-    /**
-     * Type returned from
-     * {@code combine(EventStream<A>, EventStream<B>, EventStream<C>).on(EventStream<I>)}.
-     */
-    public static final class Combine3On<A, B, C, I> {
-        private final EventStream<A> srcA;
-        private final EventStream<B> srcB;
-        private final EventStream<C> srcC;
-        private final EventStream<I> impulse;
-        Combine3On(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse) {
-            this.srcA = srcA;
-            this.srcB = srcB;
-            this.srcC = srcC;
-            this.impulse = impulse;
-        }
-        public <R> EventStream<R> by(Combinator4<A, B, C, I, R> combinator) {
-            return combineOnImpulse(srcA, srcB, srcC, impulse, combinator);
-        }
-    }
 
     public static EventStream<Void> invalidationsOf(Observable observable) {
         return new CombinedStream<Void>() {
@@ -368,22 +374,19 @@ public class EventStreams {
     }
 
     static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, Combinator3<A, B, I, R> combinator) {
-        return new CombinedStream<R>() {
-            Pocket<A> pocketA = new OverwritingPocket<A>();
-            Pocket<B> pocketB = new OverwritingPocket<B>();
-
+        return new Combine2OnImpulseStream<A, B, I, R>(srcA, srcB, impulse) {
             @Override
-            protected Subscription subscribeToInputs() {
-                return Subscription.multi(
-                        pocketA.fillFrom(srcA),
-                        pocketB.fillFrom(srcB),
-                        impulse.subscribe(i -> tryEmit(i)));
+            protected R combine(I impulse) {
+                return combinator.combine(pocketA.peek(), pocketB.peek(), impulse);
             }
+        };
+    }
 
-            private void tryEmit(I i) {
-                if(pocketA.hasValue() && pocketB.hasValue()) {
-                    emit(combinator.combine(pocketA.peek(), pocketB.peek(), i));
-                }
+    static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, Combinator2<A, B, R> combinator) {
+        return new Combine2OnImpulseStream<A, B, I, R>(srcA, srcB, impulse) {
+            @Override
+            protected R combine(I impulse) {
+                return combinator.combine(pocketA.peek(), pocketB.peek());
             }
         };
     }
@@ -416,24 +419,19 @@ public class EventStreams {
     }
 
     public static <A, B, C, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse, Combinator4<A, B, C, I, R> combinator) {
-        return new CombinedStream<R>() {
-            Pocket<A> pocketA = new OverwritingPocket<A>();
-            Pocket<B> pocketB = new OverwritingPocket<B>();
-            Pocket<C> pocketC = new OverwritingPocket<C>();
-
+        return new Combine3OnImpulseStream<A, B, C, I, R>(srcA, srcB, srcC, impulse) {
             @Override
-            protected Subscription subscribeToInputs() {
-                return Subscription.multi(
-                        pocketA.fillFrom(srcA),
-                        pocketB.fillFrom(srcB),
-                        pocketC.fillFrom(srcC),
-                        impulse.subscribe(i -> tryEmit(i)));
+            protected R combine(I impulse) {
+                return combinator.combine(pocketA.peek(), pocketB.peek(), pocketC.peek(), impulse);
             }
+        };
+    }
 
-            private void tryEmit(I i) {
-                if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
-                    emit(combinator.combine(pocketA.peek(), pocketB.peek(), pocketC.peek(), i));
-                }
+    public static <A, B, C, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse, Combinator3<A, B, C, R> combinator) {
+        return new Combine3OnImpulseStream<A, B, C, I, R>(srcA, srcB, srcC, impulse) {
+            @Override
+            protected R combine(I impulse) {
+                return combinator.combine(pocketA.peek(), pocketB.peek(), pocketC.peek());
             }
         };
     }
@@ -523,6 +521,70 @@ public class EventStreams {
         }
 
         abstract void tryEmit();
+    }
+
+    private static abstract class Combine2OnImpulseStream<A, B, I, R> extends CombinedStream<R> {
+        private final EventStream<A> srcA;
+        private final EventStream<B> srcB;
+        private final EventStream<I> impulse;
+        protected final Pocket<A> pocketA = new OverwritingPocket<A>();
+        protected final Pocket<B> pocketB = new OverwritingPocket<B>();
+
+        public Combine2OnImpulseStream(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse) {
+            this.srcA = srcA;
+            this.srcB = srcB;
+            this.impulse = impulse;
+        }
+
+        @Override
+        protected Subscription subscribeToInputs() {
+            return Subscription.multi(
+                    pocketA.fillFrom(srcA),
+                    pocketB.fillFrom(srcB),
+                    impulse.subscribe(i -> tryEmit(i)));
+        }
+
+        private void tryEmit(I impulse) {
+            if(pocketA.hasValue() && pocketB.hasValue()) {
+                emit(combine(impulse));
+            }
+        }
+
+        protected abstract R combine(I impulse);
+    }
+
+    private static abstract class Combine3OnImpulseStream<A, B, C, I, R> extends CombinedStream<R> {
+        private final EventStream<A> srcA;
+        private final EventStream<B> srcB;
+        private final EventStream<C> srcC;
+        private final EventStream<I> impulse;
+        protected final Pocket<A> pocketA = new OverwritingPocket<A>();
+        protected final Pocket<B> pocketB = new OverwritingPocket<B>();
+        protected final Pocket<C> pocketC = new OverwritingPocket<C>();
+
+        public Combine3OnImpulseStream(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse) {
+            this.srcA = srcA;
+            this.srcB = srcB;
+            this.srcC = srcC;
+            this.impulse = impulse;
+        }
+
+        @Override
+        protected Subscription subscribeToInputs() {
+            return Subscription.multi(
+                    pocketA.fillFrom(srcA),
+                    pocketB.fillFrom(srcB),
+                    pocketC.fillFrom(srcC),
+                    impulse.subscribe(i -> tryEmit(i)));
+        }
+
+        private void tryEmit(I impulse) {
+            if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
+                emit(combine(impulse));
+            }
+        }
+
+        protected abstract R combine(I impulse);
     }
 
     private static abstract class Pocket<T> implements Sink<T> {

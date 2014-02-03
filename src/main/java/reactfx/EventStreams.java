@@ -194,15 +194,12 @@ public class EventStreams {
 
     public static EventStream<Void> invalidationsOf(Observable observable) {
         return new CombinedStream<Void>() {
-            private final InvalidationListener listener = obs -> emit(null);
-            private final Subscription subscription = () -> observable.removeListener(listener);
-
             @Override
             protected Subscription subscribeToInputs() {
+                InvalidationListener listener = obs -> emit(null);
                 observable.addListener(listener);
-                return subscription;
+                return () -> observable.removeListener(listener);
             }
-
         };
     }
 

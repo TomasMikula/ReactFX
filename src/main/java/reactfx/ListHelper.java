@@ -42,6 +42,10 @@ public abstract class ListHelper<T> {
         }
     }
 
+    private ListHelper() {
+        // private constructor to prevent subclassing
+    };
+
     protected abstract ListHelper<T> add(T elem);
 
     protected abstract ListHelper<T> remove(T elem);

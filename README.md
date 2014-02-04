@@ -65,7 +65,7 @@ The `values` stream above emits the new value every time the value changes. As o
 Custom event streams
 --------------------
 
-`EventSource` is an event stream that emits precisely what you tell it to emit.
+`EventSource` is an event stream that emits precisely what you _push_ into it.
 
 ```java
 EventSource<Integer> numbers = new EventSource<>();
@@ -121,7 +121,7 @@ EventStream<Double> heights = ...;
 EventStream<Double> areas = EventStreams.zip(widths, heights).by((w, h) -> w * h);
 ```
 
-Zip-by differs from combine-by in that zip only emits value after all input streams have emitted a value. Moreover, zip expects all input streams to emit values at the same frequency. In the above example, it would an `IllegalStateException` if `widths` emitted twice while `heights` did not emit at all.
+Zip-by differs from combine-by in that zip only emits value after all input streams have emitted a value. Moreover, zip expects all input streams to emit values at the same frequency. In the above example, it would be an `IllegalStateException` if `widths` emitted twice while `heights` did not emit at all.
 
 
 ### combine-on-by
@@ -259,7 +259,7 @@ Note that `fuseWhile((a, b) -> b, runnable)` is equivalent to `retainLatestWhile
 
 ### try fuse
 
-Sometimes fusion is not defined for every pair of events. Sometimes two events _annihilate_ (cancel each other out). This type of interception tries to fuse or annihilate events when possible, and retains both events for later emmision when not possible. In the following example, two integers fuse (here sum) if their sum is less than 20 and annihilate if their sum is 0.
+Sometimes fusion is not defined for every pair of events. Sometimes two events _annihilate_ (cancel each other out). This type of interception tries to fuse or annihilate events when possible, and retains both events for later emmision when not possible. In the following example, two integers fuse (here add up) if their sum is less than 20 and annihilate if their sum is 0.
 
 ```java
 BiFunction<Integer, Integer, FusionResult<Integer>> fusor = (a, b) -> {
@@ -283,6 +283,8 @@ iStream.fuseWhile(fusor, () -> {
 });
 // now "19" and "12" get printed
 ```
+
+Note that `fuseWhile((a, b) -> FusionResult.failed(), runnable)` is equivalent to `pauseWhile(runnable)`.
 
 
 InhiBeans

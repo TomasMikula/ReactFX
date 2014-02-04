@@ -30,15 +30,15 @@ public class EventStreams {
 
     /**
      * Type returned from
-     * {@code release(EventStream<T>)}.
+     * {@code emit(EventStream<T>)}.
      */
-    public static final class Release<T> {
+    public static final class Emit<T> {
         private final EventStream<T> input;
-        Release(EventStream<T> input) {
+        Emit(EventStream<T> input) {
             this.input = input;
         }
         public EventStream<T> on(EventStream<?> impulse) {
-            return releaseOnImpulse(input, impulse);
+            return emitOnImpulse(input, impulse);
         }
     }
 
@@ -437,11 +437,11 @@ public class EventStreams {
         return new Combine3<A, B, C>(srcA, srcB, srcC);
     }
 
-    public static <T> Release<T> release(EventStream<T> input) {
-        return new Release<T>(input);
+    public static <T> Emit<T> emit(EventStream<T> input) {
+        return new Emit<T>(input);
     }
 
-    static <T> EventStream<T> releaseOnImpulse(EventStream<T> input, EventStream<?> impulse) {
+    static <T> EventStream<T> emitOnImpulse(EventStream<T> input, EventStream<?> impulse) {
         return new CombinedStream<T>() {
             private boolean hasValue = false;
             private T value = null;

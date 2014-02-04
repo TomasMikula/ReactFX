@@ -1,5 +1,6 @@
 package reactfx;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -191,6 +192,18 @@ public class EventStreams {
         }
     }
 
+
+    /**
+     * Returns an event stream that never emits any value.
+     */
+    public static <T> EventStream<T> never() {
+        return new EventStream<T>() {
+            @Override
+            public Subscription subscribe(Consumer<T> consumer) {
+                return Subscription.EMPTY;
+            }
+        };
+    }
 
     public static EventStream<Void> invalidationsOf(Observable observable) {
         return new CombinedStream<Void>() {

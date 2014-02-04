@@ -43,8 +43,8 @@ public class FibTest {
         eagerTest.setupFor(eagerResult);
 
         FibTest lazyTest = new FibTest(n);
-        inhibeans.property.SimpleLongProperty lazyResult =
-                new inhibeans.property.SimpleLongProperty();
+        reactfx.inhibeans.property.SimpleLongProperty lazyResult =
+                new reactfx.inhibeans.property.SimpleLongProperty();
         lazyTest.setupFor(lazyResult);
 
         long t1 = System.currentTimeMillis();

@@ -1,10 +1,9 @@
 package inhibeans.demo;
 
-import inhibeans.binding.BooleanBinding;
-
 import java.util.function.Predicate;
 
 import reactfx.Hold;
+import reactfx.inhibeans.binding.BooleanBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableBooleanValue;

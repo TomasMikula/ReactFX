@@ -62,6 +62,18 @@ EventStream<T> values = EventStreams.valuesOf(observable);
 The `values` stream above emits the new value every time the value changes. As opposed to the `changes` stream above, it avoids creating a `Change` instance in case we're not interested in the old value.
 
 
+Custom event streams
+--------------------
+
+`EventSource` is an event stream that emits precisely what you tell it to emit.
+
+```java
+EventSource<Integer> numbers = new EventSource<>();
+numbers.subscribe(i -> System.out.println(i));
+numbers.push(7); // prints "7"
+```
+
+
 Stream composition
 ------------------
 
@@ -157,6 +169,109 @@ StreamBoundValue<T> observable = stream.toObservableValue(initial);
 observable.unsubscribe();
 ```
 
+
+Interceptable streams
+---------------------
+
+`InterceptableStream` is an event stream whose event emission can be temporarily intercepted. `EventStream` provides method `interceptable()` that returns an interceptable version of the event stream.
+
+```java
+EventStream<T> stream = ...;
+InterceptableEventStream iStream = stream.interceptable();
+```
+
+`InterceptableEventStream` provides multiple ways to intercept the emission of events. They differ in what gets emitted when the interception ends.
+
+Examples in the rest of this section build up on this code:
+
+```java
+EventSource<Integer> src = new EventSource<>();
+InterceptableEventStream<Integer> iStream = src.interceptable();
+iStream.subscribe(i -> System.out.println(i));
+```
+
+### mute
+
+If you mute a stream temporarily, all events that would normally be emitted during this period are lost.
+
+```java
+iStream.muteWhile(() -> {
+    src.push(1); // nothing is printed, 1 is never emitted from iStream
+});
+```
+
+
+### pause
+
+When you pause the stream, events that would normally be emitted are buffered and emitted when the stream is unpaused.
+
+```java
+iStream.pauseWhile(() -> {
+    src.push(2);
+    src.push(3);
+    // nothing has been printed so far
+});
+// now "2" and "3" get printed
+```
+
+
+### retainLatest
+
+Instructs the stream to remember only the latest event that would normally be emitted. This event is emitted when the interception ends.
+
+```java
+iStream.retainLatestWhile(() -> {
+    src.push(4);
+    src.push(5);
+    // nothing has been printed so far
+});
+// now "5" gets printed
+```
+
+
+### fuse
+
+While intercepted, keep _fusing_ (accumulating) the events together. One fused event is emitted when the interception ends.
+
+```java
+iStream.fuseWhile((a, b) -> a + b, () -> {
+    src.push(6);
+    src.push(7);
+    src.push(8);
+    // nothing has been printed so far
+});
+// now "21" gets printed
+```
+
+Note that `fuseWhile((a, b) -> b, runnable)` is equivalent to `retainLatestWhile(runnable)`.
+
+
+### try fuse
+
+Sometimes fusion is not defined for every pair of events. Sometimes two events _annihilate_ (cancel each other out). This type of interception tries to fuse or annihilate events when possible, and retains both events for later emmision when not possible. In the following example, two integers fuse (here sum) if their sum is less than 20 and annihilate if their sum is 0.
+
+```java
+BiFunction<Integer, Integer, FusionResult<Integer>> fusor = (a, b) -> {
+    if(a + b == 0) {
+        return FusionResult.annihilated();
+    } else if(a + b < 20) {
+        return FusionResult.fused(a + b);
+    } else {
+        return FusionResult.failed();
+    }
+};
+
+iStream.fuseWhile(fusor, () -> {
+    src.push(9);
+    src.push(10);
+    src.push(11);
+    src.push(-5);
+    src.push(-6);
+    src.push(12);
+    // nothing has been printed so far
+});
+// now "19" and "12" get printed
+```
 
 
 Download

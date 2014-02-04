@@ -113,6 +113,8 @@ EventStream<Double> heights = ...;
 EventStream<Double> areas = EventStreams.combine(widths, heights).by((w, h) -> w * h);
 ```
 
+`areas` emits a combined value every time _either_ `widths` or `heights` emit a value, but only after both `widths` and `heights` had emitted at least once.
+
 ### zip-by
 
 ```java
@@ -121,7 +123,7 @@ EventStream<Double> heights = ...;
 EventStream<Double> areas = EventStreams.zip(widths, heights).by((w, h) -> w * h);
 ```
 
-Zip-by differs from combine-by in that zip only emits value after all input streams have emitted a value. Moreover, zip expects all input streams to emit values at the same frequency. In the above example, it would be an `IllegalStateException` if `widths` emitted twice while `heights` did not emit at all.
+`areas` emits a combined value every time _both_ `widths` and `heights` emit a value. Zip-by expects all input streams to emit values at the same frequency. In the above example, it would be an `IllegalStateException` if `widths` emitted twice while `heights` did not emit at all.
 
 
 ### combine-on-by
@@ -131,11 +133,11 @@ Emits a combined value, but only when the designated stream (impulse) emits a va
 ```java
 EventStream<Double> widths = ...;
 EventStream<Double> heights = ...;
-EventStream<Void> doneUpdating = ...;
-EventStream<Double> areas = EventStreams.combine(widths, heights).on(doneUpdating).by((w, h) -> w * h);
+EventStream<Void> impulse = ...;
+EventStream<Double> areas = EventStreams.combine(widths, heights).on(impulse).by((w, h) -> w * h);
 ```
 
-The `areas` stream emits every time `doneUpdating` emits, but only after both `widths` and `heights` had emitted at least once.
+The `areas` stream emits every time `impulse` emits, but only after both `widths` and `heights` had emitted at least once.
 
 
 ### emit-on
@@ -184,7 +186,7 @@ observable.unsubscribe();
 Interceptable streams
 ---------------------
 
-`InterceptableStream` is an event stream whose event emission can be temporarily intercepted. `EventStream` provides method `interceptable()` that returns an interceptable version of the event stream.
+`InterceptableEventStream` is an event stream whose event emission can be temporarily intercepted. `EventStream` provides the method `interceptable()` that returns an interceptable version of the event stream.
 
 ```java
 EventStream<T> stream = ...;

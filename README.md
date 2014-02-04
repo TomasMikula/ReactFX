@@ -354,10 +354,11 @@ rect.beingUpdatedProperty().onWhile(() -> {
 ```
 
 
-Download
---------
+Links
+-----
 
-Download the JAR file from [here](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/).
+[Download](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/downloads/)  
+[Javadoc](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/javadoc/index.html)  
 
 
 License

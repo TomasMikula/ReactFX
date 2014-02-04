@@ -1,4 +1,4 @@
-package inhibeans.demo;
+package reactfx.inhibeans.demo;
 
 import java.util.function.Predicate;
 

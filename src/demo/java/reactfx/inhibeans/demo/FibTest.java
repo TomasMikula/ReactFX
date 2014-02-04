@@ -1,4 +1,4 @@
-package inhibeans.demo;
+package reactfx.inhibeans.demo;
 import reactfx.Hold;
 import javafx.beans.binding.NumberExpression;
 import javafx.beans.property.LongProperty;

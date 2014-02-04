@@ -138,6 +138,17 @@ EventStream<Double> areas = EventStreams.combine(widths, heights).on(doneUpdatin
 The `areas` stream emits every time `doneUpdating` emits, but only after both `widths` and `heights` had emitted at least once.
 
 
+### emit-on
+
+```java
+EventStream<T> input = ...;
+EventStream<?> impulse = ...;
+EventStream stream = EventStreams.emit(input).on(impulse);
+```
+
+When `impulse` emits any value, `stream` emits the latest value emitted from `input`. If `input` did not emit any value between two emits from `impulse`, `stream` does not emit anything after the second impulse in a row.
+
+
 Laziness of composite streams
 -----------------------------
 
@@ -271,6 +282,75 @@ iStream.fuseWhile(fusor, () -> {
     // nothing has been printed so far
 });
 // now "19" and "12" get printed
+```
+
+
+InhiBeans
+---------
+
+InhiBeans are extensions of bindings and properties from `javafx.beans.*` that help prevent redundant invalidations and recalculations.
+
+See [InhiBeans wiki page](https://github.com/TomasMikula/ReactFX/wiki/InhiBeans) for details.
+
+
+Indicator
+---------
+
+`Indicator` is an observable boolean value that can be turned on temporarily.
+
+```java
+Indicator workBeingDone = new Indicator();
+Runnable work = ...;
+workBeingDone.onWhile(work);
+```
+
+A useful use case for indicator is to signal when a component is changing state.
+
+Consider a rectangle that needs to be repainted every time its width or height changes.
+
+```java
+interface Rectangle {
+    ObservableDoubleValue widthProperty();
+    ObservableDoubleValue heightProperty();
+    void setWidth(double width);
+    void setHeight(double height);
+}
+
+Rectangle rect = ...;
+rect.widthProperty().addListener(w -> repaint());
+rect.heightProperty().addListener(h -> repaint());
+
+rect.setWidth(20.0); // repaint #1
+rect.setHeight(40.0); // repaint #2
+```
+
+Using indicator and stream combinators we can reduce the number of repaints in the above example to 1.
+
+```java
+interface Rectangle {
+    ObservableDoubleValue widthProperty();
+    ObservableDoubleValue heightProperty();
+    Indicator beingUpdatedProperty();
+    
+    // put implementation of setWidth() and setHeight() inside
+    // beingUpdatedProperty().onWhile(/* implementation */);
+    void setWidth(double width);
+    void setHeight(double height);
+}
+
+Rectangle rect = ...;
+EventStream<Void> widthInvalidations = EventStreams.invalidationsOf(rect.widthProperty());
+EventStream<Void> heightInvalidations = EventStreams.invalidationsOf(rect.heightProperty());
+EventStream<Void> needsRepaint = EventStreams.merge(widthInvalidations, heightInvalidations);
+EventStream<Void> doneUpdating = EventStreams.valuesOf(beingUpdatedProperty()).filter(updating -> !updating).map(updating -> null);
+EventStream<Void> repaintImpulse = EventStreams.emit(needsRepaint).on(doneUpdating);
+repaintImpulse.subscribe(i -> repaint());
+
+rect.beingUpdatedProperty().onWhile(() -> {
+    rect.setWidth(20.0);
+    rect.setHeight(40.0);
+});
+// just 1 repaint takes place now
 ```
 
 

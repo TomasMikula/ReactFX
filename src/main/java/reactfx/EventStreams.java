@@ -9,6 +9,12 @@ import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.ObservableValueBase;
+import javafx.collections.ListChangeListener;
+import javafx.collections.MapChangeListener;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableMap;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
@@ -234,6 +240,39 @@ public class EventStreams {
                 ChangeListener<T> listener = (obs, old, val) -> emit(new Change<>(old, val));
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
+            }
+        };
+    }
+
+    public static <T> EventStream<ListChangeListener.Change<? extends T>> changesOf(ObservableList<T> list) {
+        return new CombinedStream<ListChangeListener.Change<? extends T>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                ListChangeListener<T> listener = c -> emit(c);
+                list.addListener(listener);
+                return () -> list.removeListener(listener);
+            }
+        };
+    }
+
+    public static <T> EventStream<SetChangeListener.Change<? extends T>> changesOf(ObservableSet<T> set) {
+        return new CombinedStream<SetChangeListener.Change<? extends T>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                SetChangeListener<T> listener = c -> emit(c);
+                set.addListener(listener);
+                return () -> set.removeListener(listener);
+            }
+        };
+    }
+
+    public static <K, V> EventStream<MapChangeListener.Change<? extends K, ? extends V>> changesOf(ObservableMap<K, V> map) {
+        return new CombinedStream<MapChangeListener.Change<? extends K, ? extends V>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                MapChangeListener<K, V> listener = c -> emit(c);
+                map.addListener(listener);
+                return () -> map.removeListener(listener);
             }
         };
     }

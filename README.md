@@ -346,7 +346,7 @@ Rectangle rect = ...;
 EventStream<Void> widthInvalidations = EventStreams.invalidationsOf(rect.widthProperty());
 EventStream<Void> heightInvalidations = EventStreams.invalidationsOf(rect.heightProperty());
 EventStream<Void> needsRepaint = EventStreams.merge(widthInvalidations, heightInvalidations);
-EventStream<Void> doneUpdating = EventStreams.valuesOf(beingUpdatedProperty()).filter(updating -> !updating).map(updating -> null);
+EventStream<Void> doneUpdating = beingUpdatedProperty().offs();
 EventStream<Void> repaintImpulse = EventStreams.emit(needsRepaint).on(doneUpdating);
 repaintImpulse.subscribe(i -> repaint());
 

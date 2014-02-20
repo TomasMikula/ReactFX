@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
-import reactfx.EventStreams.CombinedStream;
-
-class InterceptableEventStreamImpl<T> extends CombinedStream<T> implements InterceptableEventStream<T> {
+class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements InterceptableEventStream<T> {
 
     private final EventStream<T> input;
     private EventConsumer<T> consumer;

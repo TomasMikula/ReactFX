@@ -212,7 +212,7 @@ public class EventStreams {
     }
 
     public static EventStream<Void> invalidationsOf(Observable observable) {
-        return new CombinedStream<Void>() {
+        return new LazilyBoundStream<Void>() {
             @Override
             protected Subscription subscribeToInputs() {
                 InvalidationListener listener = obs -> emit(null);
@@ -223,7 +223,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<T> valuesOf(ObservableValue<T> observable) {
-        return new CombinedStream<T>() {
+        return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> emit(val);
@@ -234,7 +234,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<Change<T>> changesOf(ObservableValue<T> observable) {
-        return new CombinedStream<Change<T>>() {
+        return new LazilyBoundStream<Change<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> emit(new Change<>(old, val));
@@ -245,7 +245,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<ListChangeListener.Change<? extends T>> changesOf(ObservableList<T> list) {
-        return new CombinedStream<ListChangeListener.Change<? extends T>>() {
+        return new LazilyBoundStream<ListChangeListener.Change<? extends T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ListChangeListener<T> listener = c -> emit(c);
@@ -256,7 +256,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<SetChangeListener.Change<? extends T>> changesOf(ObservableSet<T> set) {
-        return new CombinedStream<SetChangeListener.Change<? extends T>>() {
+        return new LazilyBoundStream<SetChangeListener.Change<? extends T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 SetChangeListener<T> listener = c -> emit(c);
@@ -267,7 +267,7 @@ public class EventStreams {
     }
 
     public static <K, V> EventStream<MapChangeListener.Change<? extends K, ? extends V>> changesOf(ObservableMap<K, V> map) {
-        return new CombinedStream<MapChangeListener.Change<? extends K, ? extends V>>() {
+        return new LazilyBoundStream<MapChangeListener.Change<? extends K, ? extends V>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 MapChangeListener<K, V> listener = c -> emit(c);
@@ -278,7 +278,7 @@ public class EventStreams {
     }
 
     public static <T extends Event> EventStream<T> eventsOf(Node node, EventType<T> eventType) {
-        return new CombinedStream<T>() {
+        return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 EventHandler<T> handler = event -> emit(event);
@@ -289,7 +289,7 @@ public class EventStreams {
     }
 
     static <T> EventStream<T> filter(EventStream<? extends T> input, Predicate<T> predicate) {
-        return new CombinedStream<T>() {
+        return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return input.subscribe(value -> {
@@ -302,7 +302,7 @@ public class EventStreams {
     }
 
     static <T, U> EventStream<U> map(EventStream<T> input, Function<T, U> f) {
-        return new CombinedStream<U>() {
+        return new LazilyBoundStream<U>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return input.subscribe(value -> {
@@ -314,7 +314,7 @@ public class EventStreams {
 
     @SafeVarargs
     public static <T> EventStream<T> merge(EventStream<? extends T>... inputs) {
-        return new CombinedStream<T>() {
+        return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 Subscription[] subs = new Subscription[inputs.length];
@@ -379,7 +379,7 @@ public class EventStreams {
     }
 
     static <A, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<I> impulse, Combinator2<A, I, R> combinator) {
-        return new CombinedStream<R>() {
+        return new LazilyBoundStream<R>() {
             Pocket<A> pocketA = new OverwritingPocket<A>();
 
             @Override
@@ -494,7 +494,7 @@ public class EventStreams {
     }
 
     static <T> EventStream<T> emitOnImpulse(EventStream<T> input, EventStream<?> impulse) {
-        return new CombinedStream<T>() {
+        return new LazilyBoundStream<T>() {
             private boolean hasValue = false;
             private T value = null;
 
@@ -531,24 +531,7 @@ public class EventStreams {
     }
 
 
-    static abstract class CombinedStream<T> extends EventStreamBase<T> {
-        private Subscription subscription = null;
-
-        protected abstract Subscription subscribeToInputs();
-
-        @Override
-        protected final void firstSubscriber() {
-            subscription = subscribeToInputs();
-        }
-
-        @Override
-        protected final void noSubscribers() {
-            subscription.unsubscribe();
-            subscription = null;
-        }
-    }
-
-    private static abstract class ZippedStream<T> extends CombinedStream<T> {
+    private static abstract class ZippedStream<T> extends LazilyBoundStream<T> {
 
         class Pocket<A> extends ExclusivePocket<A> {
             @Override
@@ -560,7 +543,7 @@ public class EventStreams {
         abstract void tryEmit();
     }
 
-    private static abstract class CombineLatestStream<T> extends CombinedStream<T> {
+    private static abstract class CombineLatestStream<T> extends LazilyBoundStream<T> {
 
         class Pocket<A> extends OverwritingPocket<A> {
             @Override
@@ -572,7 +555,7 @@ public class EventStreams {
         abstract void tryEmit();
     }
 
-    private static abstract class Combine2OnImpulseStream<A, B, I, R> extends CombinedStream<R> {
+    private static abstract class Combine2OnImpulseStream<A, B, I, R> extends LazilyBoundStream<R> {
         private final EventStream<A> srcA;
         private final EventStream<B> srcB;
         private final EventStream<I> impulse;
@@ -602,7 +585,7 @@ public class EventStreams {
         protected abstract R combine(I impulse);
     }
 
-    private static abstract class Combine3OnImpulseStream<A, B, C, I, R> extends CombinedStream<R> {
+    private static abstract class Combine3OnImpulseStream<A, B, C, I, R> extends LazilyBoundStream<R> {
         private final EventStream<A> srcA;
         private final EventStream<B> srcB;
         private final EventStream<C> srcC;

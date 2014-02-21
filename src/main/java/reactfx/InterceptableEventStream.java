@@ -9,8 +9,24 @@ public interface InterceptableEventStream<T> extends EventStream<T> {
     Hold mute();
     Hold pause();
     Hold retainLatest();
-    Hold fuse(BinaryOperator<T> fusor);
-    Hold fuse(BiFunction<T, T, FusionResult<T>> fusor);
+    Hold reduce(BinaryOperator<T> reduction);
+    Hold tryReduce(BiFunction<T, T, ReductionResult<T>> reduction);
+
+    /**
+     * @deprecated Use {@link #reduce(BinaryOperator)} instead.
+     */
+    @Deprecated
+    default Hold fuse(BinaryOperator<T> fusor) {
+        return reduce(fusor);
+    }
+
+    /**
+     * @deprecated Use {@link #tryReduce(BiFunction)} instead.
+     */
+    @Deprecated
+    default Hold fuse(BiFunction<T, T, ReductionResult<T>> fusor) {
+        return tryReduce(fusor);
+    }
 
     default void muteWhile(Runnable r) {
         try(Hold h = mute()) { r.run(); }
@@ -36,19 +52,51 @@ public interface InterceptableEventStream<T> extends EventStream<T> {
         try(Hold h = retainLatest()) { return f.get(); }
     }
 
+    default void reduceWhile(BinaryOperator<T> reduction, Runnable r) {
+        try(Hold h = reduce(reduction)) { r.run(); }
+    }
+
+    default <U> U reduceWhile(BinaryOperator<T> reduction, Supplier<U> f) {
+        try(Hold h = reduce(reduction)) { return f.get(); }
+    }
+
+    default void tryReduceWhile(BiFunction<T, T, ReductionResult<T>> reduction, Runnable r) {
+        try(Hold h = tryReduce(reduction)) { r.run(); }
+    }
+
+    default <U> U tryReduceWhile(BiFunction<T, T, ReductionResult<T>> reduction, Supplier<U> f) {
+        try(Hold h = tryReduce(reduction)) { return f.get(); }
+    }
+
+    /**
+     * @deprecated use {@link #reduceWhile(BinaryOperator, Runnable)} instead.
+     */
+    @Deprecated
     default void fuseWhile(BinaryOperator<T> fusor, Runnable r) {
-        try(Hold h = fuse(fusor)) { r.run(); }
+        reduceWhile(fusor, r);
     }
 
+    /**
+     * @deprecated use {@link #reduceWhile(BinaryOperator, Supplier)} instead.
+     */
+    @Deprecated
     default <U> U fuseWhile(BinaryOperator<T> fusor, Supplier<U> f) {
-        try(Hold h = fuse(fusor)) { return f.get(); }
+        return reduceWhile(fusor, f);
     }
 
-    default void fuseWhile(BiFunction<T, T, FusionResult<T>> fusor, Runnable r) {
-        try(Hold h = fuse(fusor)) { r.run(); }
+    /**
+     * @deprecated use {@link #tryReduceWhile(BiFunction, Runnable)} instead.
+     */
+    @Deprecated
+    default void fuseWhile(BiFunction<T, T, ReductionResult<T>> fusor, Runnable r) {
+        tryReduceWhile(fusor, r);
     }
 
-    default <U> U fuseWhile(BiFunction<T, T, FusionResult<T>> fusor, Supplier<U> f) {
-        try(Hold h = fuse(fusor)) { return f.get(); }
+    /**
+     * @deprecated use {@link #tryReduceWhile(BiFunction, Supplier)} instead.
+     */
+    @Deprecated
+    default <U> U fuseWhile(BiFunction<T, T, ReductionResult<T>> fusor, Supplier<U> f) {
+        return tryReduceWhile(fusor, f);
     }
 }

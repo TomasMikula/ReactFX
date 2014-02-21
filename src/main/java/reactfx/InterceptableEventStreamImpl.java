@@ -54,7 +54,7 @@ class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements In
     }
 
     @Override
-    public Hold fuse(BinaryOperator<T> fusor) {
+    public Hold reduce(BinaryOperator<T> fusor) {
         switch(consumer.getType()) {
             case MUTE: return Hold.EMPTY_HOLD;
             default: return stack(new FusionConsumer<T>(consumer, fusor));
@@ -62,7 +62,7 @@ class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements In
     }
 
     @Override
-    public Hold fuse(BiFunction<T, T, FusionResult<T>> fusor) {
+    public Hold tryReduce(BiFunction<T, T, ReductionResult<T>> fusor) {
         switch(consumer.getType()) {
         case MUTE: return Hold.EMPTY_HOLD;
         default: return stack(new OptionalFusionConsumer<T>(consumer, fusor));
@@ -208,10 +208,10 @@ class FusionConsumer<T> extends StackedConsumer<T> {
 }
 
 class OptionalFusionConsumer<T> extends StackedConsumer<T> {
-    private final BiFunction<T, T, FusionResult<T>> fusor;
+    private final BiFunction<T, T, ReductionResult<T>> fusor;
     private final List<T> buffer = new ArrayList<>();
 
-    public OptionalFusionConsumer(EventConsumer<T> previous, BiFunction<T, T, FusionResult<T>> fusor) {
+    public OptionalFusionConsumer(EventConsumer<T> previous, BiFunction<T, T, ReductionResult<T>> fusor) {
         super(previous);
         this.fusor = fusor;
     }
@@ -223,10 +223,10 @@ class OptionalFusionConsumer<T> extends StackedConsumer<T> {
         } else {
             int lastIndex = buffer.size() - 1;
             T lastEvent = buffer.get(lastIndex);
-            FusionResult<T> res = fusor.apply(lastEvent, event);
+            ReductionResult<T> res = fusor.apply(lastEvent, event);
             if(res.isAnnihilated()) {
                 buffer.remove(lastIndex);
-            } else if(res.isFused()) {
+            } else if(res.isReduced()) {
                 buffer.set(lastIndex, res.get());
             } else {
                 assert res.isFailed();

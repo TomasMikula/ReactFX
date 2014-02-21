@@ -2,25 +2,25 @@ package reactfx;
 
 import java.util.NoSuchElementException;
 
-public abstract class FusionResult<T> {
+public abstract class ReductionResult<T> {
 
-    private static final FusionResult<?> ANNIHILATED = new FusionResult<Void>() {
-        @Override public boolean isFused() { return false; }
+    private static final ReductionResult<?> ANNIHILATED = new ReductionResult<Void>() {
+        @Override public boolean isReduced() { return false; }
         @Override public boolean isAnnihilated() { return true; }
         @Override public boolean isFailed() { return false; }
         @Override public Void get() { throw new NoSuchElementException(); }
     };
 
-    private static final FusionResult<?> FAILED = new FusionResult<Void>() {
-        @Override public boolean isFused() { return false; }
+    private static final ReductionResult<?> FAILED = new ReductionResult<Void>() {
+        @Override public boolean isReduced() { return false; }
         @Override public boolean isAnnihilated() { return false; }
         @Override public boolean isFailed() { return true; }
         @Override public Void get() { throw new NoSuchElementException(); }
     };
 
-    public static <T> FusionResult<T> fused(T result) {
-        return new FusionResult<T>() {
-            @Override public boolean isFused() { return true; }
+    public static <T> ReductionResult<T> reduced(T result) {
+        return new ReductionResult<T>() {
+            @Override public boolean isReduced() { return true; }
             @Override public boolean isAnnihilated() { return false; }
             @Override public boolean isFailed() { return false; }
             @Override public T get() { return result; }
@@ -28,19 +28,19 @@ public abstract class FusionResult<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> FusionResult<T> annihilated() {
-        return (FusionResult<T>) ANNIHILATED;
+    public static <T> ReductionResult<T> annihilated() {
+        return (ReductionResult<T>) ANNIHILATED;
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> FusionResult<T> failed() {
-        return (FusionResult<T>) FAILED;
+    public static <T> ReductionResult<T> failed() {
+        return (ReductionResult<T>) FAILED;
     }
 
     // Private constructor to prevent subclassing.
-    private FusionResult() {}
+    private ReductionResult() {}
 
-    public abstract boolean isFused();
+    public abstract boolean isReduced();
     public abstract boolean isAnnihilated();
     public abstract boolean isFailed();
     public abstract T get();

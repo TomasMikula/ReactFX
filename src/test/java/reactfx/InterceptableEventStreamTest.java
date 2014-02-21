@@ -23,13 +23,13 @@ public class InterceptableEventStreamTest {
         stream.pauseWhile(() -> {
             src.push(3);
             src.push(4);
-            stream.fuseWhile((Integer a, Integer b) -> {
+            stream.tryReduceWhile((Integer a, Integer b) -> {
                 if(a + b == 0) {
-                    return FusionResult.annihilated();
+                    return ReductionResult.annihilated();
                 } else if(a + b <= 20) {
-                    return FusionResult.fused(a + b);
+                    return ReductionResult.reduced(a + b);
                 } else {
-                    return FusionResult.failed();
+                    return ReductionResult.failed();
                 }
             }, () -> {
                 src.push(5);
@@ -44,7 +44,7 @@ public class InterceptableEventStreamTest {
                     src.push(-10);
                 });
                 src.push(4);
-                stream.fuseWhile((Integer a, Integer b) -> a + b, () -> {
+                stream.reduceWhile((Integer a, Integer b) -> a + b, () -> {
                     src.push(1);
                     src.push(2);
                     src.push(3);

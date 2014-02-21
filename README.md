@@ -242,12 +242,12 @@ iStream.retainLatestWhile(() -> {
 ```
 
 
-### fuse
+### reduce
 
-While intercepted, keep _fusing_ (accumulating) the events together. One fused event is emitted when the interception ends.
+While intercepted, keep _reducing_ (accumulating) the events together. The result of reduction is emitted when the interception ends.
 
 ```java
-iStream.fuseWhile((a, b) -> a + b, () -> {
+iStream.reduceWhile((a, b) -> a + b, () -> {
     src.push(6);
     src.push(7);
     src.push(8);
@@ -256,25 +256,25 @@ iStream.fuseWhile((a, b) -> a + b, () -> {
 // now "21" gets printed
 ```
 
-Note that `fuseWhile((a, b) -> b, runnable)` is equivalent to `retainLatestWhile(runnable)`.
+Note that `reduceWhile((a, b) -> b, runnable)` is equivalent to `retainLatestWhile(runnable)`.
 
 
-### try fuse
+### tryReduce
 
-Sometimes fusion is not defined for every pair of events. Sometimes two events _annihilate_ (cancel each other out). This type of interception tries to fuse or annihilate events when possible, and retains both events for later emmision when not possible. In the following example, two integers fuse (here add up) if their sum is less than 20 and annihilate if their sum is 0.
+Sometimes reduction is not defined for every pair of events. Sometimes two events _annihilate_ (cancel each other out). This type of interception tries to reduce or annihilate the events when possible, and retains both events for later emmision when not possible. In the following example, two integers reduce (here add up) if their sum is less than 20 and annihilate if their sum is 0.
 
 ```java
-BiFunction<Integer, Integer, FusionResult<Integer>> fusor = (a, b) -> {
+BiFunction<Integer, Integer, ReductionResult<Integer>> reduction = (a, b) -> {
     if(a + b == 0) {
-        return FusionResult.annihilated();
+        return ReductionResult.annihilated();
     } else if(a + b < 20) {
-        return FusionResult.fused(a + b);
+        return ReductionResult.reduced(a + b);
     } else {
-        return FusionResult.failed();
+        return ReductionResult.failed();
     }
 };
 
-iStream.fuseWhile(fusor, () -> {
+iStream.tryReduceWhile(reduction, () -> {
     src.push(9);
     src.push(10);
     src.push(11);
@@ -286,7 +286,7 @@ iStream.fuseWhile(fusor, () -> {
 // now "19" and "12" get printed
 ```
 
-Note that `fuseWhile((a, b) -> FusionResult.failed(), runnable)` is equivalent to `pauseWhile(runnable)`.
+Note that `tryReduceWhile((a, b) -> ReductionResult.failed(), runnable)` is equivalent to `pauseWhile(runnable)`.
 
 
 InhiBeans

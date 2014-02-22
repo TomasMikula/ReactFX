@@ -39,6 +39,10 @@ public interface EventStream<T> {
         return EventStreams.map(this, f);
     }
 
+    default EventStream<T> emitOn(EventStream<?> impulse) {
+        return EventStreams.emit(this).on(impulse);
+    }
+
     default InterceptableEventStream<T> interceptable() {
         return EventStreams.interceptable(this);
     }

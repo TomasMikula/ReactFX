@@ -140,12 +140,12 @@ EventStream<Double> areas = EventStreams.combine(widths, heights).on(impulse).by
 The `areas` stream emits every time `impulse` emits, but only after both `widths` and `heights` had emitted at least once.
 
 
-### emit-on
+### emitOn
 
 ```java
 EventStream<T> input = ...;
 EventStream<?> impulse = ...;
-EventStream stream = EventStreams.emit(input).on(impulse);
+EventStream stream = input.emitOn(impulse);
 ```
 
 When `impulse` emits any value, `stream` emits the latest value emitted from `input`. If `input` did not emit any value between two emits from `impulse`, `stream` does not emit anything after the second impulse in a row.

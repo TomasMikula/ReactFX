@@ -151,6 +151,27 @@ EventStream stream = input.emitOn(impulse);
 When `impulse` emits any value, `stream` emits the latest value emitted from `input`. If `input` did not emit any value between two emits from `impulse`, `stream` does not emit anything after the second impulse in a row.
 
 
+### reduceContemporary
+
+Accumulates events emitted in close temporal succession into one.
+
+```java
+EventSource<Integer> source = new EventSource<>();
+EventStream<Integer> accum = source.reduceContemporary((a, b) -> a + b, Duration.ofMillis(200));
+
+source.push(1);
+source.push(2);
+// wait 150ms
+source.push(3);
+// wait 150ms
+source.push(4);
+// wait 250ms
+source.push(5);
+// wait 250ms
+```
+In the above example, an event that is emitted no later than 200ms after the previous one is accumulated (added) to the previous one. `accum` emits these values: 10, 5.
+
+
 Laziness of composite streams
 -----------------------------
 

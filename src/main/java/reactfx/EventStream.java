@@ -35,6 +35,17 @@ public interface EventStream<T> {
         return EventStreams.filter(this, predicate);
     }
 
+    /**
+     * Filters this event stream by the runtime type of the values.
+     * {@code filter(SomeClass.class)} is equivalent to
+     * {@code filter(x -> x instanceof SomeClass).map(x -> (SomeClass) x)}.
+     * @param subtype
+     * @return
+     */
+    default <U extends T> EventStream<U> filter(Class<U> subtype) {
+        return filter(subtype::isInstance).map(subtype::cast);
+    }
+
     default <U> EventStream<U> map(Function<T, U> f) {
         return EventStreams.map(this, f);
     }

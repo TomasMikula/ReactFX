@@ -43,11 +43,22 @@ public interface EventStream<T> {
      * @return
      */
     default <U extends T> EventStream<U> filter(Class<U> subtype) {
-        return filter(subtype::isInstance).map(subtype::cast);
+        return filterMap(subtype::isInstance, subtype::cast);
     }
 
     default <U> EventStream<U> map(Function<T, U> f) {
         return EventStreams.map(this, f);
+    }
+
+    /**
+     * A more efficient equivalent to
+     * {@code filter(predicate).map(f)}.
+     * @param predicate
+     * @param f
+     * @return
+     */
+    default <U> EventStream<U> filterMap(Predicate<T> predicate, Function<T, U> f) {
+        return EventStreams.filterMap(this, predicate, f);
     }
 
     default EventStream<T> emitOn(EventStream<?> impulse) {

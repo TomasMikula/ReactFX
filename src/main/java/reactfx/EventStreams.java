@@ -312,6 +312,19 @@ public class EventStreams {
         };
     }
 
+    static <T, U> EventStream<U> filterMap(EventStream<T> input, Predicate<T> predicate, Function<T, U> f) {
+        return new LazilyBoundStream<U>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return input.subscribe(value -> {
+                    if(predicate.test(value)) {
+                        emit(f.apply(value));
+                    }
+                });
+            }
+        };
+    }
+
     @SafeVarargs
     public static <T> EventStream<T> merge(EventStream<? extends T>... inputs) {
         return new LazilyBoundStream<T>() {

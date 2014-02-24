@@ -78,11 +78,11 @@ public class Indicator implements ObservableBooleanValue {
     }
 
     public EventStream<Void> ons() {
-        return EventStreams.valuesOf(this).filter(on -> on).map(on -> null);
+        return EventStreams.valuesOf(this).filterMap(on -> on, on -> null);
     }
 
     public EventStream<Void> offs() {
-        return EventStreams.valuesOf(this).filter(on -> !on).map(on -> null);
+        return EventStreams.valuesOf(this).filterMap(on -> !on, on -> null);
     }
 
     private void release() {

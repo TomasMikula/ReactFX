@@ -248,4 +248,51 @@ public interface EventStream<T> {
                 scheduler,
                 eventThreadExecutor);
     }
+
+    /**
+     * Transfers events from one thread to another.
+     * Any event stream can only be accessed from a single thread.
+     * This method allows to transfer events from one thread to another.
+     * Any event emitted by this EventStream will be emitted by the returned
+     * stream on a different thread.
+     * @param sourceThreadExecutor executor that executes tasks on the thread
+     * from which this EventStream is accessed.
+     * @param targetThreadExecutor executor that executes tasks on the thread
+     * from which the returned EventStream will be accessed.
+     * @return Event stream that emits the same events as this EventStream,
+     * but uses {@code targetThreadExecutor} to emit the events.
+     */
+    default EventStream<T> threadBridge(
+            Executor sourceThreadExecutor,
+            Executor targetThreadExecutor) {
+        return new ThreadBridge<T>(this, sourceThreadExecutor, targetThreadExecutor);
+    }
+
+    /**
+     * Transfers events from the JavaFX application thread to another thread.
+     * Equivalent to
+     * {@code threadBridge(Platform::runLater, targetThreadExecutor)}.
+     * @param targetThreadExecutor executor that executes tasks on the thread
+     * from which the returned EventStream will be accessed.
+     * @return Event stream that emits the same events as this EventStream,
+     * but uses {@code targetThreadExecutor} to emit the events.
+     * @see #threadBridge(Executor, Executor)
+     */
+    default EventStream<T> threadBridgeFromFx(Executor targetThreadExecutor) {
+        return threadBridge(Platform::runLater, targetThreadExecutor);
+    }
+
+    /**
+     * Transfers events to the JavaFX application thread.
+     * Equivalent to
+     * {@code threadBridge(sourceThreadExecutor, Platform::runLater)}.
+     * @param sourceThreadExecutor executor that executes tasks on the thread
+     * from which this EventStream is accessed.
+     * @return Event stream that emits the same events as this EventStream,
+     * but emits them on the JavaFX application thread.
+     * @see #threadBridge(Executor, Executor)
+     */
+    default EventStream<T> threadBridgeToFx(Executor sourceThreadExecutor) {
+        return threadBridge(sourceThreadExecutor, Platform::runLater);
+    }
 }

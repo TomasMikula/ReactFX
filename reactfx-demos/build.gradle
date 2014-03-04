@@ -1,0 +1,21 @@
+dependencies {
+    compile project(":reactfx")
+}
+
+task fatJar(type: Jar, dependsOn: classes) {
+    appendix = 'fat'
+    from sourceSets.main.output
+    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+assemble.dependsOn fatJar
+
+task AndGateDemo(type: JavaExec, dependsOn: classes) {
+    main = 'reactfx.inhibeans.demo.AndGateDemo'
+    classpath = files(sourceSets.main.output, configurations.runtime)
+}
+
+task FibTest(type: JavaExec, dependsOn: classes) {
+    main = 'reactfx.inhibeans.demo.FibTest'
+    classpath = files(sourceSets.main.output, configurations.runtime)
+}

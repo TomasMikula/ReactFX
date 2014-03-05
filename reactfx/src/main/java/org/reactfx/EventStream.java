@@ -1,0 +1,298 @@
+package org.reactfx;
+
+import java.time.Duration;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import javafx.application.Platform;
+
+/**
+ * Stream of values (events).
+ *
+ * It is an analog of rxJava's {@code Observable}, but "Observable"
+ * already has a different meaning in JavaFX.
+ *
+ * @param <T> type of values this source emits.
+ */
+public interface EventStream<T> {
+
+    /**
+     * Get notified every time this stream emits a value.
+     * @param consumer function to call on the emitted value.
+     * @return subscription that can be used to stop observing
+     * this event stream.
+     */
+    Subscription subscribe(Consumer<T> consumer);
+
+    default EventStream<T> filter(Predicate<T> predicate) {
+        return EventStreams.filter(this, predicate);
+    }
+
+    /**
+     * Filters this event stream by the runtime type of the values.
+     * {@code filter(SomeClass.class)} is equivalent to
+     * {@code filter(x -> x instanceof SomeClass).map(x -> (SomeClass) x)}.
+     * @param subtype
+     * @return
+     */
+    default <U extends T> EventStream<U> filter(Class<U> subtype) {
+        return filterMap(subtype::isInstance, subtype::cast);
+    }
+
+    default <U> EventStream<U> map(Function<T, U> f) {
+        return EventStreams.map(this, f);
+    }
+
+    /**
+     * A more efficient equivalent to
+     * {@code filter(predicate).map(f)}.
+     * @param predicate
+     * @param f
+     * @return
+     */
+    default <U> EventStream<U> filterMap(Predicate<T> predicate, Function<T, U> f) {
+        return EventStreams.filterMap(this, predicate, f);
+    }
+
+    default EventStream<T> emitOn(EventStream<?> impulse) {
+        return EventStreams.emit(this).on(impulse);
+    }
+
+    default InterceptableEventStream<T> interceptable() {
+        return EventStreams.interceptable(this);
+    }
+
+    default StreamBoundValue<T> toObservableValue(T initialValue) {
+        return EventStreams.toObservableValue(this, initialValue);
+    }
+
+    /**
+     * Returns an event stream that accumulates temporally close events
+     * from this event stream. After an event is emitted from this stream,
+     * the returned stream waits for up to {@code timeout} for the next
+     * event from this stream. If the next event arrives within timeout,
+     * it is accumulated to the current event by the {@code reduction}
+     * function and the timeout is reset. When the timeout expires, the
+     * accumulated event is emitted from the returned stream.
+     *
+     * <p><b>Note:</b> This function can be used only when this stream and
+     * the returned stream are used from the JavaFX application thread. If
+     * you are using the event streams on a different thread, use
+     * {@link #reduceContemporary(BinaryOperator, Duration, ScheduledExecutorService, Executor)}
+     * instead.</p>
+     *
+     * @param reduction function to reduce two events into one.
+     * @param timeout the maximum time difference between two subsequent
+     * events that can still be accumulated.
+     */
+    default EventStream<T> reduceContemporary(
+            BinaryOperator<T> reduction,
+            Duration timeout) {
+
+        return reduceContemporary(t -> t, reduction, timeout);
+    }
+
+    /**
+     * A convenient method that can be used when it is more convenient to
+     * supply an identity of the type {@code U} than to transform an event
+     * of type {@code T} to an event of type {@code U}.
+     * This method is equivalent to
+     * {@code reduceContemporary(t -> reduction.apply(identitySupplier.get(), t), reduction, timeout)}.
+     *
+     * <p><b>Note:</b> This function can be used only when this stream and
+     * the returned stream are used from the JavaFX application thread. If
+     * you are using the event streams on a different thread, use
+     * {@link #reduceContemporary(Supplier, BiFunction, Duration, ScheduledExecutorService, Executor)}
+     * instead.</p>
+     *
+     * @param identitySupplier function that provides an identity
+     * (i.e. initial value for accumulation) of type {@code U}
+     * @param reduction
+     * @param timeout
+     *
+     * @see #reduceContemporary(Function, BiFunction, Duration)
+     */
+    default <U> EventStream<U> reduceContemporary(
+            Supplier<U> identitySupplier,
+            BiFunction<U, T, U> reduction,
+            Duration timeout) {
+
+        return reduceContemporary(
+                t -> reduction.apply(identitySupplier.get(), t),
+                reduction,
+                timeout);
+    }
+
+    /**
+     * A more general version of
+     * {@link #reduceContemporary(BinaryOperator, Duration)}
+     * that allows the accumulated event to be of different type.
+     *
+     * <p><b>Note:</b> This function can be used only when this stream and
+     * the returned stream are used from the JavaFX application thread. If
+     * you are using the event streams on a different thread, use
+     * {@link #reduceContemporary(Function, BiFunction, Duration, ScheduledExecutorService, Executor)}
+     * instead.</p>
+     *
+     * @param firstEventTransformation function to transform a single event
+     * from this stream to an event that can be emitted from the returned
+     * stream.
+     * @param reduction
+     * @param timeout
+     * @param <U> type of events emitted from the returned stream.
+     */
+    default <U> EventStream<U> reduceContemporary(
+            Function<T, U> firstEventTransformation,
+            BiFunction<U, T, U> reduction,
+            Duration timeout) {
+
+        if(!Platform.isFxApplicationThread()) {
+            throw new IllegalStateException("Not on FX application thread");
+        }
+
+        javafx.util.Duration fxTimeout = javafx.util.Duration.millis(timeout.toMillis());
+        return new FxContemporaryReducingStream<T, U>(
+                this,
+                firstEventTransformation,
+                reduction,
+                fxTimeout);
+    }
+
+    /**
+     * An analog to {@link #reduceContemporary(BinaryOperator, Duration)}
+     * to use out of JavaFX application thread.
+     *
+     * @param reduction
+     * @param timeout
+     * @param scheduler used to schedule timeout expiration
+     * @param eventThreadExecutor executor that executes actions on the
+     * thread on which this stream's events are emitted. The returned stream
+     * will use this executor to emit events.
+     * @return
+     */
+    default EventStream<T> reduceContemporary(
+            BinaryOperator<T> reduction,
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return reduceContemporary(
+                t -> t,
+                reduction,
+                timeout,
+                scheduler,
+                eventThreadExecutor);
+    }
+
+    /**
+     * An analog to {@link #reduceContemporary(Supplier, BiFunction, Duration)}
+     * to use out of JavaFX application thread.
+     *
+     * @param identitySupplier
+     * @param reduction
+     * @param timeout
+     * @param scheduler
+     * @param eventThreadExecutor executor that executes actions on the
+     * thread on which this stream's events are emitted. The returned stream
+     * will use this executor to emit events.
+     * @return
+     */
+    default <U> EventStream<U> reduceContemporary(
+            Supplier<U> identitySupplier,
+            BiFunction<U, T, U> reduction,
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return reduceContemporary(
+                t -> reduction.apply(identitySupplier.get(), t),
+                reduction,
+                timeout,
+                scheduler,
+                eventThreadExecutor);
+    }
+
+    /**
+     * An analog to {@link #reduceContemporary(Function, BiFunction, Duration)}
+     * to use out of JavaFX application thread.
+     *
+     * @param firstEventTransformation
+     * @param reduction
+     * @param timeout
+     * @param scheduler
+     * @param eventThreadExecutor executor that executes actions on the
+     * thread on which this stream's events are emitted. The returned stream
+     * will use this executor to emit events.
+     * @return
+     */
+    default <U> EventStream<U> reduceContemporary(
+            Function<T, U> firstEventTransformation,
+            BiFunction<U, T, U> reduction,
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return new SchedulerContemporaryReducingStream<T, U>(
+                this,
+                firstEventTransformation,
+                reduction,
+                timeout.toNanos(),
+                TimeUnit.NANOSECONDS,
+                scheduler,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Transfers events from one thread to another.
+     * Any event stream can only be accessed from a single thread.
+     * This method allows to transfer events from one thread to another.
+     * Any event emitted by this EventStream will be emitted by the returned
+     * stream on a different thread.
+     * @param sourceThreadExecutor executor that executes tasks on the thread
+     * from which this EventStream is accessed.
+     * @param targetThreadExecutor executor that executes tasks on the thread
+     * from which the returned EventStream will be accessed.
+     * @return Event stream that emits the same events as this EventStream,
+     * but uses {@code targetThreadExecutor} to emit the events.
+     */
+    default EventStream<T> threadBridge(
+            Executor sourceThreadExecutor,
+            Executor targetThreadExecutor) {
+        return new ThreadBridge<T>(this, sourceThreadExecutor, targetThreadExecutor);
+    }
+
+    /**
+     * Transfers events from the JavaFX application thread to another thread.
+     * Equivalent to
+     * {@code threadBridge(Platform::runLater, targetThreadExecutor)}.
+     * @param targetThreadExecutor executor that executes tasks on the thread
+     * from which the returned EventStream will be accessed.
+     * @return Event stream that emits the same events as this EventStream,
+     * but uses {@code targetThreadExecutor} to emit the events.
+     * @see #threadBridge(Executor, Executor)
+     */
+    default EventStream<T> threadBridgeFromFx(Executor targetThreadExecutor) {
+        return threadBridge(Platform::runLater, targetThreadExecutor);
+    }
+
+    /**
+     * Transfers events to the JavaFX application thread.
+     * Equivalent to
+     * {@code threadBridge(sourceThreadExecutor, Platform::runLater)}.
+     * @param sourceThreadExecutor executor that executes tasks on the thread
+     * from which this EventStream is accessed.
+     * @return Event stream that emits the same events as this EventStream,
+     * but emits them on the JavaFX application thread.
+     * @see #threadBridge(Executor, Executor)
+     */
+    default EventStream<T> threadBridgeToFx(Executor sourceThreadExecutor) {
+        return threadBridge(sourceThreadExecutor, Platform::runLater);
+    }
+}

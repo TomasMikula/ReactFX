@@ -11,11 +11,11 @@ task fatJar(type: Jar, dependsOn: classes) {
 assemble.dependsOn fatJar
 
 task AndGateDemo(type: JavaExec, dependsOn: classes) {
-    main = 'reactfx.inhibeans.demo.AndGateDemo'
+    main = 'org.reactfx.inhibeans.demo.AndGateDemo'
     classpath = files(sourceSets.main.output, configurations.runtime)
 }
 
 task FibTest(type: JavaExec, dependsOn: classes) {
-    main = 'reactfx.inhibeans.demo.FibTest'
+    main = 'org.reactfx.inhibeans.demo.FibTest'
     classpath = files(sourceSets.main.output, configurations.runtime)
 }

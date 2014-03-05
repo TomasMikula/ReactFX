@@ -1,3 +1,6 @@
+:boom: **NEW:** ReactFX snapshots are now deployed to the Sonatype repository. [See below.](#use-reactfx-in-your-project)  
+:boom: **IMPORTANT:** Starting from the snapshot releases, package `reactfx` was renamed to `org.reactfx`. You will have to update your dependent source code.
+
 ReactFX
 =======
 
@@ -379,10 +382,48 @@ rect.beingUpdatedProperty().onWhile(() -> {
 ```
 
 
+Use ReactFX in your project
+---------------------------
+
+### Method 1: as a managed dependency
+
+Snapshot releases are deployed to Sonatype snapshot repository with these Maven coordinates
+
+| Group ID    | Artifact ID | Version        |
+| :---------: | :---------: | :------------: |
+| org.reactfx | reactfx     | 1.0.0-SNAPSHOT |
+
+#### Gradle example
+
+```groovy
+repositories {
+    maven {
+        url 'https://oss.sonatype.org/content/repositories/snapshots/' 
+    }
+}
+
+dependencies {
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.0-SNAPSHOT'
+}
+```
+
+#### Sbt example
+
+```scala
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+
+libraryDependencies += "org.reactfx" % "reactfx" % "1.0.0-SNAPSHOT"
+```
+
+
+### Method 2: as an unmanaged dependency
+
+[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.0.0-SNAPSHOT/) the latest JAR file and place it on your classpath.
+
+
 Links
 -----
 
-[Download](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/downloads/)  
 [Javadoc](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/javadoc/index.html)  
 
 

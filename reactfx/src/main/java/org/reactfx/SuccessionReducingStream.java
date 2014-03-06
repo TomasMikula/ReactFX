@@ -3,7 +3,7 @@ package org.reactfx;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-class ContemporaryReducingStream<I, O> extends LazilyBoundStream<O> {
+class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
     private final EventStream<I> input;
     private final Function<I, O> initial;
     private final BiFunction<O, I, O> reduction;
@@ -13,7 +13,7 @@ class ContemporaryReducingStream<I, O> extends LazilyBoundStream<O> {
     private boolean hasEvent = false;
     private O event = null;
 
-    public ContemporaryReducingStream(
+    public SuccessionReducingStream(
             EventStream<I> input,
             Function<I, O> initial,
             BiFunction<O, I, O> reduction,

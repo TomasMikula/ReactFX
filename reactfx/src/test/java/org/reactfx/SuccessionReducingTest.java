@@ -20,7 +20,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-public class ReduceContemporaryTest {
+public class SuccessionReducingTest {
     private ScheduledExecutorService scheduler;
 
     @Before
@@ -42,11 +42,11 @@ public class ReduceContemporaryTest {
         Platform.runLater(() -> {
             EventSource<Integer> source = new EventSource<>();
 
-            EventStream<Integer> reducing1 = source.reduceContemporary((a,  b) -> a + b, Duration.ofMillis(200));
+            EventStream<Integer> reducing1 = source.reduceCloseSuccessions((a,  b) -> a + b, Duration.ofMillis(200));
             List<Integer> emitted1 = new ArrayList<>();
             reducing1.subscribe(i -> emitted1.add(i));
 
-            EventStream<Integer> reducing2 = source.reduceContemporary(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200));
+            EventStream<Integer> reducing2 = source.reduceCloseSuccessions(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200));
             List<Integer> emitted2 = new ArrayList<>();
             reducing2.subscribe(i -> emitted2.add(i));
 
@@ -75,11 +75,11 @@ public class ReduceContemporaryTest {
         executor.execute(() -> {
             EventSource<Integer> source = new EventSource<>();
 
-            EventStream<Integer> reducing1 = source.reduceContemporary((a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
+            EventStream<Integer> reducing1 = source.reduceCloseSuccessions((a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
             List<Integer> emitted1 = new ArrayList<>();
             reducing1.subscribe(i -> emitted1.add(i));
 
-            EventStream<Integer> reducing2 = source.reduceContemporary(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
+            EventStream<Integer> reducing2 = source.reduceCloseSuccessions(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
             List<Integer> emitted2 = new ArrayList<>();
             reducing2.subscribe(i -> emitted2.add(i));
 

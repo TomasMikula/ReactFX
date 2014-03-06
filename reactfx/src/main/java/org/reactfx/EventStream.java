@@ -3,7 +3,6 @@ package org.reactfx;
 import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -157,12 +156,12 @@ public interface EventStream<T> {
             throw new IllegalStateException("Not on FX application thread");
         }
 
-        javafx.util.Duration fxTimeout = javafx.util.Duration.millis(timeout.toMillis());
-        return new FxContemporaryReducingStream<T, U>(
+        Timer timer = new TimelineTimer(timeout);
+        return new ContemporaryReducingStream<T, U>(
                 this,
                 firstEventTransformation,
                 reduction,
-                fxTimeout);
+                timer);
     }
 
     /**
@@ -239,14 +238,13 @@ public interface EventStream<T> {
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {
 
-        return new SchedulerContemporaryReducingStream<T, U>(
+        Timer timer = new ScheduledExecutorServiceTimer(
+                timeout, scheduler, eventThreadExecutor);
+        return new ContemporaryReducingStream<T, U>(
                 this,
                 firstEventTransformation,
                 reduction,
-                timeout.toNanos(),
-                TimeUnit.NANOSECONDS,
-                scheduler,
-                eventThreadExecutor);
+                timer);
     }
 
     /**

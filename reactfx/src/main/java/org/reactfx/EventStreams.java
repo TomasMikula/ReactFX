@@ -520,9 +520,10 @@ public class EventStreams {
 
                 Subscription s2 = impulse.subscribe(i -> {
                     if(hasValue) {
-                        emit(value);
+                        T val = value;
                         hasValue = false;
                         value = null;
+                        emit(val);
                     }
                 });
 

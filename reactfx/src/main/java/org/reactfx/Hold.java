@@ -9,4 +9,12 @@ public interface Hold extends AutoCloseable {
      */
     @Override
     void close();
+
+    static Hold multi(Hold... holds) {
+        return () -> {
+            for(Hold h: holds) {
+                h.close();
+            }
+        };
+    }
 }

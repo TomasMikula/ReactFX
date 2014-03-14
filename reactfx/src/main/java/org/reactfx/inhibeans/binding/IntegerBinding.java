@@ -1,10 +1,10 @@
 package org.reactfx.inhibeans.binding;
 
-import org.reactfx.Hold;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableNumberValue;
+import javafx.beans.value.ObservableValue;
+
+import org.reactfx.Hold;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -15,12 +15,12 @@ public abstract class IntegerBinding
 extends javafx.beans.binding.IntegerBinding
 implements Binding<Number> {
 
-    public static IntegerBinding wrap(ObservableNumberValue source) {
+    public static IntegerBinding wrap(ObservableValue<? extends Number> source) {
         return new IntegerBinding() {
             { bind(source); }
 
             @Override
-            protected int computeValue() { return source.intValue(); }
+            protected int computeValue() { return source.getValue().intValue(); }
         };
     }
 

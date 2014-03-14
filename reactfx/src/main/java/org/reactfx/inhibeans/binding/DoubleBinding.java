@@ -1,10 +1,10 @@
 package org.reactfx.inhibeans.binding;
 
-import org.reactfx.Hold;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableNumberValue;
+import javafx.beans.value.ObservableValue;
+
+import org.reactfx.Hold;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -15,12 +15,12 @@ public abstract class DoubleBinding
 extends javafx.beans.binding.DoubleBinding
 implements Binding<Number> {
 
-    public static DoubleBinding wrap(ObservableNumberValue source) {
+    public static DoubleBinding wrap(ObservableValue<? extends Number> source) {
         return new DoubleBinding() {
             { bind(source); }
 
             @Override
-            protected double computeValue() { return source.doubleValue(); }
+            protected double computeValue() { return source.getValue().doubleValue(); }
         };
     }
 

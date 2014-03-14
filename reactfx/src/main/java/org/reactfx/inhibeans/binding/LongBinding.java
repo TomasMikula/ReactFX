@@ -1,10 +1,10 @@
 package org.reactfx.inhibeans.binding;
 
-import org.reactfx.Hold;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableNumberValue;
+import javafx.beans.value.ObservableValue;
+
+import org.reactfx.Hold;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -15,12 +15,12 @@ public abstract class LongBinding
 extends javafx.beans.binding.LongBinding
 implements Binding<Number> {
 
-    public static LongBinding wrap(ObservableNumberValue source) {
+    public static LongBinding wrap(ObservableValue<? extends Number> source) {
         return new LongBinding() {
             { bind(source); }
 
             @Override
-            protected long computeValue() { return source.longValue(); }
+            protected long computeValue() { return source.getValue().longValue(); }
         };
     }
 

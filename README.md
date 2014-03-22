@@ -424,7 +424,7 @@ libraryDependencies += "org.reactfx" % "reactfx" % "1.0.0-SNAPSHOT"
 Links
 -----
 
-[Javadoc](https://googledrive.com/host/0B4a5AnNnZhkbX0d4QUZXenRUaVE/javadoc/index.html)  
+[API Documentation (Javadoc)](http://www.reactfx.org/javadoc/overview-summary.html)  
 
 
 License

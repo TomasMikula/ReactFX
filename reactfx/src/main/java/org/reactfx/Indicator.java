@@ -67,6 +67,10 @@ public class Indicator implements ObservableBooleanValue {
         return on;
     }
 
+    public boolean isOff() {
+        return !on;
+    }
+
     @Override
     public boolean get() {
         return on;

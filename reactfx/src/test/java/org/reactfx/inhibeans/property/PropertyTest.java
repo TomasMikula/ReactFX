@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 import javafx.beans.value.ObservableValue;
 
 import org.junit.Test;
-import org.reactfx.Hold;
+import org.reactfx.Guard;
 
 public class PropertyTest {
 
@@ -19,10 +19,10 @@ public class PropertyTest {
         source.setValue(false);
         assertEquals(2, counter.getAndReset());
 
-        Hold b = tested.block();
+        Guard g = tested.block();
         source.setValue(true);
         source.setValue(false);
-        b.close();
+        g.close();
         assertEquals(1, counter.get());
     }
 

@@ -12,7 +12,7 @@ public class IndicatorTest {
         Indicator indicator = new Indicator();
         CountingListener counter = new CountingListener(indicator);
 
-        Hold h = indicator.on();
+        Guard g = indicator.on();
 
         assertEquals(1, counter.get());
 
@@ -20,7 +20,7 @@ public class IndicatorTest {
 
         assertEquals(1, counter.get());
 
-        h.close();
+        g.close();
 
         assertEquals(2, counter.get());
     }

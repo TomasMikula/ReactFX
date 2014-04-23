@@ -6,11 +6,11 @@ import java.util.function.Supplier;
 
 public interface InterceptableEventStream<T> extends EventStream<T> {
 
-    Hold mute();
-    Hold pause();
-    Hold retainLatest();
-    Hold reduce(BinaryOperator<T> reduction);
-    Hold tryReduce(BiFunction<T, T, ReductionResult<T>> reduction);
+    Guard mute();
+    Guard pause();
+    Guard retainLatest();
+    Guard reduce(BinaryOperator<T> reduction);
+    Guard tryReduce(BiFunction<T, T, ReductionResult<T>> reduction);
 
     /**
      * @deprecated Use {@link #reduce(BinaryOperator)} instead.
@@ -29,43 +29,43 @@ public interface InterceptableEventStream<T> extends EventStream<T> {
     }
 
     default void muteWhile(Runnable r) {
-        try(Hold h = mute()) { r.run(); }
+        try(Guard g = mute()) { r.run(); }
     };
 
     default <U> U muteWhile(Supplier<U> f) {
-        try(Hold h = mute()) { return f.get(); }
+        try(Guard g = mute()) { return f.get(); }
     }
 
     default void pauseWhile(Runnable r) {
-        try(Hold h = pause()) { r.run(); }
+        try(Guard g = pause()) { r.run(); }
     }
 
     default <U> U pauseWhile(Supplier<U> f) {
-        try(Hold h = pause()) { return f.get(); }
+        try(Guard g = pause()) { return f.get(); }
     }
 
     default void retainLatestWhile(Runnable r) {
-        try(Hold h = retainLatest()) { r.run(); }
+        try(Guard g = retainLatest()) { r.run(); }
     }
 
     default <U> U retainLatestWhile(Supplier<U> f) {
-        try(Hold h = retainLatest()) { return f.get(); }
+        try(Guard g = retainLatest()) { return f.get(); }
     }
 
     default void reduceWhile(BinaryOperator<T> reduction, Runnable r) {
-        try(Hold h = reduce(reduction)) { r.run(); }
+        try(Guard g = reduce(reduction)) { r.run(); }
     }
 
     default <U> U reduceWhile(BinaryOperator<T> reduction, Supplier<U> f) {
-        try(Hold h = reduce(reduction)) { return f.get(); }
+        try(Guard g = reduce(reduction)) { return f.get(); }
     }
 
     default void tryReduceWhile(BiFunction<T, T, ReductionResult<T>> reduction, Runnable r) {
-        try(Hold h = tryReduce(reduction)) { r.run(); }
+        try(Guard g = tryReduce(reduction)) { r.run(); }
     }
 
     default <U> U tryReduceWhile(BiFunction<T, T, ReductionResult<T>> reduction, Supplier<U> f) {
-        try(Hold h = tryReduce(reduction)) { return f.get(); }
+        try(Guard g = tryReduce(reduction)) { return f.get(); }
     }
 
     /**

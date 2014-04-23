@@ -2,23 +2,23 @@ package org.reactfx.inhibeans;
 
 import java.util.function.Supplier;
 
-import org.reactfx.Hold;
+import org.reactfx.Guard;
 
 public interface Observable extends javafx.beans.Observable {
 
     /**
      * Prevents invalidation and change events from being emitted,
-     * until the returned block is released.
+     * until the returned guard is released.
      *
-     * @return a {@code Block} instance that can be released to resume
+     * @return a {@code Guard} instance that can be released to resume
      * the delivery of invalidation and change events. If this observable
-     * has been invalidated one or more times before the block is released,
+     * has been invalidated one or more times before the guard is released,
      * a single notification is passed to invalidation and change listeners
      * of this observable.
-     * The returned {@code Block} is {@code AutoCloseable}, which makes it
-     * convenient to use it in try-with-resources.
+     * The returned {@code Guard} is {@code AutoCloseable}, which makes it
+     * convenient to use in try-with-resources.
      */
-    Hold block();
+    Guard block();
 
     /**
      * Runs the given computation, making sure the invalidation and change
@@ -26,13 +26,13 @@ public interface Observable extends javafx.beans.Observable {
      *
      * <p>Equivalent to
      * <pre>
-     * try(Hold h = block()) {
+     * try(Guard g = block()) {
      *     r.run();
      * }
      * </pre>
      */
     default void blockWhile(Runnable r) {
-        try(Hold b = block()) {
+        try(Guard g = block()) {
             r.run();
         }
     }
@@ -49,13 +49,13 @@ public interface Observable extends javafx.beans.Observable {
      *
      * <pre>
      * T t;
-     * try(Hold h = block()) {
+     * try(Guard g = block()) {
      *     t = f.get();
      * }
      * </pre>
      */
     default <T> T blockWhile(Supplier<T> f) {
-        try(Hold b = block()) {
+        try(Guard g = block()) {
             return f.get();
         }
     }

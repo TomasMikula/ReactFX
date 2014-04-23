@@ -1,6 +1,6 @@
 package org.reactfx.inhibeans.value;
 
-import org.reactfx.Hold;
+import org.reactfx.Guard;
 
 public abstract class ObservableValueBase<T>
 extends javafx.beans.value.ObservableValueBase<T>
@@ -10,9 +10,9 @@ implements ObservableValue<T> {
     private boolean fireOnRelease = false;
 
     @Override
-    public Hold block() {
+    public Guard block() {
         if(blocked) {
-            return Hold.EMPTY_HOLD;
+            return Guard.EMPTY_GUARD;
         } else {
             blocked = true;
             return this::release;

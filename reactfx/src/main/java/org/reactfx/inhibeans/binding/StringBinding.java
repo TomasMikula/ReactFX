@@ -1,10 +1,10 @@
 package org.reactfx.inhibeans.binding;
 
-import org.reactfx.Hold;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableStringValue;
+
+import org.reactfx.Guard;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
@@ -29,9 +29,9 @@ implements Binding<String> {
     private boolean fireOnRelease = false;
 
     @Override
-    public Hold block() {
+    public Guard block() {
         if(blocked) {
-            return Hold.EMPTY_HOLD;
+            return Guard.EMPTY_GUARD;
         } else {
             blocked = true;
             return this::release;

@@ -1,6 +1,6 @@
 package org.reactfx.inhibeans.property;
 
-import org.reactfx.Hold;
+import org.reactfx.Guard;
 
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleObjectProperty}.
@@ -13,9 +13,9 @@ implements Property<T> {
     private boolean fireOnRelease = false;
 
     @Override
-    public Hold block() {
+    public Guard block() {
         if(blocked) {
-            return Hold.EMPTY_HOLD;
+            return Guard.EMPTY_GUARD;
         } else {
             blocked = true;
             return this::release;

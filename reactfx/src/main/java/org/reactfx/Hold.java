@@ -1,5 +1,9 @@
 package org.reactfx;
 
+/**
+ * @deprecated Use {@link Guard} instead.
+ */
+@Deprecated
 public interface Hold extends AutoCloseable {
 
     static Hold EMPTY_HOLD = () -> {};

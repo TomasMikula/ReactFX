@@ -27,49 +27,49 @@ class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements In
     }
 
     @Override
-    public Hold mute() {
+    public Guard mute() {
         switch(consumer.getType()) {
-            case MUTE: return Hold.EMPTY_HOLD; // second mute would have no effect
+            case MUTE: return Guard.EMPTY_GUARD; // second mute would have no effect
             default: return stack(new MutedConsumer<T>(consumer));
         }
     }
 
     @Override
-    public Hold pause() {
+    public Guard pause() {
         switch(consumer.getType()) {
             case NORMAL: return stack(new PausedConsumer<T>(consumer));
-            default: return Hold.EMPTY_HOLD; // pausing has no effect if another interception is already in effect
+            default: return Guard.EMPTY_GUARD; // pausing has no effect if another interception is already in effect
         }
     }
 
     @Override
-    public Hold retainLatest() {
+    public Guard retainLatest() {
         switch(consumer.getType()) {
             case MUTE: // retaining anything is pointless if it is going to be muted anyway
             case RETAIN_LATEST: // second retainLatest would have no effect
-                return Hold.EMPTY_HOLD;
+                return Guard.EMPTY_GUARD;
             default:
                 return stack(new RetainLatestConsumer<T>(consumer));
         }
     }
 
     @Override
-    public Hold reduce(BinaryOperator<T> fusor) {
+    public Guard reduce(BinaryOperator<T> fusor) {
         switch(consumer.getType()) {
-            case MUTE: return Hold.EMPTY_HOLD;
+            case MUTE: return Guard.EMPTY_GUARD;
             default: return stack(new FusionConsumer<T>(consumer, fusor));
         }
     }
 
     @Override
-    public Hold tryReduce(BiFunction<T, T, ReductionResult<T>> fusor) {
+    public Guard tryReduce(BiFunction<T, T, ReductionResult<T>> fusor) {
         switch(consumer.getType()) {
-        case MUTE: return Hold.EMPTY_HOLD;
+        case MUTE: return Guard.EMPTY_GUARD;
         default: return stack(new OptionalFusionConsumer<T>(consumer, fusor));
     }
     }
 
-    private Hold stack(StackedConsumer<T> newConsumer) {
+    private Guard stack(StackedConsumer<T> newConsumer) {
         consumer = newConsumer;
         return () -> unstack(newConsumer);
     }

@@ -69,9 +69,9 @@ public class InterceptableEventStreamTest {
     public void testInteceptionReleaseOrder() {
         EventSource<Integer> src = new EventSource<>();
         InterceptableEventStream<Integer> stream = src.interceptable();
-        Hold h1 = stream.pause();
-        Hold h2 = stream.retainLatest();
-        h1.close();
-        h2.close();
+        Guard g1 = stream.pause();
+        Guard g2 = stream.retainLatest();
+        g1.close();
+        g2.close();
     }
 }

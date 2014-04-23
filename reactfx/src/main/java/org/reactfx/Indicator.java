@@ -14,9 +14,9 @@ public class Indicator implements ObservableBooleanValue {
 
     private boolean on = false;
 
-    public Hold on() {
+    public Guard on() {
         if(on) {
-            return Hold.EMPTY_HOLD;
+            return Guard.EMPTY_GUARD;
         } else {
             set(true);
             return this::release;
@@ -29,13 +29,13 @@ public class Indicator implements ObservableBooleanValue {
      *
      * <p>Equivalent to
      * <pre>
-     * try(Hold h = on()) {
+     * try(Guard g = on()) {
      *     r.run();
      * }
      * </pre>
      */
     public void onWhile(Runnable r) {
-        try(Hold h = on()) {
+        try(Guard g = on()) {
             r.run();
         }
     }
@@ -52,13 +52,13 @@ public class Indicator implements ObservableBooleanValue {
      *
      * <pre>
      * T t;
-     * try(Hold h = on()) {
+     * try(Guard g = on()) {
      *     t = f.get();
      * }
      * </pre>
      */
     public <T> T onWhile(Supplier<T> f) {
-        try(Hold h = on()) {
+        try(Guard g = on()) {
             return f.get();
         }
     }

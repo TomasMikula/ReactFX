@@ -6,7 +6,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableBooleanValue;
 
-import org.reactfx.Hold;
+import org.reactfx.Guard;
 import org.reactfx.inhibeans.binding.BooleanBinding;
 
 public class AndGateDemo {
@@ -63,10 +63,10 @@ public class AndGateDemo {
 
         @Override
         public void setInputs(boolean a, boolean b) {
-            Hold hold = output.block();
+            Guard guard = output.block();
             this.a.set(a);
             this.b.set(b);
-            hold.close();
+            guard.close();
         }
 
         @Override public ObservableBooleanValue a() { return a; }

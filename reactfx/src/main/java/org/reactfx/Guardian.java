@@ -6,6 +6,7 @@ import java.util.function.Supplier;
 /**
  * Interface for objects usable to guard execution (in some sense).
  */
+@FunctionalInterface
 public interface Guardian {
     Guard guard();
 

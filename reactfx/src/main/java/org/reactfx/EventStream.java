@@ -281,4 +281,16 @@ public interface EventStream<T> {
     default EventStream<T> threadBridgeToFx(Executor sourceThreadExecutor) {
         return threadBridge(sourceThreadExecutor, Platform::runLater);
     }
+
+    /**
+     * Returns a clone of this event stream guarded by the given guardians.
+     * The returned event stream emits the same events as this event stream.
+     * In addition to that, the emission of each event is guarded by the given
+     * guardians: before the emission, guards are acquired in the given order;
+     * after the emission, previously acquired guards are released in reverse
+     * order.
+     */
+    default EventStream<T> guardedBy(Guardian... guardians) {
+        return new GuardedStream<>(this, guardians);
+    }
 }

@@ -1,5 +1,6 @@
 package org.reactfx;
 
+
 @FunctionalInterface
 public interface Guard extends Hold {
 
@@ -20,10 +21,44 @@ public interface Guard extends Hold {
      * @return
      */
     static Guard multi(Guard... guards) {
-        return () -> {
-            for(int i = guards.length - 1; i >= 0; --i) {
-                guards[i].close();
-            }
-        };
+        switch(guards.length) {
+            case 0: return EMPTY_GUARD;
+            case 1: return guards[0];
+            case 2: return new BiGuard(guards[0], guards[1]);
+            default: return new MultiGuard(guards);
+        }
+    }
+}
+
+class BiGuard implements Guard {
+    private final Guard g1;
+    private final Guard g2;
+
+    public BiGuard(Guard g1, Guard g2) {
+        this.g1 = g1;
+        this.g2 = g2;
+    }
+
+    @Override
+    public void close() {
+        // close in reverse order
+        g2.close();
+        g1.close();
+    }
+}
+
+class MultiGuard implements Guard {
+    private final Guard[] guards;
+
+    public MultiGuard(Guard... guards) {
+        this.guards = guards;
+    }
+
+    @Override
+    public void close() {
+        // close in reverse order
+        for(int i = guards.length - 1; i >= 0; --i) {
+            guards[i].close();
+        }
     }
 }

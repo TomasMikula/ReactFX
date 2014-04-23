@@ -7,13 +7,18 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 
 
-public class Indicator implements ObservableBooleanValue {
+public class Indicator implements ObservableBooleanValue, Guardian {
 
     private ListHelper<InvalidationListener> iListeners;
     private ListHelper<ChangeListener<? super Boolean>> cListeners;
 
     private boolean on = false;
 
+    /**
+     * Turns this indicator on.
+     * @return a Guard that, when closed, resets this indicator to the
+     * original state.
+     */
     public Guard on() {
         if(on) {
             return Guard.EMPTY_GUARD;
@@ -21,6 +26,14 @@ public class Indicator implements ObservableBooleanValue {
             set(true);
             return this::release;
         }
+    }
+
+    /**
+     * Equivalent to {@link #on()}.
+     */
+    @Override
+    public Guard guard() {
+        return on();
     }
 
     /**

@@ -3,8 +3,9 @@ package org.reactfx.inhibeans;
 import java.util.function.Supplier;
 
 import org.reactfx.Guard;
+import org.reactfx.Guardian;
 
-public interface Observable extends javafx.beans.Observable {
+public interface Observable extends javafx.beans.Observable, Guardian {
 
     /**
      * Prevents invalidation and change events from being emitted,
@@ -19,6 +20,14 @@ public interface Observable extends javafx.beans.Observable {
      * convenient to use in try-with-resources.
      */
     Guard block();
+
+    /**
+     * Equivalent to {@link #block()}.
+     */
+    @Override
+    default Guard guard() {
+        return block();
+    }
 
     /**
      * Runs the given computation, making sure the invalidation and change

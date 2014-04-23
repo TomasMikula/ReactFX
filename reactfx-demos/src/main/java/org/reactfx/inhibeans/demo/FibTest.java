@@ -4,7 +4,7 @@ import javafx.beans.binding.NumberExpression;
 import javafx.beans.property.LongProperty;
 import javafx.beans.property.SimpleLongProperty;
 
-import org.reactfx.Hold;
+import org.reactfx.Guard;
 
 public class FibTest {
 
@@ -55,9 +55,9 @@ public class FibTest {
         double eagerTime = (t2-t1)/1000.0;
 
         t1 = System.currentTimeMillis();
-        Hold b = lazyResult.block();
+        Guard g = lazyResult.block();
         lazyTest.run();
-        b.close();
+        g.close();
         t2 = System.currentTimeMillis();
         double lazyTime = (t2-t1)/1000.0;
 

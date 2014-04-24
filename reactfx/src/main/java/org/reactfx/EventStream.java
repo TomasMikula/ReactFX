@@ -1,6 +1,7 @@
 package org.reactfx;
 
 import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiFunction;
@@ -11,6 +12,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 
 /**
  * Stream of values (events).
@@ -292,5 +294,108 @@ public interface EventStream<T> {
      */
     default EventStream<T> guardedBy(Guardian... guardians) {
         return new GuardedStream<>(this, guardians);
+    }
+
+    /**
+     * Returns a new event stream that emits values emitted from this stream
+     * asynchronously mapped by the given function. In other words, for every
+     * value emitted from this stream, the returned stream starts asynchronous
+     * computation by invoking {@code f} on the emitted value. Once the
+     * asynchronous computation completes, its result is emitted from the
+     * returned stream on the JavaFX application thread.
+     *
+     * <p>Note that due to asynchrony events may be emitted from by the returned
+     * stream in different order than from this stream.
+     *
+     * <p>If the asynchronous computation started by {@code f} fails, the error
+     * is silently ignored and nothing is emitted from the returned stream. If
+     * your computation can fail, you should handle the error in {@code f}.
+     */
+    default <U> EventStream<U> mapAsync(
+            Function<T, CompletionStage<U>> f) {
+        return mapAsync(f, Platform::runLater);
+    }
+
+    default <U> EventStream<U> mapAsync(
+            Function<T, CompletionStage<U>> f,
+            Executor clientThreadExecutor) {
+        return new AsyncMap<>(this, f, clientThreadExecutor);
+    }
+
+    /**
+     * Similar to {@link #mapAsync(Function)} with one difference: for events
+     * <i>a</i> and <i>b</i> emitted from this stream in this order, if <i>b</i>
+     * arrives before the asynchronous transformation of <i>a</i> is completed,
+     * then <i>a</i> (and the result of its transformation) is discarded (not
+     * emitted from the returned stream).
+     * @see #mapAsync(Function)
+     */
+    default <U> EventStream<U> mapAsyncSkipOutdated(
+            Function<T, CompletionStage<U>> f) {
+        return mapAsyncSkipOutdated(f, Platform::runLater);
+    }
+
+    default <U> EventStream<U> mapAsyncSkipOutdated(
+            Function<T, CompletionStage<U>> f,
+            Executor clientThreadExecutor) {
+        return new LatestOnlyAsyncMap<>(this, f, clientThreadExecutor);
+    }
+
+    /**
+     * Similar to {@link #mapAsyncSkipOutdated(Function)} with one addition:
+     * the result of the asynchronous transformation currently in progress, if
+     * any, is discarded (i.e. not emitted from the returned stream) on every
+     * event emitted from {@code canceller} (in addition to every event emitted
+     * from this stream).
+     */
+    default <U> EventStream<U> mapAsyncSkipOutdated(
+            Function<T, CompletionStage<U>> f,
+            EventStream<?> canceller) {
+        return mapAsyncSkipOutdated(f, canceller, Platform::runLater);
+    }
+
+    default <U> EventStream<U> mapAsyncSkipOutdated(
+            Function<T, CompletionStage<U>> f,
+            EventStream<?> canceller,
+            Executor clientThreadExecutor) {
+        return new CancellableLatestOnlyAsyncMap<>(
+                this, f, canceller, clientThreadExecutor);
+    }
+
+    /**
+     * Analog to {@link #mapAsync(Function)} for {@link Task}-based asynchronous
+     * computation.
+     * <p>Note that {@code f} must return tasks that have already been submitted
+     * for execution.
+     * @see #mapAsync(Function)
+     */
+    default <U> EventStream<U> mapInBackground(
+            Function<T, Task<U>> f) {
+        return new BackgroundMap<>(this, f);
+    }
+
+    /**
+     * Analog to {@link #mapAsyncSkipOutdated(Function)} for {@link Task}-based
+     * asynchronous computation.
+     * <p>Note that {@code f} must return tasks that have already been submitted
+     * for execution.
+     * @see #mapAsyncSkipOutdated(Function)
+     */
+    default <U> EventStream<U> mapInBackgroundSkipOutdated(
+            Function<T, Task<U>> f) {
+        return new LatestOnlyBackgroundMap<>(this, f);
+    }
+
+    /**
+     * Analog to {@link #mapAsyncSkipOutdated(Function, EventStream)} for
+     * {@link Task}-based asynchronous computation.
+     * <p>Note that {@code f} must return tasks that have already been submitted
+     * for execution.
+     * @see #mapAsyncSkipOutdated(Function, EventStream)
+     */
+    default <U> EventStream<U> mapInBackgroundSkipOutdated(
+            Function<T, Task<U>> f,
+            EventStream<?> canceller) {
+        return new CancellableLatestOnlyBackgroundMap<>(this, f, canceller);
     }
 }

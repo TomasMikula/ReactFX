@@ -1,9 +1,5 @@
 package org.reactfx;
 
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -203,12 +199,7 @@ public class EventStreams {
      * Returns an event stream that never emits any value.
      */
     public static <T> EventStream<T> never() {
-        return new EventStream<T>() {
-            @Override
-            public Subscription subscribe(Consumer<T> consumer) {
-                return Subscription.EMPTY;
-            }
-        };
+        return consumer -> Subscription.EMPTY;
     }
 
     public static EventStream<Void> invalidationsOf(Observable observable) {
@@ -284,43 +275,6 @@ public class EventStreams {
                 EventHandler<T> handler = event -> emit(event);
                 node.addEventHandler(eventType, handler);
                 return () -> node.removeEventHandler(eventType, handler);
-            }
-        };
-    }
-
-    static <T> EventStream<T> filter(EventStream<? extends T> input, Predicate<T> predicate) {
-        return new LazilyBoundStream<T>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return input.subscribe(value -> {
-                    if(predicate.test(value)) {
-                        emit(value);
-                    }
-                });
-            }
-        };
-    }
-
-    static <T, U> EventStream<U> map(EventStream<T> input, Function<T, U> f) {
-        return new LazilyBoundStream<U>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return input.subscribe(value -> {
-                    emit(f.apply(value));
-                });
-            }
-        };
-    }
-
-    static <T, U> EventStream<U> filterMap(EventStream<T> input, Predicate<T> predicate, Function<T, U> f) {
-        return new LazilyBoundStream<U>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return input.subscribe(value -> {
-                    if(predicate.test(value)) {
-                        emit(f.apply(value));
-                    }
-                });
             }
         };
     }

@@ -33,7 +33,16 @@ public interface EventStream<T> {
     Subscription subscribe(Consumer<T> consumer);
 
     default EventStream<T> filter(Predicate<T> predicate) {
-        return EventStreams.filter(this, predicate);
+        return new LazilyBoundStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return EventStream.this.subscribe(value -> {
+                    if(predicate.test(value)) {
+                        emit(value);
+                    }
+                });
+            }
+        };
     }
 
     /**
@@ -48,7 +57,7 @@ public interface EventStream<T> {
     }
 
     default <U> EventStream<U> map(Function<T, U> f) {
-        return EventStreams.map(this, f);
+        return new MappedStream<>(this, f);
     }
 
     /**
@@ -59,7 +68,16 @@ public interface EventStream<T> {
      * @return
      */
     default <U> EventStream<U> filterMap(Predicate<T> predicate, Function<T, U> f) {
-        return EventStreams.filterMap(this, predicate, f);
+        return new LazilyBoundStream<U>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return EventStream.this.subscribe(value -> {
+                    if(predicate.test(value)) {
+                        emit(f.apply(value));
+                    }
+                });
+            }
+        };
     }
 
     default EventStream<T> emitOn(EventStream<?> impulse) {

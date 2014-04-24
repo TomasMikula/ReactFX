@@ -20,7 +20,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class AsyncMapTest {
+public class AwaitTest {
 
     private ExecutorService executor;
 
@@ -40,10 +40,10 @@ public class AsyncMapTest {
     }
 
     @Test
-    public void testMapAsync() throws InterruptedException, ExecutionException {
+    public void testAwaitCompletionStage() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapAsync(x -> async(x*x), executor);
+        EventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).await(executor);
         executor.execute(() -> {
             List<Integer> res = aggregate(mapped);
             src.push(1);
@@ -56,10 +56,10 @@ public class AsyncMapTest {
     }
 
     @Test
-    public void testMapInBackground() throws InterruptedException, ExecutionException {
+    public void testAwaitTask() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapInBackground(x -> background(x*x));
+        EventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).await();
         Platform.runLater(() -> {
             List<Integer> res = aggregate(mapped);
             src.push(1);
@@ -72,10 +72,10 @@ public class AsyncMapTest {
     }
 
     @Test
-    public void testMapAsyncSkipOutdated() throws InterruptedException, ExecutionException {
+    public void testAwaitLatestCompletionStage() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapAsyncSkipOutdated(x -> async(x*x), executor);
+        EventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(executor);
         executor.execute(() -> {
             List<Integer> res = aggregate(mapped);
             src.push(1);
@@ -90,10 +90,10 @@ public class AsyncMapTest {
     }
 
     @Test
-    public void testMapInBackgroundSkipOutdated() throws InterruptedException, ExecutionException {
+    public void testAwaitLatestTask() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapInBackgroundSkipOutdated(x -> background(x*x));
+        EventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest();
         executor.execute(() -> {
             List<Integer> res = aggregate(mapped);
             src.push(1);
@@ -108,11 +108,11 @@ public class AsyncMapTest {
     }
 
     @Test
-    public void testMapAsyncSkipOutdatedWithCanceller() throws InterruptedException, ExecutionException {
+    public void testAwaitLatestCompletionStageWithCanceller() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
         EventSource<Void> canceller = new EventSource<>();
-        EventStream<Integer> mapped = src.mapAsyncSkipOutdated(x -> async(x*x), canceller, executor);
+        EventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(canceller, executor);
         executor.execute(() -> {
             List<Integer> res = aggregate(mapped);
             src.push(1);
@@ -133,11 +133,11 @@ public class AsyncMapTest {
     }
 
     @Test
-    public void testMapInBackgroundSkipOutdatedWithCanceller() throws InterruptedException, ExecutionException {
+    public void testAwaitLatestTaskWithCanceller() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
         EventSource<Void> canceller = new EventSource<>();
-        EventStream<Integer> mapped = src.mapInBackgroundSkipOutdated(x -> background(x*x), canceller);
+        EventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest(canceller);
         Platform.runLater(() -> {
             List<Integer> res = aggregate(mapped);
             src.push(1);

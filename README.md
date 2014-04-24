@@ -1,6 +1,3 @@
-:boom: **NEW:** ReactFX snapshots are now deployed to the Sonatype repository. [See below.](#use-reactfx-in-your-project)  
-:boom: **IMPORTANT:** Starting from the snapshot releases, package `reactfx` was renamed to `org.reactfx`. You will have to update your dependent source code.
-
 ReactFX
 =======
 
@@ -385,13 +382,44 @@ rect.beingUpdatedProperty().onWhile(() -> {
 Use ReactFX in your project
 ---------------------------
 
-### Method 1: as a managed dependency
+### Stable release
 
-Snapshot releases are deployed to Sonatype snapshot repository with these Maven coordinates
+Current stable release is 1.0.0
+
+#### Maven coordinates
 
 | Group ID    | Artifact ID | Version        |
 | :---------: | :---------: | :------------: |
-| org.reactfx | reactfx     | 1.0.0-SNAPSHOT |
+| org.reactfx | reactfx     | 1.0.0          |
+
+#### Gradle example
+
+```groovy
+dependencies {
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.0'
+}
+```
+
+#### Sbt example
+
+```scala
+libraryDependencies += "org.reactfx" % "reactfx" % "1.0.0"
+```
+
+#### Manual download
+
+[Download](http://search.maven.org/#browse%7C-53076959) the JAR file and place it on your classpath.
+
+
+### Snapshot releases
+
+Snapshot releases are deployed to Sonatype snapshot repository.
+
+#### Maven coordinates
+
+| Group ID    | Artifact ID | Version        |
+| :---------: | :---------: | :------------: |
+| org.reactfx | reactfx     | 1.0.1-SNAPSHOT |
 
 #### Gradle example
 
@@ -403,7 +431,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.0-SNAPSHOT'
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.1-SNAPSHOT'
 }
 ```
 
@@ -412,13 +440,13 @@ dependencies {
 ```scala
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-libraryDependencies += "org.reactfx" % "reactfx" % "1.0.0-SNAPSHOT"
+libraryDependencies += "org.reactfx" % "reactfx" % "1.0.1-SNAPSHOT"
 ```
 
 
-### Method 2: as an unmanaged dependency
+#### Manual download
 
-[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.0.0-SNAPSHOT/) the latest JAR file and place it on your classpath.
+[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.0.1-SNAPSHOT/) the latest JAR file and place it on your classpath.
 
 
 Links

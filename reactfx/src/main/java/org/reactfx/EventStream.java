@@ -122,29 +122,40 @@ public interface EventStream<T> {
      * <p><b>Note:</b> This function can be used only when this stream and
      * the returned stream are used from the JavaFX application thread. If
      * you are using the event streams on a different thread, use
-     * {@link #reduceCloseSuccessions(BinaryOperator, Duration, ScheduledExecutorService, Executor)}
+     * {@link #reduceSuccessions(BinaryOperator, Duration, ScheduledExecutorService, Executor)}
      * instead.</p>
      *
      * @param reduction function to reduce two events into one.
      * @param timeout the maximum time difference between two subsequent
      * events that can still be accumulated.
      */
+    default EventStream<T> reduceSuccessions(
+            BinaryOperator<T> reduction,
+            Duration timeout) {
+
+        return reduceSuccessions(t -> t, reduction, timeout);
+    }
+
+    /**
+     * @deprecated renamed to {@link #reduceSuccessions(BinaryOperator, Duration)}
+     */
+    @Deprecated
     default EventStream<T> reduceCloseSuccessions(
             BinaryOperator<T> reduction,
             Duration timeout) {
 
-        return reduceCloseSuccessions(t -> t, reduction, timeout);
+        return reduceSuccessions(reduction, timeout);
     }
 
     /**
      * A more general version of
-     * {@link #reduceCloseSuccessions(BinaryOperator, Duration)}
+     * {@link #reduceSuccessions(BinaryOperator, Duration)}
      * that allows the accumulated event to be of different type.
      *
      * <p><b>Note:</b> This function can be used only when this stream and
      * the returned stream are used from the JavaFX application thread. If
      * you are using the event streams on a different thread, use
-     * {@link #reduceCloseSuccessions(Function, BiFunction, Duration, ScheduledExecutorService, Executor)}
+     * {@link #reduceSuccessions(Function, BiFunction, Duration, ScheduledExecutorService, Executor)}
      * instead.</p>
      *
      * @param initialTransformation function to transform a single event
@@ -154,7 +165,7 @@ public interface EventStream<T> {
      * @param timeout
      * @param <U> type of events emitted from the returned stream.
      */
-    default <U> EventStream<U> reduceCloseSuccessions(
+    default <U> EventStream<U> reduceSuccessions(
             Function<T, U> initialTransformation,
             BiFunction<U, T, U> reduction,
             Duration timeout) {
@@ -169,16 +180,28 @@ public interface EventStream<T> {
     }
 
     /**
+     * @deprecated renamed to {@link #reduceSuccessions(Function, BiFunction, Duration)}
+     */
+    @Deprecated
+    default <U> EventStream<U> reduceCloseSuccessions(
+            Function<T, U> initialTransformation,
+            BiFunction<U, T, U> reduction,
+            Duration timeout) {
+
+        return reduceSuccessions(initialTransformation, reduction, timeout);
+    }
+
+    /**
      * A convenient method that can be used when it is more convenient to
      * supply an identity of the type {@code U} than to transform an event
      * of type {@code T} to an event of type {@code U}.
      * This method is equivalent to
-     * {@code reduceCloseSuccessions(t -> reduction.apply(identitySupplier.get(), t), reduction, timeout)}.
+     * {@code reduceSuccessions(t -> reduction.apply(identitySupplier.get(), t), reduction, timeout)}.
      *
      * <p><b>Note:</b> This function can be used only when this stream and
      * the returned stream are used from the JavaFX application thread. If
      * you are using the event streams on a different thread, use
-     * {@link #reduceCloseSuccessions(Supplier, BiFunction, Duration, ScheduledExecutorService, Executor)}
+     * {@link #reduceSuccessions(Supplier, BiFunction, Duration, ScheduledExecutorService, Executor)}
      * instead.</p>
      *
      * @param unitSupplier function that provides a unit element
@@ -186,20 +209,32 @@ public interface EventStream<T> {
      * @param reduction
      * @param timeout
      *
-     * @see #reduceCloseSuccessions(Function, BiFunction, Duration)
+     * @see #reduceSuccessions(Function, BiFunction, Duration)
      */
-    default <U> EventStream<U> reduceCloseSuccessions(
+    default <U> EventStream<U> reduceSuccessions(
             Supplier<U> unitSupplier,
             BiFunction<U, T, U> reduction,
             Duration timeout) {
 
         Function<T, U> map = t -> reduction.apply(unitSupplier.get(), t);
-        return reduceCloseSuccessions(map, reduction, timeout);
+        return reduceSuccessions(map, reduction, timeout);
+    }
+
+    /**
+     * @deprecated renamed to {@link #reduceSuccessions(Supplier, BiFunction, Duration)}
+     */
+    @Deprecated
+    default <U> EventStream<U> reduceCloseSuccessions(
+            Supplier<U> unitSupplier,
+            BiFunction<U, T, U> reduction,
+            Duration timeout) {
+
+        return reduceSuccessions(unitSupplier, reduction, timeout);
     }
 
     /**
      * An analog to
-     * {@link #reduceCloseSuccessions(BinaryOperator, Duration)}
+     * {@link #reduceSuccessions(BinaryOperator, Duration)}
      * to use outside of JavaFX application thread.
      *
      * @param reduction
@@ -210,19 +245,33 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
+    default EventStream<T> reduceSuccessions(
+            BinaryOperator<T> reduction,
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return reduceSuccessions(
+                t -> t, reduction, timeout, scheduler, eventThreadExecutor);
+    }
+
+    /**
+     * @deprecated renamed to {@link #reduceSuccessions(BinaryOperator, Duration, ScheduledExecutorService, Executor)}
+     */
+    @Deprecated
     default EventStream<T> reduceCloseSuccessions(
             BinaryOperator<T> reduction,
             Duration timeout,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {
 
-        return reduceCloseSuccessions(
-                t -> t, reduction, timeout, scheduler, eventThreadExecutor);
+        return reduceSuccessions(
+                reduction, timeout, scheduler, eventThreadExecutor);
     }
 
     /**
      * An analog to
-     * {@link #reduceCloseSuccessions(Function, BiFunction, Duration)}
+     * {@link #reduceSuccessions(Function, BiFunction, Duration)}
      * to use outside of JavaFX application thread.
      *
      * @param initialTransformation
@@ -234,7 +283,7 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
-    default <U> EventStream<U> reduceCloseSuccessions(
+    default <U> EventStream<U> reduceSuccessions(
             Function<T, U> initialTransformation,
             BiFunction<U, T, U> reduction,
             Duration timeout,
@@ -248,8 +297,22 @@ public interface EventStream<T> {
     }
 
     /**
+     * @deprecated renamed to {@link #reduceSuccessions(Function, BiFunction, Duration, ScheduledExecutorService, Executor)}
+     */
+    @Deprecated
+    default <U> EventStream<U> reduceCloseSuccessions(
+            Function<T, U> initialTransformation,
+            BiFunction<U, T, U> reduction,
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return reduceSuccessions(initialTransformation, reduction, timeout, scheduler, eventThreadExecutor);
+    }
+
+    /**
      * An analog to
-     * {@link #reduceCloseSuccessions(Supplier, BiFunction, Duration)}
+     * {@link #reduceSuccessions(Supplier, BiFunction, Duration)}
      * to use outside of JavaFX application thread.
      *
      * @param unitSupplier
@@ -261,7 +324,7 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
-    default <U> EventStream<U> reduceCloseSuccessions(
+    default <U> EventStream<U> reduceSuccessions(
             Supplier<U> unitSupplier,
             BiFunction<U, T, U> reduction,
             Duration timeout,
@@ -269,8 +332,23 @@ public interface EventStream<T> {
             Executor eventThreadExecutor) {
 
         Function<T, U> map = t -> reduction.apply(unitSupplier.get(), t);
-        return reduceCloseSuccessions(
+        return reduceSuccessions(
                 map, reduction, timeout, scheduler, eventThreadExecutor);
+    }
+
+    /**
+     * @deprecated renamed to {@link #reduceSuccessions(Supplier, BiFunction, Duration, ScheduledExecutorService, Executor)}
+     */
+    @Deprecated
+    default <U> EventStream<U> reduceCloseSuccessions(
+            Supplier<U> unitSupplier,
+            BiFunction<U, T, U> reduction,
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return reduceSuccessions(
+                unitSupplier, reduction, timeout, scheduler, eventThreadExecutor);
     }
 
     /**

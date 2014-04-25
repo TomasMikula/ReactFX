@@ -151,13 +151,13 @@ EventStream stream = input.emitOn(impulse);
 When `impulse` emits any value, `stream` emits the latest value emitted from `input`. If `input` did not emit any value between two emits from `impulse`, `stream` does not emit anything after the second impulse in a row.
 
 
-### reduceCloseSuccessions
+### reduceSuccessions
 
 Accumulates events emitted in close temporal succession into one.
 
 ```java
 EventSource<Integer> source = new EventSource<>();
-EventStream<Integer> accum = source.reduceCloseSuccessions((a, b) -> a + b, Duration.ofMillis(200));
+EventStream<Integer> accum = source.reduceSuccessions((a, b) -> a + b, Duration.ofMillis(200));
 
 source.push(1);
 source.push(2);

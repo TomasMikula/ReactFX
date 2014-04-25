@@ -32,6 +32,10 @@ public interface EventStream<T> {
      */
     Subscription subscribe(Consumer<T> consumer);
 
+    /**
+     * Returns a new event stream that emits events emitted from this stream
+     * that satisfy the given predicate.
+     */
     default EventStream<T> filter(Predicate<T> predicate) {
         return new LazilyBoundStream<T>() {
             @Override
@@ -56,6 +60,36 @@ public interface EventStream<T> {
         return filterMap(subtype::isInstance, subtype::cast);
     }
 
+    /**
+     * Returns an event stream that emits a value obtained from the given
+     * supplier every time this event stream emits a value.
+     */
+    default <U> EventStream<U> supply(Supplier<U> f) {
+        return map(x -> f.get());
+    }
+
+    /**
+     * Similar to {@link #supply(Supplier)}, but the returned stream is a
+     * {@link CompletionStageStream}, which can be used to await the results
+     * of asynchronous computation.
+     */
+    default <U> CompletionStageStream<U> supplyCompletionStage(Supplier<CompletionStage<U>> f) {
+        return mapToCompletionStage(x -> f.get());
+    }
+
+    /**
+     * Similar to {@link #supply(Supplier)}, but the returned stream is a
+     * {@link CompletionStageStream}, which can be used to await the results
+     * of asynchronous computation.
+     */
+    default <U> TaskStream<U> supplyTask(Supplier<Task<U>> f) {
+        return mapToTask(x -> f.get());
+    }
+
+    /**
+     * Returns a new event stream that applies the given function to every
+     * value emitted from this stream and emits the result.
+     */
     default <U> EventStream<U> map(Function<T, U> f) {
         return new MappedStream<>(this, f);
     }

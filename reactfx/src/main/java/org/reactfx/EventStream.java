@@ -352,6 +352,47 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns an event stream that, when events are emitted from this stream
+     * in close temporal succession, emits only the last event of the
+     * succession. What is considered a <i>close temporal succession</i> is
+     * defined by {@code timeout}: time gap between two successive events must
+     * be at most {@code timeout}.
+     *
+     * <p>This method is a shortcut for
+     * {@code reduceSuccessions((a, b) -> b, timeout)}.</p>
+     *
+     * <p><b>Note:</b> This function can be used only when this stream and
+     * the returned stream are used from the JavaFX application thread. If
+     * you are using the event streams on a different thread, use
+     * {@link #successionEnds(Duration, ScheduledExecutorService, Executor)}
+     * instead.</p>
+     *
+     * @param timeout the maximum time difference between two subsequent events
+     * in a <i>close succession</i>.
+     */
+    default EventStream<T> successionEnds(Duration timeout) {
+        return reduceSuccessions((a, b) -> b, timeout);
+    }
+
+    /**
+     * An analog to {@link #successionEnds(Duration)} to use outside of JavaFX
+     * application thread.
+     * @param timeout
+     * @param scheduler
+     * @param eventThreadExecutor executor that executes actions on the
+     * thread on which this stream's events are emitted. The returned stream
+     * will use this executor to emit events.
+     * @return
+     */
+    default EventStream<T> successionEnds(
+            Duration timeout,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+
+        return reduceSuccessions((a, b) -> b, timeout, scheduler, eventThreadExecutor);
+    }
+
+    /**
      * Transfers events from one thread to another.
      * Any event stream can only be accessed from a single thread.
      * This method allows to transfer events from one thread to another.

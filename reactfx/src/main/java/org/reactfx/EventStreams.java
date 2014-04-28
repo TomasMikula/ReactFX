@@ -494,7 +494,8 @@ public class EventStreams {
         }
     }
 
-    public static <T> StreamBoundValue<T> toObservableValue(EventStream<T> input, T initialValue) {
+    @Deprecated
+    static <T> StreamBoundValue<T> toObservableValue(EventStream<T> input, T initialValue) {
         return new StreamBoundValueImpl<T>(input, initialValue);
     }
 
@@ -634,6 +635,7 @@ public class EventStreams {
         };
     }
 
+    @Deprecated
     private static class StreamBoundValueImpl<T> extends ObservableValueBase<T> implements StreamBoundValue<T> {
         private T value;
         private final Subscription subscription;

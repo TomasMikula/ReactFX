@@ -12,6 +12,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Binding;
 import javafx.concurrent.Task;
 
 /**
@@ -140,6 +141,22 @@ public interface EventStream<T> {
         return EventStreams.interceptable(this);
     }
 
+    /**
+     * Returns a binding that holds the most recent event emitted from this
+     * stream. The returned binding stays subscribed to this stream until its
+     * {@code dispose()} method is called.
+     * @param initialValue used as the returned binding's value until this
+     * stream emits the first value.
+     * @return binding reflecting the most recently emitted value.
+     */
+    default Binding<T> toBinding(T initialValue) {
+        return new StreamBinding<>(this, initialValue);
+    }
+
+    /**
+     * @deprecated use {@link #toBinding(Object)} instead.
+     */
+    @Deprecated
     default StreamBoundValue<T> toObservableValue(T initialValue) {
         return EventStreams.toObservableValue(this, initialValue);
     }

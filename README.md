@@ -182,26 +182,20 @@ All the adapters and combinators above subscribe _lazily_ to their inputs - they
 Notice the difference to composed bindings. Bindings have to keep listening to their inputs all the time, because you can ask for the binding's current value (`Binding.getValue()`) any time. There is no such thing as the current value (event) of an event stream. This fact allows to automatically disconnect from the inputs when there are no subscribers.
 
 
-Conversion to ObservableValue
------------------------------
+Conversion to Binding
+---------------------
 
-Every event stream can be converted to an `ObservableValue` that reflects the latest event emitted from the stream.
+Every event stream can be converted to a `Binding` that reflects the most recent event emitted from the stream.
 
 ```java
 EventStream<T> stream = ...;
 T initial = ...;
-ObservableValue<T> observable = stream.toObservableValue(initial);
+Binding<T> binding = stream.toBinding(initial);
 ```
 
-`initial` is used as the value of `observable` until `stream` emits the first value.
+`initial` is used as the value of `binding` until `stream` emits the first value.
 
-Note that in the code above, a subscription to `stream` is created, but we don't have a reference to it, so we are unable to stop the subscription when `observable` is no longer needed. In fact, `toObservableValue()` returns a `StreamBoundValue`, which is an `ObservableValue` and a `Subscription` at the same time. The proper way to unsubscribe from the stream when `observable` is no longer used would be:
-
-```java
-StreamBoundValue<T> observable = stream.toObservableValue(initial);
-// ...
-observable.unsubscribe();
-```
+`binding` maintains an active subscription to `stream` until its `dispose()` method is called.
 
 
 Interceptable streams

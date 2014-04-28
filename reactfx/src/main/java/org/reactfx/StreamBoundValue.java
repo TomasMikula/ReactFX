@@ -6,6 +6,7 @@ import javafx.beans.value.ObservableValue;
  * Observable value that reflects the latest event emitted by an event stream.
  * @param <T>
  */
+@Deprecated
 public interface StreamBoundValue<T> extends ObservableValue<T>, Subscription {
 
     /**

@@ -34,6 +34,20 @@ public interface EventStream<T> {
     Subscription subscribe(Consumer<T> consumer);
 
     /**
+     * If this stream is a compound stream lazily subscribed to its inputs,
+     * that is, subscribed to inputs only when it itself has some subscribers,
+     * {@code pin}ning this stream causes it to stay subscribed until the
+     * pinning is revoked by calling {@code unsubscribe()} on the returned
+     * subscription.
+     *
+     * <p>Equivalent to {@code subscribe(x -> {})}.
+     * @return subscription used to cancel the pinning
+     */
+    default Subscription pin() {
+        return subscribe(x -> {});
+    }
+
+    /**
      * Returns a new event stream that emits events emitted from this stream
      * that satisfy the given predicate.
      */

@@ -48,6 +48,26 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns an event stream that emits the same<sup>(*)</sup> events as this
+     * stream, but before emitting each event performs the given side effect.
+     * This is useful for debugging.
+     *
+     * <p>(*) The returned stream is lazily bound, so it only emits events and
+     * performs side effects when it has at least one subscriber.
+     */
+    default EventStream<T> hook(Consumer<? super T> sideEffect) {
+        return new LazilyBoundStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return EventStream.this.subscribe(t -> {
+                    sideEffect.accept(t);
+                    emit(t);
+                });
+            }
+        };
+    }
+
+    /**
      * Returns a new event stream that emits events emitted from this stream
      * that satisfy the given predicate.
      */

@@ -25,7 +25,7 @@ public class DeferredHtmlRendering extends Application {
         WebEngine engine = webView.getEngine();
 
         EventStreams.valuesOf(textArea.textProperty())
-                .reduceCloseSuccessions((a, b) -> b, Duration.ofMillis(500))
+                .successionEnds(Duration.ofMillis(500))
                 .subscribe(html -> engine.loadContent(html));
 
         SplitPane root = new SplitPane();

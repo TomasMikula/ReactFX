@@ -5,8 +5,8 @@ import java.util.function.Function;
 
 class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
     private final EventStream<I> input;
-    private final Function<I, O> initial;
-    private final BiFunction<O, I, O> reduction;
+    private final Function<? super I, ? extends O> initial;
+    private final BiFunction<? super O, ? super I, ? extends O> reduction;
     private final Timer timer;
 
     private long timerNumber = 0;
@@ -15,8 +15,8 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
 
     public SuccessionReducingStream(
             EventStream<I> input,
-            Function<I, O> initial,
-            BiFunction<O, I, O> reduction,
+            Function<? super I, ? extends O> initial,
+            BiFunction<? super O, ? super I, ? extends O> reduction,
             Timer timer) {
 
         this.input = input;

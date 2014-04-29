@@ -7,9 +7,9 @@ import javafx.concurrent.Task;
 
 class MappedStream<T, U> extends LazilyBoundStream<U> {
     private final EventStream<T> input;
-    private final Function<T, U> f;
+    private final Function<? super T, ? extends U> f;
 
-    public MappedStream(EventStream<T> input, Function<T, U> f) {
+    public MappedStream(EventStream<T> input, Function<? super T, ? extends U> f) {
         this.input = input;
         this.f = f;
     }
@@ -28,7 +28,7 @@ implements CompletionStageStream<U> {
 
     public MappedToCompletionStageStream(
             EventStream<T> input,
-            Function<T, CompletionStage<U>> f) {
+            Function<? super T, CompletionStage<U>> f) {
         super(input, f);
     }
 }
@@ -37,7 +37,9 @@ class MappedToTaskStream<T, U>
 extends MappedStream<T, Task<U>>
 implements TaskStream<U> {
 
-    public MappedToTaskStream(EventStream<T> input, Function<T, Task<U>> f) {
+    public MappedToTaskStream(
+            EventStream<T> input,
+            Function<? super T, Task<U>> f) {
         super(input, f);
     }
 }

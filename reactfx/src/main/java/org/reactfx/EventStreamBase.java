@@ -4,7 +4,7 @@ import java.util.function.Consumer;
 
 public abstract class EventStreamBase<T> implements EventStream<T> {
 
-    private ListHelper<Consumer<T>> subscribers = null;
+    private ListHelper<Consumer<? super T>> subscribers = null;
 
     protected void emit(T value) {
         ListHelper.forEach(subscribers, s -> s.accept(value));
@@ -29,7 +29,7 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
     }
 
     @Override
-    public Subscription subscribe(Consumer<T> consumer) {
+    public Subscription subscribe(Consumer<? super T> consumer) {
         subscribers = ListHelper.add(subscribers, consumer);
         if(ListHelper.size(subscribers) == 1) {
             firstSubscriber();
@@ -37,7 +37,7 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
         return () -> unsubscribe(consumer);
     }
 
-    private void unsubscribe(Consumer<T> consumer) {
+    private void unsubscribe(Consumer<? super T> consumer) {
         subscribers = ListHelper.remove(subscribers, consumer);
         if(ListHelper.isEmpty(subscribers)) {
             noSubscribers();

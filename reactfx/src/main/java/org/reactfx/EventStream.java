@@ -31,7 +31,7 @@ public interface EventStream<T> {
      * @return subscription that can be used to stop observing
      * this event stream.
      */
-    Subscription subscribe(Consumer<T> consumer);
+    Subscription subscribe(Consumer<? super T> consumer);
 
     /**
      * If this stream is a compound stream lazily subscribed to its inputs,
@@ -51,7 +51,7 @@ public interface EventStream<T> {
      * Returns a new event stream that emits events emitted from this stream
      * that satisfy the given predicate.
      */
-    default EventStream<T> filter(Predicate<T> predicate) {
+    default EventStream<T> filter(Predicate<? super T> predicate) {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
@@ -79,7 +79,7 @@ public interface EventStream<T> {
      * Returns an event stream that emits a value obtained from the given
      * supplier every time this event stream emits a value.
      */
-    default <U> EventStream<U> supply(Supplier<U> f) {
+    default <U> EventStream<U> supply(Supplier<? extends U> f) {
         return map(x -> f.get());
     }
 
@@ -105,7 +105,7 @@ public interface EventStream<T> {
      * Returns a new event stream that applies the given function to every
      * value emitted from this stream and emits the result.
      */
-    default <U> EventStream<U> map(Function<T, U> f) {
+    default <U> EventStream<U> map(Function<? super T, ? extends U> f) {
         return new MappedStream<>(this, f);
     }
 
@@ -114,7 +114,7 @@ public interface EventStream<T> {
      * {@link CompletionStageStream}, which can be used to await the results
      * of asynchronous computation.
      */
-    default <U> CompletionStageStream<U> mapToCompletionStage(Function<T, CompletionStage<U>> f) {
+    default <U> CompletionStageStream<U> mapToCompletionStage(Function<? super T, CompletionStage<U>> f) {
         return new MappedToCompletionStageStream<>(this, f);
     }
 
@@ -123,7 +123,7 @@ public interface EventStream<T> {
      * {@link TaskStream}, which can be used to await the results of
      * asynchronous computation.
      */
-    default <U> TaskStream<U> mapToTask(Function<T, Task<U>> f) {
+    default <U> TaskStream<U> mapToTask(Function<? super T, Task<U>> f) {
         return new MappedToTaskStream<>(this, f);
     }
 
@@ -134,7 +134,7 @@ public interface EventStream<T> {
      * @param f
      * @return
      */
-    default <U> EventStream<U> filterMap(Predicate<T> predicate, Function<T, U> f) {
+    default <U> EventStream<U> filterMap(Predicate<? super T> predicate, Function<? super T, ? extends U> f) {
         return new LazilyBoundStream<U>() {
             @Override
             protected Subscription subscribeToInputs() {
@@ -231,8 +231,8 @@ public interface EventStream<T> {
      * @param <U> type of events emitted from the returned stream.
      */
     default <U> EventStream<U> reduceSuccessions(
-            Function<T, U> initialTransformation,
-            BiFunction<U, T, U> reduction,
+            Function<? super T, ? extends U> initialTransformation,
+            BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout) {
 
         if(!Platform.isFxApplicationThread()) {
@@ -277,8 +277,8 @@ public interface EventStream<T> {
      * @see #reduceSuccessions(Function, BiFunction, Duration)
      */
     default <U> EventStream<U> reduceSuccessions(
-            Supplier<U> unitSupplier,
-            BiFunction<U, T, U> reduction,
+            Supplier<? extends U> unitSupplier,
+            BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout) {
 
         Function<T, U> map = t -> reduction.apply(unitSupplier.get(), t);
@@ -349,8 +349,8 @@ public interface EventStream<T> {
      * @return
      */
     default <U> EventStream<U> reduceSuccessions(
-            Function<T, U> initialTransformation,
-            BiFunction<U, T, U> reduction,
+            Function<? super T, ? extends U> initialTransformation,
+            BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {
@@ -390,8 +390,8 @@ public interface EventStream<T> {
      * @return
      */
     default <U> EventStream<U> reduceSuccessions(
-            Supplier<U> unitSupplier,
-            BiFunction<U, T, U> reduction,
+            Supplier<? extends U> unitSupplier,
+            BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {

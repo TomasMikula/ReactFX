@@ -5,8 +5,8 @@ import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ObservableList;
 
 class StreamBinding<T> extends ObservableValueBase<T> implements Binding<T> {
-    private T value;
     private final Subscription subscription;
+    private T value;
 
     public StreamBinding(EventStream<T> input, T initialValue) {
         value = initialValue;
@@ -28,7 +28,7 @@ class StreamBinding<T> extends ObservableValueBase<T> implements Binding<T> {
 
     @Override
     public ObservableList<?> getDependencies() {
-        return null;
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -40,5 +40,4 @@ class StreamBinding<T> extends ObservableValueBase<T> implements Binding<T> {
     public boolean isValid() {
         return true;
     }
-
 }

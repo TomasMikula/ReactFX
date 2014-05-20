@@ -167,6 +167,10 @@ public interface EventStream<T> {
         };
     }
 
+    default <U> EventStream<U> flatMap(Function<? super T, ? extends EventStream<U>> f) {
+        return new FlatMapStream<>(this, f);
+    }
+
     default EventStream<T> emitOn(EventStream<?> impulse) {
         return EventStreams.emit(this).on(impulse);
     }

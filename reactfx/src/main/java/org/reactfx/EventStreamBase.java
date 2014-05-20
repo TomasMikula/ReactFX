@@ -14,8 +14,20 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
      * Called when the number of subscribers goes from 0 to 1.
      * Overriding this method is a convenient way for subclasses
      * to handle this event.
+     *
+     * <p>This method is called after the {@link #newSubscriber(Consumer)}
+     * method.</p>
      */
     protected void firstSubscriber() {
+        // default implementation is empty
+    }
+
+    /**
+     * Called for each new subscriber.
+     * Overriding this method is a convenient way for subclasses
+     * to handle this event, for example to publish some initial events.
+     */
+    protected void newSubscriber(Consumer<? super T> consumer) {
         // default implementation is empty
     }
 
@@ -31,6 +43,7 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
     @Override
     public Subscription subscribe(Consumer<? super T> consumer) {
         subscribers = ListHelper.add(subscribers, consumer);
+        newSubscriber(consumer);
         if(ListHelper.size(subscribers) == 1) {
             firstSubscriber();
         }

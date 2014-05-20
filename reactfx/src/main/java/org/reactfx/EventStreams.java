@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import java.util.function.Consumer;
+
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -220,6 +222,11 @@ public class EventStreams {
                 ChangeListener<T> listener = (obs, old, val) -> emit(val);
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
+            }
+
+            @Override
+            protected void newSubscriber(Consumer<? super T> consumer) {
+                consumer.accept(observable.getValue());
             }
         };
     }

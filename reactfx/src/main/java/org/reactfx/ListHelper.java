@@ -8,6 +8,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.function.IntFunction;
 
 public abstract class ListHelper<T> {
 
@@ -49,6 +50,14 @@ public abstract class ListHelper<T> {
         }
     }
 
+    public static <T> T[] toArray(ListHelper<T> listHelper, IntFunction<T[]> allocator) {
+        if(listHelper == null) {
+            return allocator.apply(0);
+        } else {
+            return listHelper.toArray(allocator);
+        }
+    }
+
     public static <T> boolean isEmpty(ListHelper<T> listHelper) {
         return listHelper == null;
     }
@@ -74,6 +83,8 @@ public abstract class ListHelper<T> {
     protected abstract Optional<T> reduce(BinaryOperator<T> f);
 
     protected abstract <U> U reduce(U unit, BiFunction<U, T, U> f);
+
+    protected abstract T[] toArray(IntFunction<T[]> allocator);
 
     protected abstract int size();
 
@@ -112,6 +123,13 @@ public abstract class ListHelper<T> {
         @Override
         protected <U> U reduce(U unit, BiFunction<U, T, U> f) {
             return f.apply(unit, elem);
+        }
+
+        @Override
+        protected T[] toArray(IntFunction<T[]> allocator) {
+            T[] res = allocator.apply(1);
+            res[0] = elem;
+            return res;
         }
 
         @Override
@@ -164,6 +182,11 @@ public abstract class ListHelper<T> {
                 u = f.apply(u, elem);
             }
             return u;
+        }
+
+        @Override
+        protected T[] toArray(IntFunction<T[]> allocator) {
+            return elems.toArray(allocator.apply(size()));
         }
 
         @Override

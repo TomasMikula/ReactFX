@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 
 public abstract class ListHelper<T> {
@@ -30,6 +33,22 @@ public abstract class ListHelper<T> {
         }
     }
 
+    public static <T> Optional<T> reduce(ListHelper<T> listHelper, BinaryOperator<T> f) {
+        if(listHelper == null) {
+            return Optional.empty();
+        } else {
+            return listHelper.reduce(f);
+        }
+    }
+
+    public static <T, U> U reduce(ListHelper<T> listHelper, U unit, BiFunction<U, T, U> f) {
+        if(listHelper == null) {
+            return unit;
+        } else {
+            return listHelper.reduce(unit, f);
+        }
+    }
+
     public static <T> boolean isEmpty(ListHelper<T> listHelper) {
         return listHelper == null;
     }
@@ -51,6 +70,10 @@ public abstract class ListHelper<T> {
     protected abstract ListHelper<T> remove(T elem);
 
     protected abstract void forEach(Consumer<T> f);
+
+    protected abstract Optional<T> reduce(BinaryOperator<T> f);
+
+    protected abstract <U> U reduce(U unit, BiFunction<U, T, U> f);
 
     protected abstract int size();
 
@@ -79,6 +102,16 @@ public abstract class ListHelper<T> {
         @Override
         protected void forEach(Consumer<T> f) {
             f.accept(elem);
+        }
+
+        @Override
+        protected Optional<T> reduce(BinaryOperator<T> f) {
+            return Optional.of(elem);
+        }
+
+        @Override
+        protected <U> U reduce(U unit, BiFunction<U, T, U> f) {
+            return f.apply(unit, elem);
         }
 
         @Override
@@ -117,6 +150,20 @@ public abstract class ListHelper<T> {
             for(Object elem: elems.toArray()) {
                 f.accept((T) elem);
             }
+        }
+
+        @Override
+        protected Optional<T> reduce(BinaryOperator<T> f) {
+            return elems.stream().reduce(f);
+        }
+
+        @Override
+        protected <U> U reduce(U unit, BiFunction<U, T, U> f) {
+            U u = unit;
+            for(T elem: elems) {
+                u = f.apply(u, elem);
+            }
+            return u;
         }
 
         @Override

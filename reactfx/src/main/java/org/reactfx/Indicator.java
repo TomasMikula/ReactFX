@@ -12,7 +12,7 @@ public class Indicator implements ObservableBooleanValue, Guardian {
     private ListHelper<InvalidationListener> iListeners;
     private ListHelper<ChangeListener<? super Boolean>> cListeners;
 
-    private boolean on = false;
+    private int on = 0;
 
     /**
      * Turns this indicator on.
@@ -20,11 +20,17 @@ public class Indicator implements ObservableBooleanValue, Guardian {
      * original state.
      */
     public Guard on() {
-        if(on) {
-            return Guard.EMPTY_GUARD;
-        } else {
-            set(true);
-            return this::release;
+        if(++on == 1) {
+            notifyListeners(true);
+        }
+
+        return ((Guard) this::release).closeableOnce();
+    }
+
+    private void release() {
+        assert on > 0;
+        if(--on == 0) {
+            notifyListeners(false);
         }
     }
 
@@ -77,21 +83,21 @@ public class Indicator implements ObservableBooleanValue, Guardian {
     }
 
     public boolean isOn() {
-        return on;
+        return on > 0;
     }
 
     public boolean isOff() {
-        return !on;
+        return on == 0;
     }
 
     @Override
     public boolean get() {
-        return on;
+        return on > 0;
     }
 
     @Override
     public Boolean getValue() {
-        return on;
+        return on > 0;
     }
 
     public EventStream<Void> ons() {
@@ -102,13 +108,7 @@ public class Indicator implements ObservableBooleanValue, Guardian {
         return EventStreams.valuesOf(this).filterMap(on -> !on, on -> null);
     }
 
-    private void release() {
-        assert on;
-        set(false);
-    }
-
-    private void set(boolean value) {
-        on = value;
+    private void notifyListeners(boolean value) {
         ListHelper.forEach(iListeners, l -> l.invalidated(this));
         ListHelper.forEach(cListeners, l -> l.changed(this, !value, value));
     }

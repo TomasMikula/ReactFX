@@ -12,6 +12,10 @@ public interface Guard extends Hold {
     @Override
     void close();
 
+    default Guard closeableOnce() {
+        return new CloseableOnceGuard(this);
+    }
+
 
     /**
      * Returns a guard that is a composition of multiple guards.
@@ -26,6 +30,22 @@ public interface Guard extends Hold {
             case 1: return guards[0];
             case 2: return new BiGuard(guards[0], guards[1]);
             default: return new MultiGuard(guards);
+        }
+    }
+}
+
+class CloseableOnceGuard implements Guard {
+    private Guard delegate;
+
+    public CloseableOnceGuard(Guard delegate) {
+        this.delegate = delegate;
+    }
+
+    @Override
+    public void close() {
+        if(delegate != null) {
+            delegate.close();
+            delegate = null;
         }
     }
 }

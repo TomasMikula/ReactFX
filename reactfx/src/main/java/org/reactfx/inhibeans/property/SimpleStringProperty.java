@@ -9,22 +9,18 @@ public class SimpleStringProperty
 extends javafx.beans.property.SimpleStringProperty
 implements Property<String> {
 
-    private boolean blocked = false;
+    private int blocked = 0;
     private boolean fireOnRelease = false;
 
     @Override
     public Guard block() {
-        if(blocked) {
-            return Guard.EMPTY_GUARD;
-        } else {
-            blocked = true;
-            return this::release;
-        }
+        ++blocked;
+        return ((Guard) this::release).closeableOnce();
     }
 
     private void release() {
-        blocked = false;
-        if(fireOnRelease) {
+        assert blocked > 0;
+        if(--blocked == 0 && fireOnRelease) {
             fireOnRelease = false;
             super.fireValueChangedEvent();
         }
@@ -32,10 +28,11 @@ implements Property<String> {
 
     @Override
     protected void fireValueChangedEvent() {
-        if(blocked)
+        if(blocked > 0) {
             fireOnRelease = true;
-        else
+        } else {
             super.fireValueChangedEvent();
+        }
     }
 
 

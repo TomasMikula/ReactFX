@@ -41,43 +41,49 @@ public class AwaitTest {
 
     @Test
     public void testAwaitCompletionStage() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
+        CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).await(executor);
+        AwaitingEventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).await(executor);
         executor.execute(() -> {
-            List<Integer> res = aggregate(mapped);
+            List<Object> res = aggregate(EventStreams.merge(
+                    mapped,
+                    EventStreams.valuesOf(mapped.pendingProperty())));
             src.push(1);
             src.push(2);
             src.push(3);
             src.push(4);
             executor.execute(() -> executor.execute(() -> emitted.complete(res)));
         });
-        assertEquals(Arrays.asList(1, 4, 9, 16), emitted.get());
+        assertEquals(Arrays.asList(false, true, 1, 4, 9, 16, false), emitted.get());
     }
 
     @Test
     public void testAwaitTask() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
+        CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).await();
+        AwaitingEventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).await();
         Platform.runLater(() -> {
-            List<Integer> res = aggregate(mapped);
+            List<Object> res = aggregate(EventStreams.merge(
+                    mapped,
+                    EventStreams.valuesOf(mapped.pendingProperty())));
             src.push(1);
             src.push(2);
             src.push(3);
             src.push(4);
             executor.execute(() -> Platform.runLater(() -> emitted.complete(res)));
         });
-        assertEquals(Arrays.asList(1, 4, 9, 16), emitted.get());
+        assertEquals(Arrays.asList(false, true, 1, 4, 9, 16, false), emitted.get());
     }
 
     @Test
     public void testAwaitLatestCompletionStage() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
+        CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(executor);
+        AwaitingEventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(executor);
         executor.execute(() -> {
-            List<Integer> res = aggregate(mapped);
+            List<Object> res = aggregate(EventStreams.merge(
+                    mapped,
+                    EventStreams.valuesOf(mapped.pendingProperty())));
             src.push(1);
             src.push(2);
             executor.execute(() -> executor.execute(() -> {
@@ -86,16 +92,18 @@ public class AwaitTest {
                 executor.execute(() -> executor.execute(() -> emitted.complete(res)));
             }));
         });
-        assertEquals(Arrays.asList(4, 16), emitted.get());
+        assertEquals(Arrays.asList(false, true, 4, false, true, 16, false), emitted.get());
     }
 
     @Test
     public void testAwaitLatestTask() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
+        CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        EventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest();
+        AwaitingEventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest();
         executor.execute(() -> {
-            List<Integer> res = aggregate(mapped);
+            List<Object> res = aggregate(EventStreams.merge(
+                    mapped,
+                    EventStreams.valuesOf(mapped.pendingProperty())));
             src.push(1);
             src.push(2);
             executor.execute(() -> Platform.runLater(() -> {
@@ -104,17 +112,19 @@ public class AwaitTest {
                 executor.execute(() -> Platform.runLater(() -> emitted.complete(res)));
             }));
         });
-        assertEquals(Arrays.asList(4, 16), emitted.get());
+        assertEquals(Arrays.asList(false, true, 4, false, true, 16, false), emitted.get());
     }
 
     @Test
     public void testAwaitLatestCompletionStageWithCanceller() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
+        CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
         EventSource<Void> canceller = new EventSource<>();
-        EventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(canceller, executor);
+        AwaitingEventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(canceller, executor);
         executor.execute(() -> {
-            List<Integer> res = aggregate(mapped);
+            List<Object> res = aggregate(EventStreams.merge(
+                    mapped,
+                    EventStreams.valuesOf(mapped.pendingProperty())));
             src.push(1);
             src.push(2);
             canceller.push(null);
@@ -129,17 +139,19 @@ public class AwaitTest {
                 }));
             }));
         });
-        assertEquals(Arrays.asList(16), emitted.get());
+        assertEquals(Arrays.asList(false, true, false, true, 16, false, true, false), emitted.get());
     }
 
     @Test
     public void testAwaitLatestTaskWithCanceller() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> emitted = new CompletableFuture<>();
+        CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
         EventSource<Void> canceller = new EventSource<>();
-        EventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest(canceller);
+        AwaitingEventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest(canceller);
         Platform.runLater(() -> {
-            List<Integer> res = aggregate(mapped);
+            List<Object> res = aggregate(EventStreams.merge(
+                    mapped,
+                    EventStreams.valuesOf(mapped.pendingProperty())));
             src.push(1);
             src.push(2);
             canceller.push(null);
@@ -154,7 +166,7 @@ public class AwaitTest {
                 }));
             }));
         });
-        assertEquals(Arrays.asList(16), emitted.get());
+        assertEquals(Arrays.asList(false, true, false, true, 16, false, true, false), emitted.get());
     }
 
     private CompletionStage<Integer> async(int x) {

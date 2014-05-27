@@ -4,23 +4,45 @@ import static javafx.concurrent.WorkerStateEvent.*;
 
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.value.ObservableBooleanValue;
 import javafx.concurrent.Task;
 
-abstract class AwaitBase<T, F> extends LazilyBoundStream<T> {
+abstract class AwaitBase<T, F> extends LazilyBoundStream<T> implements AwaitingEventStream<T> {
     private final EventStream<F> source;
+    private final Indicator pending = new Indicator();
 
     public AwaitBase(EventStream<F> source) {
         this.source = source;
     }
 
     @Override
-    protected final Subscription subscribeToInputs() {
-        return source.subscribe(future -> addResultHandler(future, this::emit));
+    public final ObservableBooleanValue pendingProperty() {
+        return pending;
     }
 
-    protected abstract void addResultHandler(F future, Consumer<T> action);
+    @Override
+    public final boolean isPending() {
+        return pending.isOn();
+    }
+
+    @Override
+    protected final Subscription subscribeToInputs() {
+        return source.subscribe(future -> {
+            Guard g = pending.on();
+            addCompletionHandler(future, (result, success) -> {
+                if(success) {
+                    emit(result);
+                }
+                g.close();
+            });
+        });
+    }
+
+    protected abstract void addCompletionHandler(F future, BiConsumer<T, Boolean> action);
 }
 
 class AwaitCompletionStage<T> extends AwaitBase<T, CompletionStage<T>> {
@@ -34,8 +56,10 @@ class AwaitCompletionStage<T> extends AwaitBase<T, CompletionStage<T>> {
     }
 
     @Override
-    protected void addResultHandler(CompletionStage<T> future, Consumer<T> f) {
-        future.thenAcceptAsync(f, clientThreadExecutor);
+    protected void addCompletionHandler(CompletionStage<T> future, BiConsumer<T, Boolean> f) {
+        future.whenCompleteAsync((result, error) -> {
+            f.accept(result, error == null);
+        }, clientThreadExecutor);
     }
 }
 
@@ -46,20 +70,42 @@ class AwaitTask<T> extends AwaitBase<T, Task<T>> {
     }
 
     @Override
-    protected void addResultHandler(Task<T> t, Consumer<T> f) {
-        t.addEventHandler(WORKER_STATE_SUCCEEDED, e -> f.accept(t.getValue()));
+    protected void addCompletionHandler(Task<T> t, BiConsumer<T, Boolean> f) {
+        t.addEventHandler(WORKER_STATE_SUCCEEDED, e -> f.accept(t.getValue(), true));
+        t.addEventHandler(WORKER_STATE_FAILED, e -> f.accept(null, false));
+        t.addEventHandler(WORKER_STATE_CANCELLED, e -> f.accept(null, false));
     }
 }
 
 
-abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> {
+abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> implements AwaitingEventStream<T> {
     private final EventStream<F> source;
 
     private long revision = 0;
     private F expectedFuture = null;
 
+    private BooleanBinding pending = null;
+
     public AwaitLatestBase(EventStream<F> source) {
         this.source = source;
+    }
+
+    @Override
+    public ObservableBooleanValue pendingProperty() {
+        if(pending == null) {
+            pending = new BooleanBinding() {
+                @Override
+                protected boolean computeValue() {
+                    return expectedFuture != null;
+                }
+            };
+        }
+        return pending;
+    }
+
+    @Override
+    public boolean isPending() {
+        return pending != null ? pending.get() : expectedFuture != null;
     }
 
     @Override
@@ -69,11 +115,12 @@ abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> {
             addResultHandler(future, t -> {
                 if(rev == revision) {
                     emit(t);
+                    setExpected(null);
                 }
             });
             addErrorHandler(future, () -> {
                 if(rev == revision) {
-                    cancelExpected();
+                    setExpected(null);
                 }
             });
         });
@@ -82,10 +129,17 @@ abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> {
     private final long replaceExpected(F newExpected) {
         if(expectedFuture != null) {
             cancel(expectedFuture);
-            ++revision;
         }
-        expectedFuture = newExpected;
+        ++revision;
+        setExpected(newExpected);
         return revision;
+    }
+
+    private void setExpected(F newExpected) {
+        expectedFuture = newExpected;
+        if(pending != null) {
+            pending.invalidate();
+        }
     }
 
     protected final void cancelExpected() {

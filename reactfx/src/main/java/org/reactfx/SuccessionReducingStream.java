@@ -3,7 +3,10 @@ package org.reactfx;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.value.ObservableBooleanValue;
+
+class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements AwaitingEventStream<O> {
     private final EventStream<I> input;
     private final Function<? super I, ? extends O> initial;
     private final BiFunction<? super O, ? super I, ? extends O> reduction;
@@ -11,6 +14,7 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
 
     private long timerNumber = 0;
     private boolean hasEvent = false;
+    private BooleanBinding pending = null;
     private O event = null;
 
     public SuccessionReducingStream(
@@ -26,6 +30,24 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
     }
 
     @Override
+    public ObservableBooleanValue pendingProperty() {
+        if(pending == null) {
+            pending = new BooleanBinding() {
+                @Override
+                protected boolean computeValue() {
+                    return hasEvent;
+                }
+            };
+        }
+        return pending;
+    }
+
+    @Override
+    public boolean isPending() {
+        return pending != null ? pending.get() : hasEvent;
+    }
+
+    @Override
     protected final Subscription subscribeToInputs() {
         return input.subscribe(i -> handleEvent(i));
     }
@@ -35,7 +57,7 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
             event = reduction.apply(event, i);
         } else {
             event = initial.apply(i);
-            hasEvent = true;
+            setHasEvent(true);
         }
         resetTimer();
     }
@@ -52,6 +74,13 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> {
     private void handleTimeout() {
         emit(event);
         event = null;
-        hasEvent = false;
+        setHasEvent(false);
+    }
+
+    private void setHasEvent(boolean value) {
+        hasEvent = value;
+        if(pending != null) {
+            pending.invalidate();
+        }
     }
 }

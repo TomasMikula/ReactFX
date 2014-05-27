@@ -20,7 +20,7 @@ public interface CompletionStageStream<T> extends EventStream<CompletionStage<T>
      * stream. If error handling is required, the completion stages emitted from
      * this stream should already have error handlers registered.
      */
-    default EventStream<T> await() {
+    default AwaitingEventStream<T> await() {
         return await(Platform::runLater);
     }
 
@@ -31,7 +31,7 @@ public interface CompletionStageStream<T> extends EventStream<CompletionStage<T>
      * on the same thread on which this event stream lives.
      * @see #await()
      */
-    default EventStream<T> await(Executor clientThreadExecutor) {
+    default AwaitingEventStream<T> await(Executor clientThreadExecutor) {
         return new AwaitCompletionStage<>(this, clientThreadExecutor);
     }
 
@@ -42,7 +42,7 @@ public interface CompletionStageStream<T> extends EventStream<CompletionStage<T>
      * <i>s1</i> is discarded (i.e. not emitted from the returned stream).
      * @see #await()
      */
-    default EventStream<T> awaitLatest() {
+    default AwaitingEventStream<T> awaitLatest() {
         return awaitLatest(Platform::runLater);
     }
 
@@ -53,7 +53,7 @@ public interface CompletionStageStream<T> extends EventStream<CompletionStage<T>
      * on the same thread on which this event stream lives.
      * @see #awaitLatest()
      */
-    default EventStream<T> awaitLatest(Executor clientThreadExecutor) {
+    default AwaitingEventStream<T> awaitLatest(Executor clientThreadExecutor) {
         return new AwaitLatestCompletionStage<>(this, clientThreadExecutor);
     }
 
@@ -68,7 +68,7 @@ public interface CompletionStageStream<T> extends EventStream<CompletionStage<T>
      * currently expected result outdated.
      * @see #awaitLatest()
      */
-    default EventStream<T> awaitLatest(EventStream<?> canceller) {
+    default AwaitingEventStream<T> awaitLatest(EventStream<?> canceller) {
         return awaitLatest(canceller, Platform::runLater);
     }
 
@@ -79,7 +79,7 @@ public interface CompletionStageStream<T> extends EventStream<CompletionStage<T>
      * on the same thread on which this event stream lives.
      * @see #awaitLatest(EventStream)
      */
-    default EventStream<T> awaitLatest(EventStream<?> canceller, Executor clientThreadExecutor) {
+    default AwaitingEventStream<T> awaitLatest(EventStream<?> canceller, Executor clientThreadExecutor) {
         return new CancellableAwaitLatestCompletionStage<>(this, canceller, clientThreadExecutor);
     }
 }

@@ -36,19 +36,21 @@ public class SuccessionReducingTest {
 
     @Test
     public void fxTest() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> future1 = new CompletableFuture<>();
-        CompletableFuture<List<Integer>> future2 = new CompletableFuture<>();
+        CompletableFuture<List<Object>> future1 = new CompletableFuture<>();
+        CompletableFuture<List<Object>> future2 = new CompletableFuture<>();
 
         Platform.runLater(() -> {
             EventSource<Integer> source = new EventSource<>();
 
-            EventStream<Integer> reducing1 = source.reduceSuccessions((a,  b) -> a + b, Duration.ofMillis(200));
-            List<Integer> emitted1 = new ArrayList<>();
-            reducing1.subscribe(i -> emitted1.add(i));
+            AwaitingEventStream<Integer> reducing1 = source.reduceSuccessions((a,  b) -> a + b, Duration.ofMillis(200));
+            EventStream<Boolean> pending1 = EventStreams.valuesOf(reducing1.pendingProperty());
+            List<Object> emitted1 = new ArrayList<>();
+            EventStreams.merge(reducing1, pending1).subscribe(i -> emitted1.add(i));
 
-            EventStream<Integer> reducing2 = source.reduceSuccessions(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200));
-            List<Integer> emitted2 = new ArrayList<>();
-            reducing2.subscribe(i -> emitted2.add(i));
+            AwaitingEventStream<Integer> reducing2 = source.reduceSuccessions(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200));
+            EventStream<Boolean> pending2 = EventStreams.valuesOf(reducing2.pendingProperty());
+            List<Object> emitted2 = new ArrayList<>();
+            EventStreams.merge(reducing2, pending2).subscribe(i -> emitted2.add(i));
 
             source.push(1);
             source.push(2);
@@ -61,27 +63,29 @@ public class SuccessionReducingTest {
             scheduler.schedule(() -> Platform.runLater(() -> future2.complete(emitted2)), 600, TimeUnit.MILLISECONDS);
         });
 
-        assertEquals(Arrays.asList(6, 9), future1.get());
-        assertEquals(Arrays.asList(6, 9), future2.get());
+        assertEquals(Arrays.asList(false, true, 6, false, true, 9, false), future1.get());
+        assertEquals(Arrays.asList(false, true, 6, false, true, 9, false), future2.get());
     }
 
     @Test
     public void executorTest() throws InterruptedException, ExecutionException {
-        CompletableFuture<List<Integer>> future1 = new CompletableFuture<>();
-        CompletableFuture<List<Integer>> future2 = new CompletableFuture<>();
+        CompletableFuture<List<Object>> future1 = new CompletableFuture<>();
+        CompletableFuture<List<Object>> future2 = new CompletableFuture<>();
 
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         executor.execute(() -> {
             EventSource<Integer> source = new EventSource<>();
 
-            EventStream<Integer> reducing1 = source.reduceSuccessions((a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
-            List<Integer> emitted1 = new ArrayList<>();
-            reducing1.subscribe(i -> emitted1.add(i));
+            AwaitingEventStream<Integer> reducing1 = source.reduceSuccessions((a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
+            EventStream<Boolean> pending1 = EventStreams.valuesOf(reducing1.pendingProperty());
+            List<Object> emitted1 = new ArrayList<>();
+            EventStreams.merge(reducing1, pending1).subscribe(i -> emitted1.add(i));
 
-            EventStream<Integer> reducing2 = source.reduceSuccessions(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
-            List<Integer> emitted2 = new ArrayList<>();
-            reducing2.subscribe(i -> emitted2.add(i));
+            AwaitingEventStream<Integer> reducing2 = source.reduceSuccessions(() -> 0, (a,  b) -> a + b, Duration.ofMillis(200), scheduler, executor);
+            EventStream<Boolean> pending2 = EventStreams.valuesOf(reducing2.pendingProperty());
+            List<Object> emitted2 = new ArrayList<>();
+            EventStreams.merge(reducing2, pending2).subscribe(i -> emitted2.add(i));
 
             source.push(1);
             source.push(2);
@@ -94,8 +98,8 @@ public class SuccessionReducingTest {
             scheduler.schedule(() -> executor.execute(() -> future2.complete(emitted2)), 600, TimeUnit.MILLISECONDS);
         });
 
-        assertEquals(Arrays.asList(6, 9), future1.get());
-        assertEquals(Arrays.asList(6, 9), future2.get());
+        assertEquals(Arrays.asList(false, true, 6, false, true, 9, false), future1.get());
+        assertEquals(Arrays.asList(false, true, 6, false, true, 9, false), future2.get());
 
         executor.shutdown();
     }

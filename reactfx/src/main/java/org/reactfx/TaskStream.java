@@ -16,7 +16,7 @@ public interface TaskStream<T> extends EventStream<Task<T>> {
      * required, the tasks emitted from this stream should already have error
      * handlers registered.
      */
-    default EventStream<T> await() {
+    default AwaitingEventStream<T> await() {
         return new AwaitTask<>(this);
     }
 
@@ -27,7 +27,7 @@ public interface TaskStream<T> extends EventStream<Task<T>> {
      * is discarded (i.e. not emitted from the returned stream).
      * @see #await()
      */
-    default EventStream<T> awaitLatest() {
+    default AwaitingEventStream<T> awaitLatest() {
         return new AwaitLatestTask<>(this);
     }
 
@@ -42,7 +42,7 @@ public interface TaskStream<T> extends EventStream<Task<T>> {
      * expected result outdated.
      * @see #awaitLatest()
      */
-    default EventStream<T> awaitLatest(EventStream<?> canceller) {
+    default AwaitingEventStream<T> awaitLatest(EventStream<?> canceller) {
         return new CancellableAwaitLatestTask<>(this, canceller);
     }
 }

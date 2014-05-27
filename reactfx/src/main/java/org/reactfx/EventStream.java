@@ -218,7 +218,7 @@ public interface EventStream<T> {
      * @param timeout the maximum time difference between two subsequent
      * events that can still be accumulated.
      */
-    default EventStream<T> reduceSuccessions(
+    default AwaitingEventStream<T> reduceSuccessions(
             BinaryOperator<T> reduction,
             Duration timeout) {
 
@@ -254,7 +254,7 @@ public interface EventStream<T> {
      * @param timeout
      * @param <U> type of events emitted from the returned stream.
      */
-    default <U> EventStream<U> reduceSuccessions(
+    default <U> AwaitingEventStream<U> reduceSuccessions(
             Function<? super T, ? extends U> initialTransformation,
             BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout) {
@@ -300,7 +300,7 @@ public interface EventStream<T> {
      *
      * @see #reduceSuccessions(Function, BiFunction, Duration)
      */
-    default <U> EventStream<U> reduceSuccessions(
+    default <U> AwaitingEventStream<U> reduceSuccessions(
             Supplier<? extends U> unitSupplier,
             BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout) {
@@ -334,7 +334,7 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
-    default EventStream<T> reduceSuccessions(
+    default AwaitingEventStream<T> reduceSuccessions(
             BinaryOperator<T> reduction,
             Duration timeout,
             ScheduledExecutorService scheduler,
@@ -372,7 +372,7 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
-    default <U> EventStream<U> reduceSuccessions(
+    default <U> AwaitingEventStream<U> reduceSuccessions(
             Function<? super T, ? extends U> initialTransformation,
             BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout,
@@ -413,7 +413,7 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
-    default <U> EventStream<U> reduceSuccessions(
+    default <U> AwaitingEventStream<U> reduceSuccessions(
             Supplier<? extends U> unitSupplier,
             BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout,
@@ -459,7 +459,7 @@ public interface EventStream<T> {
      * @param timeout the maximum time difference between two subsequent events
      * in a <i>close succession</i>.
      */
-    default EventStream<T> successionEnds(Duration timeout) {
+    default AwaitingEventStream<T> successionEnds(Duration timeout) {
         return reduceSuccessions((a, b) -> b, timeout);
     }
 
@@ -473,7 +473,7 @@ public interface EventStream<T> {
      * will use this executor to emit events.
      * @return
      */
-    default EventStream<T> successionEnds(
+    default AwaitingEventStream<T> successionEnds(
             Duration timeout,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {

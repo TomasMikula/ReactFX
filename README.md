@@ -378,26 +378,26 @@ Use ReactFX in your project
 
 ### Stable release
 
-Current stable release is 1.0.1
+Current stable release is 1.0.2
 
 #### Maven coordinates
 
 | Group ID    | Artifact ID | Version        |
 | :---------: | :---------: | :------------: |
-| org.reactfx | reactfx     | 1.0.1          |
+| org.reactfx | reactfx     | 1.0.2          |
 
 #### Gradle example
 
 ```groovy
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.1'
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.2'
 }
 ```
 
 #### Sbt example
 
 ```scala
-libraryDependencies += "org.reactfx" % "reactfx" % "1.0.1"
+libraryDependencies += "org.reactfx" % "reactfx" % "1.0.2"
 ```
 
 #### Manual download
@@ -413,7 +413,7 @@ Snapshot releases are deployed to Sonatype snapshot repository.
 
 | Group ID    | Artifact ID | Version        |
 | :---------: | :---------: | :------------: |
-| org.reactfx | reactfx     | 1.0.2-SNAPSHOT |
+| org.reactfx | reactfx     | 1.1.0-SNAPSHOT |
 
 #### Gradle example
 
@@ -425,7 +425,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '1.0.2-SNAPSHOT'
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.1.0-SNAPSHOT'
 }
 ```
 
@@ -434,13 +434,13 @@ dependencies {
 ```scala
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-libraryDependencies += "org.reactfx" % "reactfx" % "1.0.2-SNAPSHOT"
+libraryDependencies += "org.reactfx" % "reactfx" % "1.1.0-SNAPSHOT"
 ```
 
 
 #### Manual download
 
-[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.0.2-SNAPSHOT/) the latest JAR file and place it on your classpath.
+[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.1.0-SNAPSHOT/) the latest JAR file and place it on your classpath.
 
 
 Links

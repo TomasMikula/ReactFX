@@ -130,6 +130,16 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns a new event stream that emits events emitted by this stream
+     * cast to the given type.
+     * {@code cast(SomeClass.class)} is equivalent to
+     * {@code map(x -> (SomeClass) x)}.
+     */
+    default <U extends T> EventStream<U> cast(Class<U> subtype) {
+        return map(subtype::cast);
+    }
+
+    /**
      * Similar to {@link #map(Function)}, but the returned stream is a
      * {@link CompletionStageStream}, which can be used to await the results
      * of asynchronous computation.

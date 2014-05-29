@@ -378,13 +378,13 @@ Use ReactFX in your project
 
 ### Stable release
 
-Current stable release is 1.0.2
+Current stable release is 1.0.2.
 
 #### Maven coordinates
 
-| Group ID    | Artifact ID | Version        |
-| :---------: | :---------: | :------------: |
-| org.reactfx | reactfx     | 1.0.2          |
+| Group ID    | Artifact ID | Version |
+| :---------: | :---------: | :-----: |
+| org.reactfx | reactfx     | 1.0.2   |
 
 #### Gradle example
 
@@ -402,7 +402,7 @@ libraryDependencies += "org.reactfx" % "reactfx" % "1.0.2"
 
 #### Manual download
 
-[Download](http://search.maven.org/#browse%7C-53076959) the JAR file and place it on your classpath.
+[Download](https://github.com/TomasMikula/ReactFX/releases/download/v1.0.2/reactfx-1.0.2.jar) the JAR file and place it on your classpath.
 
 
 ### Snapshot releases
@@ -436,7 +436,6 @@ resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repos
 
 libraryDependencies += "org.reactfx" % "reactfx" % "1.1.0-SNAPSHOT"
 ```
-
 
 #### Manual download
 

@@ -3,6 +3,9 @@ ReactFX
 
 This project is an exploration of reactive programming techniques for JavaFX. A lot of inspiration is drawn from the [rxJava library](https://github.com/Netflix/RxJava/wiki) and the excellent [Principles of Reactive Programming](https://www.coursera.org/course/reactive) course. Since ReactFX specifically targets JavaFX applications, its design and use can be significantly simpler than that of rxJava. Most importantly, all UI events in JavaFX applications are handled on the JavaFX application thread. Therefore, ReactFX does not need to worry about asynchrony, schedulers, etc.
 
+Help and discussion
+-------------------
+
 Use [reactfx](http://stackoverflow.com/tags/reactfx) tag on StackOverflow to ask specific questions. For more general discussions about the design of ReactFX and reactive programming for JavaFX, use the [reactfx-dev mailing list](https://groups.google.com/forum/#!forum/reactfx-dev).
 
 Event streams

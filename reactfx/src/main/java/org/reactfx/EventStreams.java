@@ -18,6 +18,9 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 
+import org.reactfx.util.Tuple2;
+import org.reactfx.util.Tuple3;
+import org.reactfx.util.Tuples;
 
 public class EventStreams {
 
@@ -75,6 +78,9 @@ public class EventStreams {
         public <R> EventStream<R> by(Combinator2<A, I, R> combinator) {
             return combineOnImpulse(srcA, impulse, combinator);
         }
+        public EventStream<Tuple2<A, I>> asTuple() {
+            return combineLatest(srcA, impulse, (a, b) -> Tuples.t(a, b));
+        }
     }
 
     /**
@@ -90,6 +96,9 @@ public class EventStreams {
         }
         public <R> EventStream<R> by(Combinator2<A, B, R> combinator) {
             return combineLatest(srcA, srcB, combinator);
+        }
+        public EventStream<Tuple2<A, B>> asTuple() {
+            return combineLatest(srcA, srcB, (a, b) -> Tuples.t(a, b));
         }
         public <I> Combine2On<A, B, I> on(EventStream<I> impulse) {
             return new Combine2On<A, B, I>(srcA, srcB, impulse);
@@ -115,6 +124,9 @@ public class EventStreams {
         public <R> EventStream<R> by(Combinator3<A, B, I, R> combinator) {
             return combineOnImpulse(srcA, srcB, impulse, combinator);
         }
+        public EventStream<Tuple2<A, B>> asTuple() {
+            return combineOnImpulse(srcA, srcB, (a, b) -> Tuples.t(a, b));
+        }
     }
 
     /**
@@ -132,6 +144,9 @@ public class EventStreams {
         }
         public <R> EventStream<R> by(Combinator3<A, B, C, R> combinator) {
             return combineLatest(srcA, srcB, srcC, combinator);
+        }
+        public EventStream<Tuple3<A, B, C>> asTuple() {
+            return combineLatest(srcA, srcB, srcC, (a, b, c) -> Tuples.t(a, b, c));
         }
         public <I> Combine3On<A, B, C, I> on(EventStream<I> impulse) {
             return new Combine3On<A, B, C, I>(srcA, srcB, srcC, impulse);
@@ -158,6 +173,9 @@ public class EventStreams {
         }
         public <R> EventStream<R> by(Combinator4<A, B, C, I, R> combinator) {
             return combineOnImpulse(srcA, srcB, srcC, impulse, combinator);
+        }
+        public EventStream<Tuple3<A, B, C>> asTuple() {
+            return combineOnImpulse(srcA, srcB, srcC, (a, b, c) -> Tuples.t(a, b, c));
         }
     }
 

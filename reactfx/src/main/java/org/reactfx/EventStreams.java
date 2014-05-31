@@ -41,6 +41,7 @@ public class EventStreams {
      * Type returned from
      * {@code emit(EventStream<T>)}.
      */
+    @Deprecated
     public static final class Emit<T> {
         private final EventStream<T> input;
         Emit(EventStream<T> input) {
@@ -488,6 +489,10 @@ public class EventStreams {
         return new Combine3<A, B, C>(srcA, srcB, srcC);
     }
 
+    /**
+     * @deprecated Use {@code input.emitOn(impulse)} instead.
+     */
+    @Deprecated
     public static <T> Emit<T> emit(EventStream<T> input) {
         return new Emit<T>(input);
     }
@@ -513,7 +518,31 @@ public class EventStreams {
                     }
                 });
 
-                return Subscription.multi(s1, s2);
+                return s1.and(s2);
+            }
+        };
+    }
+
+    static <T> EventStream<T> repeatOnImpulse(EventStream<T> input, EventStream<?> impulse) {
+        return new LazilyBoundStream<T>() {
+            private boolean hasValue = false;
+            private T value = null;
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                Subscription s1 = input.subscribe(v -> {
+                    hasValue = true;
+                    value = v;
+                    emit(v);
+                });
+
+                Subscription s2 = impulse.subscribe(i -> {
+                    if(hasValue) {
+                        emit(value);
+                    }
+                });
+
+                return s1.and(s2);
             }
         };
     }

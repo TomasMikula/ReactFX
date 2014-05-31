@@ -181,8 +181,25 @@ public interface EventStream<T> {
         return new FlatMapStream<>(this, f);
     }
 
+    /**
+     * Returns a new event stream that, when an event arrives from the
+     * {@code impulse} stream, emits the most recent event emitted by this
+     * stream. Each event is emitted at most once. For example, if events
+     * are emitted in this order, [<i>i, a, i, b, c, i, i, d</i>], where <i>
+     * a, b, c, d</i> come from this stream and <i>i</i>s come from the
+     * {@code impulse} stream, then the returned stream emits [<i>a, c</i>].
+     */
     default EventStream<T> emitOn(EventStream<?> impulse) {
-        return EventStreams.emit(this).on(impulse);
+        return EventStreams.emitOnImpulse(this, impulse);
+    }
+
+    /**
+     * Returns a new event stream that emits all the events emitted from this
+     * stream and in addition to that re-emits the most recent event on every
+     * event emitted from {@code impulse}.
+     */
+    default EventStream<T> repeatOn(EventStream<?> impulse) {
+        return EventStreams.repeatOnImpulse(this, impulse);
     }
 
     default InterceptableEventStream<T> interceptable() {

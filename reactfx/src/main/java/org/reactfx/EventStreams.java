@@ -257,6 +257,29 @@ public class EventStreams {
         };
     }
 
+    public static <T> EventStream<T> nonNullValuesOf(ObservableValue<T> observable) {
+        return new LazilyBoundStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                ChangeListener<T> listener = (obs, old, val) -> {
+                    if(val != null) {
+                        emit(val);
+                    }
+                };
+                observable.addListener(listener);
+                return () -> observable.removeListener(listener);
+            }
+
+            @Override
+            protected void newSubscriber(Consumer<? super T> consumer) {
+                T val = observable.getValue();
+                if(val != null) {
+                    consumer.accept(val);
+                }
+            }
+        };
+    }
+
     public static <T> EventStream<Change<T>> changesOf(ObservableValue<T> observable) {
         return new LazilyBoundStream<Change<T>>() {
             @Override

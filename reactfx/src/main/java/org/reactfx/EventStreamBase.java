@@ -2,6 +2,8 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
+import org.reactfx.util.ListHelper;
+
 /**
  *
  * @param <S> type of the subscriber

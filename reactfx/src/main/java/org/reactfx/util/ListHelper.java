@@ -1,4 +1,4 @@
-package org.reactfx;
+package org.reactfx.util;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -12,7 +12,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 
 import org.reactfx.Guard;
-import org.reactfx.ListHelper;
+import org.reactfx.util.ListHelper;
 
 class ObservableListWrapper<E> implements ObservableList<E> {
     private final javafx.collections.ObservableList<E> delegate;

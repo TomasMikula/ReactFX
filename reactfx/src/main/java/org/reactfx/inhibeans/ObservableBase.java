@@ -1,6 +1,6 @@
 package org.reactfx.inhibeans;
 
-import org.reactfx.ListHelper;
+import org.reactfx.util.ListHelper;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;

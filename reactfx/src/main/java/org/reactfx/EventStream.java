@@ -168,6 +168,18 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns a new event stream that, when an event arrives from the
+     * {@code impulse} stream, emits the most recent event emitted by this
+     * stream. The same event may be emitted more than once. For example, if
+     * events are emitted in this order, [<i>i, a, i, b, c, i, i, d</i>], where
+     * <i>a, b, c, d</i> come from this stream and <i>i</i>s come from the
+     * {@code impulse} stream, then the returned stream emits [<i>a, c, c</i>].
+     */
+    default EventStream<T> emitOnEach(EventStream<?> impulse) {
+        return new EmitOnEachStream<>(this, impulse);
+    }
+
+    /**
      * Returns a new event stream that emits all the events emitted from this
      * stream and in addition to that re-emits the most recent event on every
      * event emitted from {@code impulse}.

@@ -65,6 +65,11 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
     }
 
     @Override
+    default TriEventStream<A, B, C> emitOnEach(EventStream<?> impulse) {
+        return new EmitOnEachTriStream<>(this, impulse);
+    }
+
+    @Override
     default TriEventStream<A, B, C> repeatOn(EventStream<?> impulse) {
         return new RepeatOnTriStream<>(this, impulse);
     }

@@ -64,6 +64,11 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
     }
 
     @Override
+    default BiEventStream<A, B> emitOnEach(EventStream<?> impulse) {
+        return new EmitOnEachBiStream<>(this, impulse);
+    }
+
+    @Override
     default BiEventStream<A, B> repeatOn(EventStream<?> impulse) {
         return new RepeatOnBiStream<>(this, impulse);
     }

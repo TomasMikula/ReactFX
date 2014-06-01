@@ -71,8 +71,6 @@ public interface EventStream<T> {
      * Filters this event stream by the runtime type of the values.
      * {@code filter(SomeClass.class)} is equivalent to
      * {@code filter(x -> x instanceof SomeClass).map(x -> (SomeClass) x)}.
-     * @param subtype
-     * @return
      */
     default <U extends T> EventStream<U> filter(Class<U> subtype) {
         return filterMap(subtype::isInstance, subtype::cast);
@@ -143,9 +141,6 @@ public interface EventStream<T> {
     /**
      * A more efficient equivalent to
      * {@code filter(predicate).map(f)}.
-     * @param predicate
-     * @param f
-     * @return
      */
     default <U> EventStream<U> filterMap(Predicate<? super T> predicate, Function<? super T, ? extends U> f) {
         return new FilterMapStream<>(this, predicate, f);
@@ -259,8 +254,9 @@ public interface EventStream<T> {
      * @param initialTransformation function to transform a single event
      * from this stream to an event that can be emitted from the returned
      * stream.
-     * @param reduction
-     * @param timeout
+     * @param reduction function to accumulate an event to the stored value
+     * @param timeout the maximum time difference between two subsequent
+     * events that can still be accumulated.
      * @param <U> type of events emitted from the returned stream.
      */
     default <U> AwaitingEventStream<U> reduceSuccessions(
@@ -290,10 +286,11 @@ public interface EventStream<T> {
      * {@link #reduceSuccessions(Supplier, BiFunction, Duration, ScheduledExecutorService, Executor)}
      * instead.</p>
      *
-     * @param unitSupplier function that provides a unit element
+     * @param unitSupplier function that provides the unit element
      * (i.e. initial value for accumulation) of type {@code U}
-     * @param reduction
-     * @param timeout
+     * @param reduction function to accumulate an event to the stored value
+     * @param timeout the maximum time difference between two subsequent
+     * events that can still be accumulated.
      *
      * @see #reduceSuccessions(Function, BiFunction, Duration)
      */
@@ -311,13 +308,13 @@ public interface EventStream<T> {
      * {@link #reduceSuccessions(BinaryOperator, Duration)}
      * to use outside of JavaFX application thread.
      *
-     * @param reduction
-     * @param timeout
+     * @param reduction function to reduce two events into one.
+     * @param timeout the maximum time difference between two subsequent
+     * events that can still be accumulated.
      * @param scheduler used to schedule timeout expiration
      * @param eventThreadExecutor executor that executes actions on the
      * thread on which this stream's events are emitted. The returned stream
      * will use this executor to emit events.
-     * @return
      */
     default AwaitingEventStream<T> reduceSuccessions(
             BinaryOperator<T> reduction,
@@ -334,14 +331,16 @@ public interface EventStream<T> {
      * {@link #reduceSuccessions(Function, BiFunction, Duration)}
      * to use outside of JavaFX application thread.
      *
-     * @param initialTransformation
-     * @param reduction
-     * @param timeout
-     * @param scheduler
+     * @param initialTransformation function to transform a single event
+     * from this stream to an event that can be emitted from the returned
+     * stream.
+     * @param reduction function to accumulate an event to the stored value
+     * @param timeout the maximum time difference between two subsequent
+     * events that can still be accumulated.
+     * @param scheduler used to schedule timeout expiration
      * @param eventThreadExecutor executor that executes actions on the
      * thread on which this stream's events are emitted. The returned stream
      * will use this executor to emit events.
-     * @return
      */
     default <U> AwaitingEventStream<U> reduceSuccessions(
             Function<? super T, ? extends U> initialTransformation,
@@ -361,14 +360,14 @@ public interface EventStream<T> {
      * {@link #reduceSuccessions(Supplier, BiFunction, Duration)}
      * to use outside of JavaFX application thread.
      *
-     * @param unitSupplier
-     * @param reduction
-     * @param timeout
-     * @param scheduler
+     * @param unitSupplier function that provides the unit element
+     * @param reduction function to accumulate an event to the stored value
+     * @param timeout the maximum time difference between two subsequent
+     * events that can still be accumulated.
+     * @param scheduler used to schedule timeout expiration
      * @param eventThreadExecutor executor that executes actions on the
      * thread on which this stream's events are emitted. The returned stream
      * will use this executor to emit events.
-     * @return
      */
     default <U> AwaitingEventStream<U> reduceSuccessions(
             Supplier<? extends U> unitSupplier,
@@ -399,7 +398,7 @@ public interface EventStream<T> {
      * instead.</p>
      *
      * @param timeout the maximum time difference between two subsequent events
-     * in a <i>close succession</i>.
+     * in a <em>close</em> succession.
      */
     default AwaitingEventStream<T> successionEnds(Duration timeout) {
         return reduceSuccessions((a, b) -> b, timeout);
@@ -408,12 +407,12 @@ public interface EventStream<T> {
     /**
      * An analog to {@link #successionEnds(Duration)} to use outside of JavaFX
      * application thread.
-     * @param timeout
-     * @param scheduler
+     * @param timeout the maximum time difference between two subsequent events
+     * in a <em>close</em> succession.
+     * @param scheduler used to schedule timeout expiration
      * @param eventThreadExecutor executor that executes actions on the
      * thread on which this stream's events are emitted. The returned stream
      * will use this executor to emit events.
-     * @return
      */
     default AwaitingEventStream<T> successionEnds(
             Duration timeout,

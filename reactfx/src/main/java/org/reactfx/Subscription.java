@@ -8,7 +8,6 @@ public interface Subscription {
      * Returns a new aggregate subscription whose {@link #unsubscribe()}
      * method calls {@code unsubscribe()} on both this subscription and
      * {@code other} subscription.
-     * @param other
      */
     default Subscription and(Subscription other) {
         return new BiSubscription(this, other);
@@ -19,7 +18,6 @@ public interface Subscription {
     /**
      * Returns a new aggregate subscription whose {@link #unsubscribe()}
      * method calls {@code unsubscribe()} on all arguments to this method.
-     * @param subs
      */
     static Subscription multi(Subscription... subs) {
         switch(subs.length) {

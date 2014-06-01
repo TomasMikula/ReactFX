@@ -8,8 +8,6 @@ import javafx.beans.value.ObservableBooleanValue;
  *
  * <p>A stream may indicate a pending event while it is awaiting a timer or
  * completion of an asynchronous task.
- *
- * @param <T>
  */
 public interface AwaitingEventStream<T> extends EventStream<T> {
     /**

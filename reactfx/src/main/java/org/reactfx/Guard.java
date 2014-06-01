@@ -22,7 +22,6 @@ public interface Guard extends AutoCloseable {
      * Its {@code close()} method closes the guards in reverse order.
      * @param guards guards that should be released (in reverse order)
      * when the returned guards is released.
-     * @return
      */
     static Guard multi(Guard... guards) {
         switch(guards.length) {

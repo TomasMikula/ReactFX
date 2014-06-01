@@ -2,7 +2,7 @@ package org.reactfx;
 
 
 @FunctionalInterface
-public interface Guard extends Hold {
+public interface Guard extends AutoCloseable {
 
     static Guard EMPTY_GUARD = () -> {};
 

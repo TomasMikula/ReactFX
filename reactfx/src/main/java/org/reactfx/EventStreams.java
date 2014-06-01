@@ -7,7 +7,6 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.beans.value.ObservableValueBase;
 import javafx.collections.ListChangeListener;
 import javafx.collections.MapChangeListener;
 import javafx.collections.ObservableList;
@@ -488,16 +487,6 @@ public class EventStreams {
         return new Combine3<A, B, C>(srcA, srcB, srcC);
     }
 
-    @Deprecated
-    public static <T> InterceptableEventStream<T> interceptable(EventStream<T> input) {
-        return input.interceptable();
-    }
-
-    @Deprecated
-    static <T> StreamBoundValue<T> toObservableValue(EventStream<T> input, T initialValue) {
-        return new StreamBoundValueImpl<T>(input, initialValue);
-    }
-
 
     private static abstract class ZippedStream<T> extends LazilyBoundStream<T> {
 
@@ -632,30 +621,5 @@ public class EventStreams {
         public final void push(T a) {
             setValue(a);
         };
-    }
-
-    @Deprecated
-    private static class StreamBoundValueImpl<T> extends ObservableValueBase<T> implements StreamBoundValue<T> {
-        private T value;
-        private final Subscription subscription;
-
-        public StreamBoundValueImpl(EventStream<T> input, T initialValue) {
-            value = initialValue;
-            subscription = input.subscribe(evt -> {
-                value = evt;
-                fireValueChangedEvent();
-            });
-        }
-
-        @Override
-        public T getValue() {
-            return value;
-        }
-
-        @Override
-        public void unsubscribe() {
-            subscription.unsubscribe();
-        }
-
     }
 }

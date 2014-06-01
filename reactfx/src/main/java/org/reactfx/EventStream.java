@@ -197,14 +197,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * @deprecated use {@link #toBinding(Object)} instead.
-     */
-    @Deprecated
-    default StreamBoundValue<T> toObservableValue(T initialValue) {
-        return EventStreams.toObservableValue(this, initialValue);
-    }
-
-    /**
      * Returns an event stream that accumulates events emitted from this event
      * stream in close temporal succession. After an event is emitted from this
      * stream, the returned stream waits for up to {@code timeout} for the next
@@ -228,17 +220,6 @@ public interface EventStream<T> {
             Duration timeout) {
 
         return reduceSuccessions(t -> t, reduction, timeout);
-    }
-
-    /**
-     * @deprecated renamed to {@link #reduceSuccessions(BinaryOperator, Duration)}
-     */
-    @Deprecated
-    default EventStream<T> reduceCloseSuccessions(
-            BinaryOperator<T> reduction,
-            Duration timeout) {
-
-        return reduceSuccessions(reduction, timeout);
     }
 
     /**
@@ -274,18 +255,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * @deprecated renamed to {@link #reduceSuccessions(Function, BiFunction, Duration)}
-     */
-    @Deprecated
-    default <U> EventStream<U> reduceCloseSuccessions(
-            Function<T, U> initialTransformation,
-            BiFunction<U, T, U> reduction,
-            Duration timeout) {
-
-        return reduceSuccessions(initialTransformation, reduction, timeout);
-    }
-
-    /**
      * A convenient method that can be used when it is more convenient to
      * supply an identity of the type {@code U} than to transform an event
      * of type {@code T} to an event of type {@code U}.
@@ -315,18 +284,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * @deprecated renamed to {@link #reduceSuccessions(Supplier, BiFunction, Duration)}
-     */
-    @Deprecated
-    default <U> EventStream<U> reduceCloseSuccessions(
-            Supplier<U> unitSupplier,
-            BiFunction<U, T, U> reduction,
-            Duration timeout) {
-
-        return reduceSuccessions(unitSupplier, reduction, timeout);
-    }
-
-    /**
      * An analog to
      * {@link #reduceSuccessions(BinaryOperator, Duration)}
      * to use outside of JavaFX application thread.
@@ -347,20 +304,6 @@ public interface EventStream<T> {
 
         return reduceSuccessions(
                 t -> t, reduction, timeout, scheduler, eventThreadExecutor);
-    }
-
-    /**
-     * @deprecated renamed to {@link #reduceSuccessions(BinaryOperator, Duration, ScheduledExecutorService, Executor)}
-     */
-    @Deprecated
-    default EventStream<T> reduceCloseSuccessions(
-            BinaryOperator<T> reduction,
-            Duration timeout,
-            ScheduledExecutorService scheduler,
-            Executor eventThreadExecutor) {
-
-        return reduceSuccessions(
-                reduction, timeout, scheduler, eventThreadExecutor);
     }
 
     /**
@@ -391,20 +334,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * @deprecated renamed to {@link #reduceSuccessions(Function, BiFunction, Duration, ScheduledExecutorService, Executor)}
-     */
-    @Deprecated
-    default <U> EventStream<U> reduceCloseSuccessions(
-            Function<T, U> initialTransformation,
-            BiFunction<U, T, U> reduction,
-            Duration timeout,
-            ScheduledExecutorService scheduler,
-            Executor eventThreadExecutor) {
-
-        return reduceSuccessions(initialTransformation, reduction, timeout, scheduler, eventThreadExecutor);
-    }
-
-    /**
      * An analog to
      * {@link #reduceSuccessions(Supplier, BiFunction, Duration)}
      * to use outside of JavaFX application thread.
@@ -428,21 +357,6 @@ public interface EventStream<T> {
         Function<T, U> map = t -> reduction.apply(unitSupplier.get(), t);
         return reduceSuccessions(
                 map, reduction, timeout, scheduler, eventThreadExecutor);
-    }
-
-    /**
-     * @deprecated renamed to {@link #reduceSuccessions(Supplier, BiFunction, Duration, ScheduledExecutorService, Executor)}
-     */
-    @Deprecated
-    default <U> EventStream<U> reduceCloseSuccessions(
-            Supplier<U> unitSupplier,
-            BiFunction<U, T, U> reduction,
-            Duration timeout,
-            ScheduledExecutorService scheduler,
-            Executor eventThreadExecutor) {
-
-        return reduceSuccessions(
-                unitSupplier, reduction, timeout, scheduler, eventThreadExecutor);
     }
 
     /**

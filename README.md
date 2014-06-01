@@ -38,7 +38,7 @@ Note that you need only the instance of `Subscription` to stop previously reques
 
 ### Multi-valued streams
 
-Sometimes it is convenient that your stream emits pairs or tuples of values. ReactFX currently has convenience classes for 2- and 3-valued streams, namely `BiEventStream` and `TriEventStream`. This allows you to write
+Multi-valued streams compensate for the lack of language support for tuples in Java. ReactFX has convenience classes for 2- and 3-valued streams, namely `BiEventStream` and `TriEventStream`. This allows you to write
 
 ```java
 BiEventStream<A, B> eventStream = ...;

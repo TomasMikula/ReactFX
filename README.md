@@ -36,6 +36,22 @@ subscription.unsubscribe();
 
 Note that you need only the instance of `Subscription` to stop previously requested notifications. Compare this to JavaFX listeners/event handlers, where you need to keep both the listener/handler and the object you are listening to to be able to unregister the listener/handler.
 
+### Multi-valued streams
+
+Sometimes it is convenient that your stream emits pairs or tuples of values. ReactFX currently has convenience classes for 2- and 3-valued streams, namely `BiEventStream` and `TriEventStream`. This allows you to write
+
+```java
+BiEventStream<A, B> eventStream = ...;
+eventStream.subscribe((a, b) -> f(a, b));
+```
+
+instead of
+
+```java
+EventStream<Tuple2<A, B>> eventStream = ...;
+eventStream.subscribe(tuple -> f(tuple._1, tuple._2));
+```
+
 
 Event streams in JavaFX
 -----------------------
@@ -110,50 +126,26 @@ EventStream<T> merged = EventStreams.merge(stream1, stream2);
 ```
 
 
-### combine-by
+### combine
 
 ```java
 EventStream<Double> widths = ...;
 EventStream<Double> heights = ...;
-EventStream<Double> areas = EventStreams.combine(widths, heights).by((w, h) -> w * h);
+EventStream<Double> areas = EventStreams.combine(widths, heights).map((w, h) -> w * h);
 ```
 
 `areas` emits a combined value every time _either_ `widths` or `heights` emit a value, but only after both `widths` and `heights` had emitted at least once.
 
-### zip-by
+
+### zip
 
 ```java
 EventStream<Double> widths = ...;
 EventStream<Double> heights = ...;
-EventStream<Double> areas = EventStreams.zip(widths, heights).by((w, h) -> w * h);
+EventStream<Double> areas = EventStreams.zip(widths, heights).map((w, h) -> w * h);
 ```
 
-`areas` emits a combined value every time _both_ `widths` and `heights` emit a value. Zip-by expects all input streams to emit values at the same frequency. In the above example, it would be an `IllegalStateException` if `widths` emitted twice while `heights` did not emit at all.
-
-
-### combine-on-by
-
-Emits a combined value, but only when the designated stream (impulse) emits a value.
-
-```java
-EventStream<Double> widths = ...;
-EventStream<Double> heights = ...;
-EventStream<Void> impulse = ...;
-EventStream<Double> areas = EventStreams.combine(widths, heights).on(impulse).by((w, h) -> w * h);
-```
-
-The `areas` stream emits every time `impulse` emits, but only after both `widths` and `heights` had emitted at least once.
-
-
-### emitOn
-
-```java
-EventStream<T> input = ...;
-EventStream<?> impulse = ...;
-EventStream stream = input.emitOn(impulse);
-```
-
-When `impulse` emits any value, `stream` emits the latest value emitted from `input`. If `input` did not emit any value between two emits from `impulse`, `stream` does not emit anything after the second impulse in a row.
+`areas` emits a combined value every time _both_ `widths` and `heights` emit a value. `zip` expects all input streams to emit values at the same frequency. In the above example, it would be an `IllegalStateException` if `widths` emitted twice while `heights` did not emit at all.
 
 
 ### reduceSuccessions
@@ -175,6 +167,11 @@ source.push(5);
 // wait 250ms
 ```
 In the above example, an event that is emitted no later than 200ms after the previous one is accumulated (added) to the previous one. `accum` emits these values: 10, 5.
+
+
+### and more...
+
+See the [JavaDoc](http://www.reactfx.org/javadoc/org/reactfx/EventStream.html) for more stream combinators.
 
 
 Laziness of composite streams

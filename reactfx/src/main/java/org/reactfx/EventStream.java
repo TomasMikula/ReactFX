@@ -180,6 +180,17 @@ public interface EventStream<T> {
     }
 
     /**
+     * Similar to {@link #emitOnEach(EventStream)}, but also includes the
+     * impulse in the emitted value. For example, if events are emitted in this
+     * order, [<i>i1, a, i2, b, c, i3, i4, d</i>], where <i>a, b, c, d</i> come
+     * from this stream and <i>i</i>s come from the {@code impulse} stream, then
+     * the returned stream emits [<i>(a, i2), (c, i3), (c, i4)</i>].
+     */
+    default <I> BiEventStream<T, I> emitBothOnEach(EventStream<I> impulse) {
+        return new EmitBothOnEachStream<>(this, impulse);
+    }
+
+    /**
      * Returns a new event stream that emits all the events emitted from this
      * stream and in addition to that re-emits the most recent event on every
      * event emitted from {@code impulse}.

@@ -12,22 +12,6 @@ public interface InterceptableEventStream<T> extends EventStream<T> {
     Guard reduce(BinaryOperator<T> reduction);
     Guard tryReduce(BiFunction<T, T, ReductionResult<T>> reduction);
 
-    /**
-     * @deprecated Use {@link #reduce(BinaryOperator)} instead.
-     */
-    @Deprecated
-    default Hold fuse(BinaryOperator<T> fusor) {
-        return reduce(fusor);
-    }
-
-    /**
-     * @deprecated Use {@link #tryReduce(BiFunction)} instead.
-     */
-    @Deprecated
-    default Hold fuse(BiFunction<T, T, ReductionResult<T>> fusor) {
-        return tryReduce(fusor);
-    }
-
     default void muteWhile(Runnable r) {
         try(Guard g = mute()) { r.run(); }
     };
@@ -66,37 +50,5 @@ public interface InterceptableEventStream<T> extends EventStream<T> {
 
     default <U> U tryReduceWhile(BiFunction<T, T, ReductionResult<T>> reduction, Supplier<U> f) {
         try(Guard g = tryReduce(reduction)) { return f.get(); }
-    }
-
-    /**
-     * @deprecated use {@link #reduceWhile(BinaryOperator, Runnable)} instead.
-     */
-    @Deprecated
-    default void fuseWhile(BinaryOperator<T> fusor, Runnable r) {
-        reduceWhile(fusor, r);
-    }
-
-    /**
-     * @deprecated use {@link #reduceWhile(BinaryOperator, Supplier)} instead.
-     */
-    @Deprecated
-    default <U> U fuseWhile(BinaryOperator<T> fusor, Supplier<U> f) {
-        return reduceWhile(fusor, f);
-    }
-
-    /**
-     * @deprecated use {@link #tryReduceWhile(BiFunction, Runnable)} instead.
-     */
-    @Deprecated
-    default void fuseWhile(BiFunction<T, T, ReductionResult<T>> fusor, Runnable r) {
-        tryReduceWhile(fusor, r);
-    }
-
-    /**
-     * @deprecated use {@link #tryReduceWhile(BiFunction, Supplier)} instead.
-     */
-    @Deprecated
-    default <U> U fuseWhile(BiFunction<T, T, ReductionResult<T>> fusor, Supplier<U> f) {
-        return tryReduceWhile(fusor, f);
     }
 }

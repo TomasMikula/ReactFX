@@ -1,5 +1,6 @@
 package org.reactfx;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import javafx.beans.InvalidationListener;
@@ -18,39 +19,14 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 
+import org.reactfx.util.TetraFunction;
+import org.reactfx.util.TriFunction;
 import org.reactfx.util.Tuple2;
 import org.reactfx.util.Tuple3;
 import org.reactfx.util.Tuple4;
 import org.reactfx.util.Tuples;
 
 public class EventStreams {
-
-    public static interface Combinator2<A, B, R> {
-        R combine(A a, B b);
-    }
-
-    public static interface Combinator3<A, B, C, R> {
-        R combine(A a, B b, C c);
-    }
-
-    public static interface Combinator4<A, B, C, D, R> {
-        R combine(A a, B b, C c, D d);
-    }
-
-    /**
-     * Type returned from
-     * {@code emit(EventStream<T>)}.
-     */
-    @Deprecated
-    public static final class Emit<T> {
-        private final EventStream<T> input;
-        Emit(EventStream<T> input) {
-            this.input = input;
-        }
-        public EventStream<T> on(EventStream<?> impulse) {
-            return emitOnImpulse(input, impulse);
-        }
-    }
 
     /**
      * Type returned from
@@ -77,7 +53,7 @@ public class EventStreams {
             this.srcA = srcA;
             this.impulse = impulse;
         }
-        public <R> EventStream<R> by(Combinator2<A, I, R> combinator) {
+        public <R> EventStream<R> by(BiFunction<A, I, R> combinator) {
             return combineOnImpulse(srcA, impulse, combinator);
         }
         public EventStream<Tuple2<A, I>> asTuple() {
@@ -96,7 +72,7 @@ public class EventStreams {
             this.srcA = srcA;
             this.srcB = srcB;
         }
-        public <R> EventStream<R> by(Combinator2<A, B, R> combinator) {
+        public <R> EventStream<R> by(BiFunction<A, B, R> combinator) {
             return combineLatest(srcA, srcB, combinator);
         }
         public EventStream<Tuple2<A, B>> asTuple() {
@@ -120,10 +96,10 @@ public class EventStreams {
             this.srcB = srcB;
             this.impulse = impulse;
         }
-        public <R> EventStream<R> by(Combinator2<A, B, R> combinator) {
+        public <R> EventStream<R> by(BiFunction<A, B, R> combinator) {
             return combineOnImpulse(srcA, srcB, impulse, combinator);
         }
-        public <R> EventStream<R> by(Combinator3<A, B, I, R> combinator) {
+        public <R> EventStream<R> by(TriFunction<A, B, I, R> combinator) {
             return combineOnImpulse(srcA, srcB, impulse, combinator);
         }
         public EventStream<Tuple3<A, B, I>> asTuple() {
@@ -144,7 +120,7 @@ public class EventStreams {
             this.srcB = srcB;
             this.srcC = srcC;
         }
-        public <R> EventStream<R> by(Combinator3<A, B, C, R> combinator) {
+        public <R> EventStream<R> by(TriFunction<A, B, C, R> combinator) {
             return combineLatest(srcA, srcB, srcC, combinator);
         }
         public EventStream<Tuple3<A, B, C>> asTuple() {
@@ -170,10 +146,10 @@ public class EventStreams {
             this.srcC = srcC;
             this.impulse = impulse;
         }
-        public <R> EventStream<R> by(Combinator3<A, B, C, R> combinator) {
+        public <R> EventStream<R> by(TriFunction<A, B, C, R> combinator) {
             return combineOnImpulse(srcA, srcB, srcC, impulse, combinator);
         }
-        public <R> EventStream<R> by(Combinator4<A, B, C, I, R> combinator) {
+        public <R> EventStream<R> by(TetraFunction<A, B, C, I, R> combinator) {
             return combineOnImpulse(srcA, srcB, srcC, impulse, combinator);
         }
         public EventStream<Tuple4<A, B, C, I>> asTuple() {
@@ -193,7 +169,7 @@ public class EventStreams {
             this.srcA = srcA;
             this.srcB = srcB;
         }
-        public <R> EventStream<R> by(Combinator2<A, B, R> combinator) {
+        public <R> EventStream<R> by(BiFunction<A, B, R> combinator) {
             return zip(srcA, srcB, combinator);
         }
         public EventStream<Tuple2<A, B>> asTuple() {
@@ -214,7 +190,7 @@ public class EventStreams {
             this.srcB = srcB;
             this.srcC = srcC;
         }
-        public <R> EventStream<R> by(Combinator3<A, B, C, R> combinator) {
+        public <R> EventStream<R> by(TriFunction<A, B, C, R> combinator) {
             return zip(srcA, srcB, srcC, combinator);
         }
         public EventStream<Tuple3<A, B, C>> asTuple() {
@@ -353,7 +329,7 @@ public class EventStreams {
         return new Zip2<>(srcA, srcB);
     }
 
-    static <A, B, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, Combinator2<A, B, R> combinator) {
+    static <A, B, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, BiFunction<A, B, R> combinator) {
         return new ZippedStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -368,7 +344,7 @@ public class EventStreams {
             @Override
             protected void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue()) {
-                    emit(combinator.combine(pocketA.extract(), pocketB.extract()));
+                    emit(combinator.apply(pocketA.extract(), pocketB.extract()));
                 }
             }
         };
@@ -378,7 +354,7 @@ public class EventStreams {
         return new Zip3<>(srcA, srcB, srcC);
     }
 
-    static <A, B, C, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, Combinator3<A, B, C, R> combinator) {
+    static <A, B, C, R> EventStream<R> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, TriFunction<A, B, C, R> combinator) {
         return new ZippedStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -395,13 +371,13 @@ public class EventStreams {
             @Override
             protected void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
-                    emit(combinator.combine(pocketA.extract(), pocketB.extract(), pocketC.extract()));
+                    emit(combinator.apply(pocketA.extract(), pocketB.extract(), pocketC.extract()));
                 }
             }
         };
     }
 
-    static <A, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<I> impulse, Combinator2<A, I, R> combinator) {
+    static <A, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<I> impulse, BiFunction<A, I, R> combinator) {
         return new LazilyBoundStream<R>() {
             Pocket<A> pocketA = new OverwritingPocket<A>();
 
@@ -414,7 +390,7 @@ public class EventStreams {
 
             private void tryEmit(I i) {
                 if(pocketA.hasValue()) {
-                    emit(combinator.combine(pocketA.extract(), i));
+                    emit(combinator.apply(pocketA.extract(), i));
                 }
             }
         };
@@ -424,7 +400,7 @@ public class EventStreams {
         return new Combine1<A>(srcA);
     }
 
-    static <A, B, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, Combinator2<A, B, R> combinator) {
+    static <A, B, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, BiFunction<A, B, R> combinator) {
         return new CombineLatestStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -439,26 +415,26 @@ public class EventStreams {
             @Override
             void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue()) {
-                    emit(combinator.combine(pocketA.peek(), pocketB.peek()));
+                    emit(combinator.apply(pocketA.peek(), pocketB.peek()));
                 }
             }
         };
     }
 
-    static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, Combinator3<A, B, I, R> combinator) {
+    static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, TriFunction<A, B, I, R> combinator) {
         return new Combine2OnImpulseStream<A, B, I, R>(srcA, srcB, impulse) {
             @Override
             protected R combine(I impulse) {
-                return combinator.combine(pocketA.peek(), pocketB.peek(), impulse);
+                return combinator.apply(pocketA.peek(), pocketB.peek(), impulse);
             }
         };
     }
 
-    static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, Combinator2<A, B, R> combinator) {
+    static <A, B, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<I> impulse, BiFunction<A, B, R> combinator) {
         return new Combine2OnImpulseStream<A, B, I, R>(srcA, srcB, impulse) {
             @Override
             protected R combine(I impulse) {
-                return combinator.combine(pocketA.peek(), pocketB.peek());
+                return combinator.apply(pocketA.peek(), pocketB.peek());
             }
         };
     }
@@ -467,7 +443,7 @@ public class EventStreams {
         return new Combine2<A, B>(srcA, srcB);
     }
 
-    static <A, B, C, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, Combinator3<A, B, C, R> combinator) {
+    static <A, B, C, R> EventStream<R> combineLatest(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, TriFunction<A, B, C, R> combinator) {
         return new CombineLatestStream<R>() {
             Pocket<A> pocketA = new Pocket<A>();
             Pocket<B> pocketB = new Pocket<B>();
@@ -484,26 +460,26 @@ public class EventStreams {
             @Override
             void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
-                    emit(combinator.combine(pocketA.peek(), pocketB.peek(), pocketC.peek()));
+                    emit(combinator.apply(pocketA.peek(), pocketB.peek(), pocketC.peek()));
                 }
             }
         };
     }
 
-    public static <A, B, C, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse, Combinator4<A, B, C, I, R> combinator) {
+    public static <A, B, C, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse, TetraFunction<A, B, C, I, R> combinator) {
         return new Combine3OnImpulseStream<A, B, C, I, R>(srcA, srcB, srcC, impulse) {
             @Override
             protected R combine(I impulse) {
-                return combinator.combine(pocketA.peek(), pocketB.peek(), pocketC.peek(), impulse);
+                return combinator.apply(pocketA.peek(), pocketB.peek(), pocketC.peek(), impulse);
             }
         };
     }
 
-    public static <A, B, C, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse, Combinator3<A, B, C, R> combinator) {
+    public static <A, B, C, I, R> EventStream<R> combineOnImpulse(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC, EventStream<I> impulse, TriFunction<A, B, C, R> combinator) {
         return new Combine3OnImpulseStream<A, B, C, I, R>(srcA, srcB, srcC, impulse) {
             @Override
             protected R combine(I impulse) {
-                return combinator.combine(pocketA.peek(), pocketB.peek(), pocketC.peek());
+                return combinator.apply(pocketA.peek(), pocketB.peek(), pocketC.peek());
             }
         };
     }
@@ -512,70 +488,9 @@ public class EventStreams {
         return new Combine3<A, B, C>(srcA, srcB, srcC);
     }
 
-    /**
-     * @deprecated Use {@code input.emitOn(impulse)} instead.
-     */
     @Deprecated
-    public static <T> Emit<T> emit(EventStream<T> input) {
-        return new Emit<T>(input);
-    }
-
-    static <T> EventStream<T> emitOnImpulse(EventStream<T> input, EventStream<?> impulse) {
-        return new LazilyBoundStream<T>() {
-            private boolean hasValue = false;
-            private T value = null;
-
-            @Override
-            protected Subscription subscribeToInputs() {
-                Subscription s1 = input.subscribe(v -> {
-                    hasValue = true;
-                    value = v;
-                });
-
-                Subscription s2 = impulse.subscribe(i -> {
-                    if(hasValue) {
-                        T val = value;
-                        hasValue = false;
-                        value = null;
-                        emit(val);
-                    }
-                });
-
-                return s1.and(s2);
-            }
-        };
-    }
-
-    static <T> EventStream<T> repeatOnImpulse(EventStream<T> input, EventStream<?> impulse) {
-        return new LazilyBoundStream<T>() {
-            private boolean hasValue = false;
-            private T value = null;
-
-            @Override
-            protected Subscription subscribeToInputs() {
-                Subscription s1 = input.subscribe(v -> {
-                    hasValue = true;
-                    value = v;
-                    emit(v);
-                });
-
-                Subscription s2 = impulse.subscribe(i -> {
-                    if(hasValue) {
-                        emit(value);
-                    }
-                });
-
-                return s1.and(s2);
-            }
-        };
-    }
-
     public static <T> InterceptableEventStream<T> interceptable(EventStream<T> input) {
-        if(input instanceof InterceptableEventStream) {
-            return (InterceptableEventStream<T>) input;
-        } else {
-            return new InterceptableEventStreamImpl<>(input);
-        }
+        return input.interceptable();
     }
 
     @Deprecated

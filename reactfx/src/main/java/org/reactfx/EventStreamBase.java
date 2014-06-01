@@ -2,12 +2,16 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-public abstract class EventStreamBase<T> implements EventStream<T> {
+/**
+ *
+ * @param <S> type of the subscriber
+ */
+public abstract class EventStreamBase<S> {
 
-    private ListHelper<Consumer<? super T>> subscribers = null;
+    private ListHelper<S> subscribers = null;
 
-    protected void emit(T value) {
-        ListHelper.forEach(subscribers, s -> s.accept(value));
+    protected final void forEachSubscriber(Consumer<S> action) {
+        ListHelper.forEach(subscribers, action);
     }
 
     /**
@@ -15,7 +19,7 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
      * Overriding this method is a convenient way for subclasses
      * to handle this event.
      *
-     * <p>This method is called after the {@link #newSubscriber(Consumer)}
+     * <p>This method is called after the {@link #newSubscriber(Object)}
      * method.</p>
      */
     protected void firstSubscriber() {
@@ -27,7 +31,7 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
      * Overriding this method is a convenient way for subclasses
      * to handle this event, for example to publish some initial events.
      */
-    protected void newSubscriber(Consumer<? super T> consumer) {
+    protected void newSubscriber(S subscriber) {
         // default implementation is empty
     }
 
@@ -40,18 +44,17 @@ public abstract class EventStreamBase<T> implements EventStream<T> {
         // default implementation is empty
     }
 
-    @Override
-    public Subscription subscribe(Consumer<? super T> consumer) {
-        subscribers = ListHelper.add(subscribers, consumer);
-        newSubscriber(consumer);
+    public final Subscription subscribe(S subscriber) {
+        subscribers = ListHelper.add(subscribers, subscriber);
+        newSubscriber(subscriber);
         if(ListHelper.size(subscribers) == 1) {
             firstSubscriber();
         }
-        return () -> unsubscribe(consumer);
+        return () -> unsubscribe(subscriber);
     }
 
-    private void unsubscribe(Consumer<? super T> consumer) {
-        subscribers = ListHelper.remove(subscribers, consumer);
+    private void unsubscribe(S subscriber) {
+        subscribers = ListHelper.remove(subscribers, subscriber);
         if(ListHelper.isEmpty(subscribers)) {
             noSubscribers();
         }

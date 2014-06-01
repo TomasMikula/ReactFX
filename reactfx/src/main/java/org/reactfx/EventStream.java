@@ -56,15 +56,7 @@ public interface EventStream<T> {
      * performs side effects when it has at least one subscriber.
      */
     default EventStream<T> hook(Consumer<? super T> sideEffect) {
-        return new LazilyBoundStream<T>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return EventStream.this.subscribe(t -> {
-                    sideEffect.accept(t);
-                    emit(t);
-                });
-            }
-        };
+        return new SideEffectStream<>(this, sideEffect);
     }
 
     /**
@@ -72,16 +64,7 @@ public interface EventStream<T> {
      * that satisfy the given predicate.
      */
     default EventStream<T> filter(Predicate<? super T> predicate) {
-        return new LazilyBoundStream<T>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return EventStream.this.subscribe(value -> {
-                    if(predicate.test(value)) {
-                        emit(value);
-                    }
-                });
-            }
-        };
+        return new FilterStream<>(this, predicate);
     }
 
     /**
@@ -165,16 +148,7 @@ public interface EventStream<T> {
      * @return
      */
     default <U> EventStream<U> filterMap(Predicate<? super T> predicate, Function<? super T, ? extends U> f) {
-        return new LazilyBoundStream<U>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return EventStream.this.subscribe(value -> {
-                    if(predicate.test(value)) {
-                        emit(f.apply(value));
-                    }
-                });
-            }
-        };
+        return new FilterMapStream<>(this, predicate, f);
     }
 
     default <U> EventStream<U> flatMap(Function<? super T, ? extends EventStream<U>> f) {
@@ -190,7 +164,7 @@ public interface EventStream<T> {
      * {@code impulse} stream, then the returned stream emits [<i>a, c</i>].
      */
     default EventStream<T> emitOn(EventStream<?> impulse) {
-        return EventStreams.emitOnImpulse(this, impulse);
+        return new EmitOnStream<>(this, impulse);
     }
 
     /**
@@ -199,11 +173,15 @@ public interface EventStream<T> {
      * event emitted from {@code impulse}.
      */
     default EventStream<T> repeatOn(EventStream<?> impulse) {
-        return EventStreams.repeatOnImpulse(this, impulse);
+        return new RepeatOnStream<>(this, impulse);
     }
 
     default InterceptableEventStream<T> interceptable() {
-        return EventStreams.interceptable(this);
+        if(this instanceof InterceptableEventStream) {
+            return (InterceptableEventStream<T>) this;
+        } else {
+            return new InterceptableEventStreamImpl<>(this);
+        }
     }
 
     /**

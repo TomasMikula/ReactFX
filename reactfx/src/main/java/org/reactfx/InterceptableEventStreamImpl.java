@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
+import org.reactfx.util.Tuple2;
+import org.reactfx.util.Tuple3;
+
 class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements InterceptableEventStream<T> {
 
     private final EventStream<T> input;
@@ -54,18 +57,18 @@ class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements In
     }
 
     @Override
-    public Guard reduce(BinaryOperator<T> fusor) {
+    public Guard reduce(BinaryOperator<T> reduction) {
         switch(consumer.getType()) {
             case MUTE: return Guard.EMPTY_GUARD;
-            default: return stack(new FusionConsumer<T>(consumer, fusor));
+            default: return stack(new ReduceConsumer<T>(consumer, reduction));
         }
     }
 
     @Override
-    public Guard tryReduce(BiFunction<T, T, ReductionResult<T>> fusor) {
+    public Guard tryReduce(BiFunction<T, T, ReductionResult<T>> reduction) {
         switch(consumer.getType()) {
         case MUTE: return Guard.EMPTY_GUARD;
-        default: return stack(new OptionalFusionConsumer<T>(consumer, fusor));
+        default: return stack(new ReduceOptionallyConsumer<T>(consumer, reduction));
     }
     }
 
@@ -87,7 +90,7 @@ enum ConsumerType {
     MUTE,
     PAUSE,
     RETAIN_LATEST,
-    FUSE,
+    REDUCE,
 }
 
 interface EventConsumer<T> {
@@ -176,20 +179,20 @@ class RetainLatestConsumer<T> extends StackedConsumer<T> {
     }
 }
 
-class FusionConsumer<T> extends StackedConsumer<T> {
-    private final BinaryOperator<T> fusor;
+class ReduceConsumer<T> extends StackedConsumer<T> {
+    private final BinaryOperator<T> reduction;
     private boolean eventArrived = false;
     private T aggregate;
 
-    public FusionConsumer(EventConsumer<T> previous, BinaryOperator<T> fusor) {
+    public ReduceConsumer(EventConsumer<T> previous, BinaryOperator<T> reduction) {
         super(previous);
-        this.fusor = fusor;
+        this.reduction = reduction;
     }
 
     @Override
     public void consume(T event) {
         if(eventArrived) {
-            aggregate = fusor.apply(aggregate, event);
+            aggregate = reduction.apply(aggregate, event);
         } else {
             eventArrived = true;
             aggregate = event;
@@ -197,7 +200,7 @@ class FusionConsumer<T> extends StackedConsumer<T> {
     }
 
     @Override
-    public ConsumerType getType() { return ConsumerType.FUSE; }
+    public ConsumerType getType() { return ConsumerType.REDUCE; }
 
     @Override
     protected void feedToPrevious() {
@@ -207,13 +210,13 @@ class FusionConsumer<T> extends StackedConsumer<T> {
     }
 }
 
-class OptionalFusionConsumer<T> extends StackedConsumer<T> {
-    private final BiFunction<T, T, ReductionResult<T>> fusor;
+class ReduceOptionallyConsumer<T> extends StackedConsumer<T> {
+    private final BiFunction<T, T, ReductionResult<T>> reduction;
     private final List<T> buffer = new ArrayList<>();
 
-    public OptionalFusionConsumer(EventConsumer<T> previous, BiFunction<T, T, ReductionResult<T>> fusor) {
+    public ReduceOptionallyConsumer(EventConsumer<T> previous, BiFunction<T, T, ReductionResult<T>> reduction) {
         super(previous);
-        this.fusor = fusor;
+        this.reduction = reduction;
     }
 
     @Override
@@ -223,7 +226,7 @@ class OptionalFusionConsumer<T> extends StackedConsumer<T> {
         } else {
             int lastIndex = buffer.size() - 1;
             T lastEvent = buffer.get(lastIndex);
-            ReductionResult<T> res = fusor.apply(lastEvent, event);
+            ReductionResult<T> res = reduction.apply(lastEvent, event);
             if(res.isAnnihilated()) {
                 buffer.remove(lastIndex);
             } else if(res.isReduced()) {
@@ -236,12 +239,32 @@ class OptionalFusionConsumer<T> extends StackedConsumer<T> {
     }
 
     @Override
-    public ConsumerType getType() { return ConsumerType.FUSE; }
+    public ConsumerType getType() { return ConsumerType.REDUCE; }
 
     @Override
     protected void feedToPrevious() {
         for(T evt: buffer) {
             getPrevious().consume(evt);
         }
+    }
+}
+
+
+class InterceptableBiEventStreamImpl<A, B>
+extends InterceptableEventStreamImpl<Tuple2<A, B>>
+implements InterceptableBiEventStream<A, B>, PoorMansBiStream<A, B> {
+
+    public InterceptableBiEventStreamImpl(EventStream<Tuple2<A, B>> input) {
+        super(input);
+    }
+}
+
+
+class InterceptableTriEventStreamImpl<A, B, C>
+extends InterceptableEventStreamImpl<Tuple3<A, B, C>>
+implements InterceptableTriEventStream<A, B, C>, PoorMansTriStream<A, B, C> {
+
+    public InterceptableTriEventStreamImpl(EventStream<Tuple3<A, B, C>> input) {
+        super(input);
     }
 }

@@ -2,6 +2,7 @@ package org.reactfx;
 
 import static org.reactfx.util.Tuples.*;
 
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.BiConsumer;
@@ -56,6 +57,10 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
 
     default <U> EventStream<U> flatMap(BiFunction<? super A, ? super B, ? extends EventStream<U>> f) {
         return flatMap(t -> f.apply(t._1, t._2));
+    }
+
+    default <U> EventStream<U> flatMapOpt(BiFunction<? super A, ? super B, Optional<U>> f) {
+        return flatMapOpt(t -> f.apply(t._1, t._2));
     }
 
     @Override

@@ -1,6 +1,7 @@
 package org.reactfx;
 
 import java.time.Duration;
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
@@ -146,8 +147,34 @@ public interface EventStream<T> {
         return new FilterMapStream<>(this, predicate, f);
     }
 
+    /**
+     * Returns a new event stream that, for each event <i>x</i> emitted from
+     * this stream, obtains the event stream <i>f(x)</i> and keeps emitting its
+     * events until the next event is emitted from this stream.
+     */
     default <U> EventStream<U> flatMap(Function<? super T, ? extends EventStream<U>> f) {
         return new FlatMapStream<>(this, f);
+    }
+
+    /**
+     * <pre>
+     * {@code
+     * stream.flatMapOpt(f)
+     * }
+     * </pre>
+     * is equivalent to
+     * <pre>
+     * {@code
+     * stream.map(f)
+     *     .filter(Optional::isPresent)
+     *     .map(Optional::get)
+     * }
+     * </pre>
+     * @param f
+     * @return
+     */
+    default <U> EventStream<U> flatMapOpt(Function<? super T, Optional<U>> f) {
+        return new FlatMapOptStream<T, U>(this, f);
     }
 
     /**

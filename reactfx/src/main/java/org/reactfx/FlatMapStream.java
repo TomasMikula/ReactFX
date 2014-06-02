@@ -1,5 +1,6 @@
 package org.reactfx;
 
+import java.util.Optional;
 import java.util.function.Function;
 
 class FlatMapStream<T, U> extends LazilyBoundStream<U> {
@@ -26,5 +27,22 @@ class FlatMapStream<T, U> extends LazilyBoundStream<U> {
             mappedSubscription.unsubscribe();
             mappedSubscription = Subscription.EMPTY;
         };
+    }
+}
+
+class FlatMapOptStream<T, U> extends LazilyBoundStream<U> {
+    private final EventStream<T> source;
+    private final Function<? super T, Optional<U>> mapper;
+
+    public FlatMapOptStream(
+            EventStream<T> src,
+            Function<? super T, Optional<U>> f) {
+        this.source = src;
+        this.mapper = f;
+    }
+
+    @Override
+    protected Subscription subscribeToInputs() {
+        return source.subscribe(t -> mapper.apply(t).ifPresent(u -> emit(u)));
     }
 }

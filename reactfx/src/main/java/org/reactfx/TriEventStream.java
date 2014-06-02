@@ -2,6 +2,7 @@ package org.reactfx;
 
 import static org.reactfx.util.Tuples.*;
 
+import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
@@ -56,6 +57,10 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
 
     default <U> EventStream<U> flatMap(TriFunction<? super A, ? super B, ? super C, ? extends EventStream<U>> f) {
         return flatMap(t -> f.apply(t._1, t._2, t._3));
+    }
+
+    default <U> EventStream<U> flatMapOpt(TriFunction<? super A, ? super B, ? super C, Optional<U>> f) {
+        return flatMapOpt(t -> f.apply(t._1, t._2, t._3));
     }
 
     @Override

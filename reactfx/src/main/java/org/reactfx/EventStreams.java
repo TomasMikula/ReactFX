@@ -1,6 +1,7 @@
 package org.reactfx;
 
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -131,15 +132,21 @@ public class EventStreams {
         };
     }
 
+    /**
+     * Returns an event stream that emits all the events emitted from any of
+     * the {@code inputs}. The event type of the returned stream is the nearest
+     * common super-type of all the {@code inputs}.
+     *
+     * @see EventStream#or(EventStream)
+     */
     @SafeVarargs
     public static <T> EventStream<T> merge(EventStream<? extends T>... inputs) {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription[] subs = new Subscription[inputs.length];
-                for(int i = 0; i < inputs.length; ++i) {
-                    subs[i] = inputs[i].subscribe(value -> emit(value));
-                }
+                Subscription[] subs = Stream.of(inputs)
+                        .map(i -> i.subscribe(this::emit))
+                        .toArray(n -> new Subscription[n]);
                 return Subscription.multi(subs);
             }
         };

@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import static org.reactfx.util.Either.*;
+
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -15,6 +17,8 @@ import java.util.function.Supplier;
 import javafx.application.Platform;
 import javafx.beans.binding.Binding;
 import javafx.concurrent.Task;
+
+import org.reactfx.util.Either;
 
 /**
  * Stream of values (events).
@@ -175,6 +179,28 @@ public interface EventStream<T> {
      */
     default <U> EventStream<U> flatMapOpt(Function<? super T, Optional<U>> f) {
         return new FlatMapOptStream<T, U>(this, f);
+    }
+
+    /**
+     * Returns an event stream that emits all the events emitted from either
+     * this stream or the {@code right} stream. An event <i>t</i> emitted from
+     * this stream is emitted as {@code Either.left(t)}. An event <i>u</i>
+     * emitted from the {@code right} stream is emitted as
+     * {@code Either.right(u)}.
+     *
+     * @see EventStreams#merge(EventStream...)
+     */
+    default <U> EventStream<Either<T, U>> or(EventStream<? extends U> right) {
+        EventStream<T> left = this;
+        return new LazilyBoundStream<Either<T, U>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return Subscription.multi(
+                        left.subscribe(t -> emit(left(t))),
+                        right.subscribe(u -> emit(right(u))));
+            }
+
+        };
     }
 
     /**

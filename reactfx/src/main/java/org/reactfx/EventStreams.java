@@ -141,6 +141,11 @@ public class EventStreams {
     /**
      * Returns an event stream that emits periodic <i>ticks</i>. The returned
      * stream may only be used on the JavaFX application thread.
+     *
+     * <p>As with all lazily bound streams, ticks are emitted only when there
+     * is at least one subscriber to the returned stream. This means that to
+     * release associated resources, it suffices to unsubscribe from the
+     * returned stream.
      */
     public static EventStream<?> ticks(Duration interval) {
         return new LazilyBoundStream<Void>() {
@@ -159,6 +164,12 @@ public class EventStreams {
      * Returns an event stream that emits periodic <i>ticks</i> on the given
      * {@code eventThreadExecutor}. The returned stream may only be used from
      * that executor's thread.
+     *
+     * <p>As with all lazily bound streams, ticks are emitted only when there
+     * is at least one subscriber to the returned stream. This means that to
+     * release associated resources, it suffices to unsubscribe from the
+     * returned stream.
+     *
      * @param scheduler scheduler used to schedule periodic emissions.
      * @param eventThreadExecutor single-thread executor used to emit the ticks.
      */

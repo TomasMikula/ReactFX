@@ -189,8 +189,6 @@ public interface EventStream<T> {
      *     .map(Optional::get)
      * }
      * </pre>
-     * @param f
-     * @return
      */
     default <U> EventStream<U> flatMapOpt(Function<? super T, Optional<U>> f) {
         return new FlatMapOptStream<T, U>(this, f);

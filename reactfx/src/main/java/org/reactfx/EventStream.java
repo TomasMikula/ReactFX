@@ -39,6 +39,19 @@ public interface EventStream<T> {
     Subscription subscribe(Consumer<? super T> subscriber);
 
     /**
+     * Starts pushing all events emitted by this stream to the given event sink.
+     * <p>{@code stream.feedTo(sink)} is equivalent to
+     * {@code sink.feedFrom(stream)}
+     * @param sink event sink to which this event stream's events will be pushed
+     * @return subscription that can be used to stop delivering this stream's
+     * events to {@code sink}.
+     * @see EventSink#feedFrom(EventStream)
+     */
+    default Subscription feedTo(EventSink<? super T> sink) {
+        return subscribe(sink::push);
+    }
+
+    /**
      * If this stream is a compound stream lazily subscribed to its inputs,
      * that is, subscribed to inputs only when it itself has some subscribers,
      * {@code pin}ning this stream causes it to stay subscribed until the

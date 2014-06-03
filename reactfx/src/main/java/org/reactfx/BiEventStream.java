@@ -24,6 +24,10 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return subscribe((a, b) -> subscriber.accept(t(a, b)));
     }
 
+    default Subscription feedTo2(BiEventSink<? super A, ? super B> sink) {
+        return subscribe(sink::push);
+    }
+
     default BiEventStream<A, B> hook(
             BiConsumer<? super A, ? super B> sideEffect) {
         return new SideEffectBiStream<>(this, sideEffect);

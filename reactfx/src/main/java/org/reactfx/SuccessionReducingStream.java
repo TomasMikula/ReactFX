@@ -12,7 +12,6 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements Awa
     private final BiFunction<? super O, ? super I, ? extends O> reduction;
     private final Timer timer;
 
-    private long timerNumber = 0;
     private boolean hasEvent = false;
     private BooleanBinding pending = null;
     private O event = null;
@@ -21,12 +20,12 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements Awa
             EventStream<I> input,
             Function<? super I, ? extends O> initial,
             BiFunction<? super O, ? super I, ? extends O> reduction,
-            Timer timer) {
+            Function<Runnable, Timer> timerFactory) {
 
         this.input = input;
         this.initial = initial;
         this.reduction = reduction;
-        this.timer = timer;
+        this.timer = timerFactory.apply(this::handleTimeout);
     }
 
     @Override
@@ -59,16 +58,7 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements Awa
             event = initial.apply(i);
             setHasEvent(true);
         }
-        resetTimer();
-    }
-
-    private void resetTimer() {
-        long nextTimer = ++timerNumber;
-        timer.reset(() -> {
-            if(nextTimer == timerNumber) {
-                handleTimeout();
-            }
-        });
+        timer.restart();
     }
 
     private void handleTimeout() {

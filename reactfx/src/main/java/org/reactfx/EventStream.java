@@ -334,9 +334,10 @@ public interface EventStream<T> {
             throw new IllegalStateException("Not on FX application thread");
         }
 
-        Timer timer = new TimelineTimer(timeout);
+        Function<Runnable, Timer> timerFactory =
+                action -> new FxTimer(timeout, action);
         return new SuccessionReducingStream<T, U>(
-                this, initialTransformation, reduction, timer);
+                this, initialTransformation, reduction, timerFactory);
     }
 
     /**
@@ -415,10 +416,11 @@ public interface EventStream<T> {
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {
 
-        Timer timer = new ScheduledExecutorServiceTimer(
-                timeout, scheduler, eventThreadExecutor);
+        Function<Runnable, Timer> timerFactory =
+                action -> new ScheduledExecutorServiceTimer(
+                        timeout, action, scheduler, eventThreadExecutor);
         return new SuccessionReducingStream<T, U>(
-                this, initialTransformation, reduction, timer);
+                this, initialTransformation, reduction, timerFactory);
     }
 
     /**

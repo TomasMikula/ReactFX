@@ -32,11 +32,11 @@ public interface EventStream<T> {
 
     /**
      * Get notified every time this stream emits a value.
-     * @param consumer function to call on the emitted value.
+     * @param subscriber function to call on the emitted value.
      * @return subscription that can be used to stop observing
      * this event stream.
      */
-    Subscription subscribe(Consumer<? super T> consumer);
+    Subscription subscribe(Consumer<? super T> subscriber);
 
     /**
      * If this stream is a compound stream lazily subscribed to its inputs,

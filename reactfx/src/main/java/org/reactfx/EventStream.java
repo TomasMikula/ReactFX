@@ -19,6 +19,8 @@ import javafx.beans.binding.Binding;
 import javafx.concurrent.Task;
 
 import org.reactfx.util.Either;
+import org.reactfx.util.FxTimer;
+import org.reactfx.util.Timer;
 
 /**
  * Stream of values (events).
@@ -335,7 +337,7 @@ public interface EventStream<T> {
         }
 
         Function<Runnable, Timer> timerFactory =
-                action -> new FxTimer(timeout, action);
+                action -> FxTimer.create(timeout, action);
         return new SuccessionReducingStream<T, U>(
                 this, initialTransformation, reduction, timerFactory);
     }

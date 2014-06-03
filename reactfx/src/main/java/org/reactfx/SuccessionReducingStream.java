@@ -3,6 +3,8 @@ package org.reactfx;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+import org.reactfx.util.Timer;
+
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
 

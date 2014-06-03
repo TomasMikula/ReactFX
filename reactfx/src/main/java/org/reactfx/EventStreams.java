@@ -1,5 +1,8 @@
 package org.reactfx;
 
+import java.time.Duration;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -17,6 +20,9 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
+
+import org.reactfx.util.FxTimer;
+import org.reactfx.util.Timer;
 
 public class EventStreams {
 
@@ -128,6 +134,46 @@ public class EventStreams {
                 EventHandler<T> handler = event -> emit(event);
                 node.addEventHandler(eventType, handler);
                 return () -> node.removeEventHandler(eventType, handler);
+            }
+        };
+    }
+
+    /**
+     * Returns an event stream that emits periodic <i>ticks</i>. The returned
+     * stream may only be used on the JavaFX application thread.
+     */
+    public static EventStream<?> ticks(Duration interval) {
+        return new LazilyBoundStream<Void>() {
+            private final Timer timer = FxTimer.createPeriodic(
+                    interval, () -> emit(null));
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                timer.restart();
+                return timer::stop;
+            }
+        };
+    }
+
+    /**
+     * Returns an event stream that emits periodic <i>ticks</i> on the given
+     * {@code eventThreadExecutor}. The returned stream may only be used from
+     * that executor's thread.
+     * @param scheduler scheduler used to schedule periodic emissions.
+     * @param eventThreadExecutor single-thread executor used to emit the ticks.
+     */
+    public static EventStream<?> ticks(
+            Duration interval,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+        return new LazilyBoundStream<Void>() {
+            private final Timer timer = ScheduledExecutorServiceTimer.createPeriodic(
+                    interval, () -> emit(null), scheduler, eventThreadExecutor);
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                timer.restart();
+                return timer::stop;
             }
         };
     }

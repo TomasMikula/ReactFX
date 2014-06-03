@@ -419,7 +419,7 @@ public interface EventStream<T> {
             Executor eventThreadExecutor) {
 
         Function<Runnable, Timer> timerFactory =
-                action -> new ScheduledExecutorServiceTimer(
+                action -> ScheduledExecutorServiceTimer.create(
                         timeout, action, scheduler, eventThreadExecutor);
         return new SuccessionReducingStream<T, U>(
                 this, initialTransformation, reduction, timerFactory);

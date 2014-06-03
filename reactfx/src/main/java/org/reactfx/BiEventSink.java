@@ -12,6 +12,6 @@ public interface BiEventSink<A, B> extends EventSink<Tuple2<A, B>> {
     }
 
     default Subscription feedFrom2(BiEventStream<? extends A, ? extends B> source) {
-        return source.subscribe(this::push);
+        return source.subscribe((a, b) -> push(a, b));
     }
 }

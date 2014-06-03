@@ -12,6 +12,6 @@ public interface TriEventSink<A, B, C> extends EventSink<Tuple3<A, B, C>> {
     }
 
     default Subscription feedFrom3(TriEventStream<? extends A, ? extends B, ? extends C> source) {
-        return source.subscribe(this::push);
+        return source.subscribe((a, b, c) -> push(a, b, c));
     }
 }

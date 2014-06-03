@@ -25,7 +25,7 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
     }
 
     default Subscription feedTo3(TriEventSink<? super A, ? super B, ? super C> sink) {
-        return subscribe(sink::push);
+        return subscribe((a, b, c) -> sink.push(a, b, c));
     }
 
     default TriEventStream<A, B, C> hook(

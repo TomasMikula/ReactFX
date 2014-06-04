@@ -97,6 +97,13 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns a new event stream that emits repetitive events only once.
+     */
+    default EventStream<T> distinct() {
+        return new DistinctStream<>(this);
+    }
+
+    /**
      * Returns an event stream that emits a value obtained from the given
      * supplier every time this event stream emits a value.
      */

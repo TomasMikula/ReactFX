@@ -38,6 +38,10 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
         return new FilterTriStream<>(this, predicate);
     }
 
+    default TriEventStream<A, B, C> distinct() {
+        return new DistinctTriStream<>(this);
+    }
+
     default <U> EventStream<U> map(
             TriFunction<? super A, ? super B, ? super C, ? extends U> f) {
         return new MappedTriStream<>(this, f);

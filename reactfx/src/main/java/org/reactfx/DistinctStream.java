@@ -1,0 +1,80 @@
+package org.reactfx;
+
+import java.util.Objects;
+
+
+class DistinctStream<T> extends LazilyBoundStream<T> {
+    static final Object NONE = new Object();
+    private final EventStream<T> input;
+    private Object previous = NONE;
+
+    public DistinctStream(EventStream<T> input) {
+        this.input = input;
+    }
+
+    @Override
+    protected Subscription subscribeToInputs() {
+        return input.subscribe(value -> {
+            Object prevToCompare = previous;
+            previous = value;
+            if (!Objects.equals(value, prevToCompare)) {
+                emit(value);
+            }
+        });
+    }
+}
+
+class DistinctBiStream<A, B> extends LazilyBoundBiStream<A, B> {
+    private final BiEventStream<A, B> input;
+    private Object previousA = DistinctStream.NONE;
+    private Object previousB = DistinctStream.NONE;
+
+    DistinctBiStream(BiEventStream<A, B> input) {
+        this.input = input;
+    }
+
+    @Override
+    protected Subscription subscribeToInputs() {
+        return input.subscribe((a, b) -> {
+            Object aPrevToCompare = previousA;
+            previousA = a;
+            Object bPrevToCompare = previousB;
+            previousB = b;
+
+            if (Objects.equals(a, aPrevToCompare) && Objects.equals(b, bPrevToCompare)) {
+                return;
+            }
+            emit(a, b);
+        });
+    }
+}
+
+class DistinctTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
+    private final TriEventStream<A, B, C> input;
+    private Object previousA = DistinctStream.NONE;
+    private Object previousB = DistinctStream.NONE;
+    private Object previousC = DistinctStream.NONE;
+
+    DistinctTriStream(TriEventStream<A, B, C> input) {
+        this.input = input;
+    }
+
+    @Override
+    protected Subscription subscribeToInputs() {
+        return input.subscribe((a, b, c) -> {
+            Object aPrevToCompare = previousA;
+            previousA = a;
+            Object bPrevToCompare = previousB;
+            previousB = b;
+            Object cPrevToCompare = previousC;
+            previousC = c;
+
+            if (Objects.equals(a, aPrevToCompare) &&
+                Objects.equals(b, bPrevToCompare) &&
+                Objects.equals(c, cPrevToCompare)) {
+                return;
+            }
+            emit(a, b, c);
+        });
+    }
+}

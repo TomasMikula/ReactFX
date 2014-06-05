@@ -38,6 +38,7 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return new FilterBiStream<>(this, predicate);
     }
 
+    @Override
     default BiEventStream<A, B> distinct() {
         return new DistinctBiStream<>(this);
     }

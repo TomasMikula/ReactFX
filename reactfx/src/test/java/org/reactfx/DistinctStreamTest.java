@@ -124,7 +124,7 @@ public class DistinctStreamTest {
         checkList(Tuples.t(4L, 5L, 6L), distinctCollector);
     }
 
-    private void checkList(Object elem, List list) {
+    private void checkList(Object elem, List<?> list) {
         assertEquals(Arrays.asList(elem), list);
         list.clear();
     }

@@ -102,6 +102,14 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns an event stream that emits the given constant value every time
+     * this stream emits a value.
+     */
+    default <U> EventStream<U> supply(U value) {
+        return map(x -> value);
+    }
+
+    /**
      * Returns an event stream that emits a value obtained from the given
      * supplier every time this event stream emits a value.
      */

@@ -20,6 +20,7 @@ import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
@@ -134,6 +135,17 @@ public class EventStreams {
                 EventHandler<T> handler = event -> emit(event);
                 node.addEventHandler(eventType, handler);
                 return () -> node.removeEventHandler(eventType, handler);
+            }
+        };
+    }
+
+    public static <T extends Event> EventStream<T> eventsOf(Scene scene, EventType<T> eventType) {
+        return new LazilyBoundStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                EventHandler<T> handler = event -> emit(event);
+                scene.addEventHandler(eventType, handler);
+                return () -> scene.removeEventHandler(eventType, handler);
             }
         };
     }

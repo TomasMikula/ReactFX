@@ -1,6 +1,6 @@
 package org.reactfx;
 
-import static org.reactfx.L.*;
+import static org.reactfx.LL.*;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -93,9 +93,9 @@ class InitialStateImpl<S> implements InitialState<S> {
 
 class ObservableStateBuilderImpl<S> implements ObservableStateBuilder<S> {
     private final S initialState;
-    private final L<TransitionBuilder<S>> transitions;
+    private final LL<TransitionBuilder<S>> transitions;
 
-    ObservableStateBuilderImpl(S initialState, L<TransitionBuilder<S>> transitions) {
+    ObservableStateBuilderImpl(S initialState, LL<TransitionBuilder<S>> transitions) {
         this.initialState = initialState;
         this.transitions = transitions;
     }
@@ -115,7 +115,7 @@ class ObservableState<S> extends ObservableValueBase<S> implements Binding<S> {
     private final Subscription subscription;
     private S state;
 
-    public ObservableState(S initialState, L<TransitionBuilder<S>> transitions) {
+    public ObservableState(S initialState, LL<TransitionBuilder<S>> transitions) {
         state = initialState;
 
         Subscription[] subs = transitions.stream()
@@ -158,15 +158,15 @@ class ObservableState<S> extends ObservableValueBase<S> implements Binding<S> {
 
 class StatefulStreamBuilderImpl<S, O> implements StatefulStreamBuilder<S, O> {
     private final S initialState;
-    private final L<TransitionBuilder<S>> transitions;
-    private final L<EmissionBuilder<S, O>> emissions;
-    private final L<TransmissionBuilder<S, O>> transmissions;
+    private final LL<TransitionBuilder<S>> transitions;
+    private final LL<EmissionBuilder<S, O>> emissions;
+    private final LL<TransmissionBuilder<S, O>> transmissions;
 
     StatefulStreamBuilderImpl(
             S initialState,
-            L<TransitionBuilder<S>> transitions,
-            L<EmissionBuilder<S, O>> emissions,
-            L<TransmissionBuilder<S, O>> transmissions) {
+            LL<TransitionBuilder<S>> transitions,
+            LL<EmissionBuilder<S, O>> emissions,
+            LL<TransmissionBuilder<S, O>> transmissions) {
         this.initialState = initialState;
         this.transitions = transitions;
         this.emissions = emissions;
@@ -191,9 +191,9 @@ class StatefulStream<S, O> extends LazilyBoundStream<O> {
 
     StatefulStream(
             S initialState,
-            L<TransitionBuilder<S>> transitions,
-            L<EmissionBuilder<S, O>> emissions,
-            L<TransmissionBuilder<S, O>> transmissions) {
+            LL<TransitionBuilder<S>> transitions,
+            LL<EmissionBuilder<S, O>> emissions,
+            LL<TransmissionBuilder<S, O>> transmissions) {
 
         state = initialState;
 
@@ -237,12 +237,12 @@ class StatefulStream<S, O> extends LazilyBoundStream<O> {
 
 class ObservableStateBuilderOnImpl<S, I> implements ObservableStateBuilderOn<S, I> {
     private final S initialState;
-    private final L<TransitionBuilder<S>> transitions;
+    private final LL<TransitionBuilder<S>> transitions;
     private final EventStream<I> input;
 
     ObservableStateBuilderOnImpl(
             S initialState,
-            L<TransitionBuilder<S>> transitions,
+            LL<TransitionBuilder<S>> transitions,
             EventStream<I> input) {
         this.initialState = initialState;
         this.transitions = transitions;
@@ -273,16 +273,16 @@ class ObservableStateBuilderOnImpl<S, I> implements ObservableStateBuilderOn<S, 
 
 class StatefulStreamBuilderOnImpl<S, O, I> implements StatefulStreamBuilderOn<S, O, I> {
     private final S initialState;
-    private final L<TransitionBuilder<S>> transitions;
-    private final L<EmissionBuilder<S, O>> emissions;
-    private final L<TransmissionBuilder<S, O>> transmissions;
+    private final LL<TransitionBuilder<S>> transitions;
+    private final LL<EmissionBuilder<S, O>> emissions;
+    private final LL<TransmissionBuilder<S, O>> transmissions;
     private final EventStream<I> input;
 
     StatefulStreamBuilderOnImpl(
             S initialState,
-            L<TransitionBuilder<S>> transitions,
-            L<EmissionBuilder<S, O>> emissions,
-            L<TransmissionBuilder<S, O>> transmissions,
+            LL<TransitionBuilder<S>> transitions,
+            LL<EmissionBuilder<S, O>> emissions,
+            LL<TransmissionBuilder<S, O>> transmissions,
             EventStream<I> input) {
         this.initialState = initialState;
         this.transitions = transitions;
@@ -354,23 +354,26 @@ class TransmissionBuilder<S, O> extends InputHandlerBuilder<S, Tuple2<S, Optiona
     }
 }
 
-interface L<T> extends Iterable<T> {
-    static <T> L<T> nil() { return Nil.instance(); }
-    static <T> L<T> cons(T head, L<T> tail) { return new NonEmpty<>(head, tail); }
+/**
+ * Immutable linked list.
+ */
+interface LL<T> extends Iterable<T> {
+    static <T> LL<T> nil() { return Nil.instance(); }
+    static <T> LL<T> cons(T head, LL<T> tail) { return new NonEmpty<>(head, tail); }
 
     boolean isEmpty();
     int size();
     T head();
-    L<T> tail();
+    LL<T> tail();
 
-    default L<T> prepend(T head) {
+    default LL<T> prepend(T head) {
         return new NonEmpty<>(head, this);
     }
 
     @Override
     default Iterator<T> iterator() {
         return new Iterator<T>() {
-            private L<T> l = L.this;
+            private LL<T> l = LL.this;
 
             @Override
             public boolean hasNext() {
@@ -388,7 +391,7 @@ interface L<T> extends Iterable<T> {
 
     default List<T> toList() {
         List<T> res = new ArrayList<>(size());
-        for(L<T> l = this; !l.isEmpty(); l = l.tail()) {
+        for(LL<T> l = this; !l.isEmpty(); l = l.tail()) {
             res.add(l.head());
         }
         return res;
@@ -429,7 +432,7 @@ interface L<T> extends Iterable<T> {
     }
 }
 
-class Nil<T> implements L<T> {
+class Nil<T> implements LL<T> {
     private static final Nil<?> INSTANCE = new Nil<Void>();
 
     @SuppressWarnings("unchecked")
@@ -438,14 +441,14 @@ class Nil<T> implements L<T> {
     @Override public boolean isEmpty() { return true; }
     @Override public int size() { return 0; }
     @Override public T head() { throw new NoSuchElementException(); }
-    @Override public L<T> tail() { throw new NoSuchElementException(); }
+    @Override public LL<T> tail() { throw new NoSuchElementException(); }
 }
 
-class NonEmpty<T> implements L<T> {
+class NonEmpty<T> implements LL<T> {
     private final T head;
-    private final L<T> tail;
+    private final LL<T> tail;
 
-    NonEmpty(T head, L<T> tail) {
+    NonEmpty(T head, LL<T> tail) {
         this.head = head;
         this.tail = tail;
     }
@@ -471,7 +474,7 @@ class NonEmpty<T> implements L<T> {
     }
 
     @Override
-    public L<T> tail() {
+    public LL<T> tail() {
         return tail;
     }
 }

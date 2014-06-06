@@ -1,5 +1,6 @@
 package org.reactfx;
 
+import org.reactfx.util.Either;
 import org.reactfx.util.Tuple2;
 import org.reactfx.util.Tuple3;
 
@@ -49,6 +50,17 @@ implements PoorMansTriStream<A, B, C> {
 
     public EmitOnEachTriStream(
             EventStream<Tuple3<A, B, C>> source,
+            EventStream<?> impulse) {
+        super(source, impulse);
+    }
+}
+
+class EmitOnEachEitherStream<L, R>
+extends EmitOnEachStream<Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public EmitOnEachEitherStream(
+            EventStream<Either<L, R>> source,
             EventStream<?> impulse) {
         super(source, impulse);
     }

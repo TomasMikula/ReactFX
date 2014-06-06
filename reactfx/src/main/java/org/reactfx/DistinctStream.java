@@ -2,6 +2,8 @@ package org.reactfx;
 
 import java.util.Objects;
 
+import org.reactfx.util.Either;
+
 
 class DistinctStream<T> extends LazilyBoundStream<T> {
     static final Object NONE = new Object();
@@ -76,5 +78,14 @@ class DistinctTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
             }
             emit(a, b, c);
         });
+    }
+}
+
+class DistinctEitherStream<L, R>
+extends DistinctStream<Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public DistinctEitherStream(EventStream<Either<L, R>> input) {
+        super(input);
     }
 }

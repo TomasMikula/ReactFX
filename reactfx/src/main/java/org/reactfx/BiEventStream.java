@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
+import org.reactfx.util.Either;
 import org.reactfx.util.Tuple2;
 
 public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
@@ -46,6 +47,11 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
     default <U> EventStream<U> map(
             BiFunction<? super A, ? super B, ? extends U> f) {
         return new MappedBiStream<>(this, f);
+    }
+
+    default <L, R> EitherEventStream<L, R> split(
+            BiFunction<? super A, ? super B, Either<L, R>> f) {
+        return new MappedToEitherBiStream<>(this, f);
     }
 
     default <U> CompletionStageStream<U> mapToCompletionStage(

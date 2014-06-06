@@ -1,7 +1,5 @@
 package org.reactfx;
 
-import static org.reactfx.util.Either.*;
-
 import java.time.Duration;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -148,6 +146,16 @@ public interface EventStream<T> {
     }
 
     /**
+     * Like {@link #map(Function)}, but returns an {@link EitherEventStream}
+     * that provides additional convenient methods on a stream of
+     * {@link Either}.
+     */
+    default <L, R> EitherEventStream<L, R> split(
+            Function<? super T, Either<L, R>> f) {
+        return new MappedToEitherStream<>(this, f);
+    }
+
+    /**
      * Similar to {@link #map(Function)}, but the returned stream is a
      * {@link CompletionStageStream}, which can be used to await the results
      * of asynchronous computation.
@@ -210,17 +218,8 @@ public interface EventStream<T> {
      *
      * @see EventStreams#merge(EventStream...)
      */
-    default <U> EventStream<Either<T, U>> or(EventStream<? extends U> right) {
-        EventStream<T> left = this;
-        return new LazilyBoundStream<Either<T, U>>() {
-            @Override
-            protected Subscription subscribeToInputs() {
-                return Subscription.multi(
-                        left.subscribe(t -> emit(left(t))),
-                        right.subscribe(u -> emit(right(u))));
-            }
-
-        };
+    default <U> EitherEventStream<T, U> or(EventStream<? extends U> right) {
+        return new OrStream<>(this, right);
     }
 
     /**

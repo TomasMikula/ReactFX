@@ -6,6 +6,7 @@ import java.util.function.Function;
 
 import javafx.concurrent.Task;
 
+import org.reactfx.util.Either;
 import org.reactfx.util.TriFunction;
 
 class MappedStream<T, U> extends LazilyBoundStream<U> {
@@ -127,6 +128,39 @@ implements TaskStream<U> {
     public MappedToTaskTriStream(
             TriEventStream<A, B, C> input,
             TriFunction<? super A, ? super B, ? super C, Task<U>> f) {
+        super(input, f);
+    }
+}
+
+class MappedToEitherStream<T, L, R>
+extends MappedStream<T, Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public MappedToEitherStream(
+            EventStream<T> input,
+            Function<? super T, ? extends Either<L, R>> f) {
+        super(input, f);
+    }
+}
+
+class MappedToEitherBiStream<A, B, L, R>
+extends MappedBiStream<A, B, Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public MappedToEitherBiStream(
+            BiEventStream<A, B> input,
+            BiFunction<? super A, ? super B, ? extends Either<L, R>> f) {
+        super(input, f);
+    }
+}
+
+class MappedToEitherTriStream<A, B, C, L, R>
+extends MappedTriStream<A, B, C, Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public MappedToEitherTriStream(
+            TriEventStream<A, B, C> input,
+            TriFunction<? super A, ? super B, ? super C, ? extends Either<L, R>> f) {
         super(input, f);
     }
 }

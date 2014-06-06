@@ -3,6 +3,7 @@ package org.reactfx;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.reactfx.util.Either;
 import org.reactfx.util.TriConsumer;
 
 class SideEffectStream<T> extends LazilyBoundStream<T> {
@@ -58,4 +59,15 @@ class SideEffectTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
             emit(a, b, c);
         });
     }
+}
+
+class SideEffectEitherStream<L, R>
+extends SideEffectStream<Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public SideEffectEitherStream(EventStream<Either<L, R>> source,
+            Consumer<? super Either<L, R>> sideEffect) {
+        super(source, sideEffect);
+    }
+
 }

@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 
+import org.reactfx.util.Either;
 import org.reactfx.util.Tuple2;
 import org.reactfx.util.Tuple3;
 
@@ -265,6 +266,16 @@ extends InterceptableEventStreamImpl<Tuple3<A, B, C>>
 implements InterceptableTriEventStream<A, B, C>, PoorMansTriStream<A, B, C> {
 
     public InterceptableTriEventStreamImpl(EventStream<Tuple3<A, B, C>> input) {
+        super(input);
+    }
+}
+
+
+class InterceptableEitherEventStreamImpl<L, R>
+extends InterceptableEventStreamImpl<Either<L, R>>
+implements InterceptableEitherEventStream<L, R> {
+
+    public InterceptableEitherEventStreamImpl(EventStream<Either<L, R>> input) {
         super(input);
     }
 }

@@ -1,0 +1,124 @@
+package org.reactfx;
+
+import java.util.concurrent.Executor;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import javafx.application.Platform;
+
+import org.reactfx.util.Either;
+
+public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
+
+    default Subscription subscribe(
+            Consumer<? super L> leftSubscriber,
+            Consumer<? super R> rightSubscriber) {
+        return subscribe(either -> {
+            either.ifLeft(leftSubscriber);
+            either.ifRight(rightSubscriber);
+        });
+    }
+
+    default EventStream<L> left() {
+        return filterMap(Either::isLeft, Either::getLeft);
+    }
+
+    default EventStream<R> right() {
+        return filterMap(Either::isRight, Either::getRight);
+    }
+
+    @Override
+    default EitherEventStream<L, R> hook(
+            Consumer<? super Either<L, R>> sideEffect) {
+        return new SideEffectEitherStream<>(this, sideEffect);
+    }
+
+    default EitherEventStream<L, R> hook(
+            Consumer<? super L> leftSideEffect,
+            Consumer<? super R> rightSideEffect) {
+        return hook(either -> {
+            either.ifLeft(leftSideEffect);
+            either.ifRight(rightSideEffect);
+        });
+    }
+
+    @Override
+    default EitherEventStream<L, R> filter(
+            Predicate<? super Either<L, R>> predicate) {
+        return new FilterEitherStream<>(this, predicate);
+    }
+
+    @Override
+    default EitherEventStream<L, R> distinct() {
+        return new DistinctEitherStream<>(this);
+    }
+
+    default <L1, R1> EitherEventStream<L1, R1> map(
+            Function<? super L, ? extends L1> leftMap,
+            Function<? super R, ? extends R1> rightMap) {
+        return split(either -> either.map(leftMap, rightMap));
+    }
+
+    default <L1> EitherEventStream<L1, R> mapLeft(
+            Function<? super L, ? extends L1> f) {
+        return split(either -> either.mapLeft(f));
+    }
+
+    default <R1> EitherEventStream<L, R1> mapRight(
+            Function<? super R, ? extends R1> f) {
+        return split(either -> either.mapRight(f));
+    }
+
+    default <T> EventStream<T> unify(
+            Function<? super L, ? extends T> leftMap,
+            Function<? super R, ? extends T> rightMap) {
+        return map(either -> either.unify(leftMap, rightMap));
+    }
+
+    @Override
+    default EitherEventStream<L, R> emitOn(EventStream<?> impulse) {
+        return new EmitOnEitherStream<>(this, impulse);
+    }
+
+    @Override
+    default EitherEventStream<L, R> emitOnEach(EventStream<?> impulse) {
+        return new EmitOnEachEitherStream<>(this, impulse);
+    }
+
+    @Override
+    default EitherEventStream<L, R> repeatOn(EventStream<?> impulse) {
+        return new RepeatOnEitherStream<>(this, impulse);
+    }
+
+    @Override
+    default InterceptableEitherEventStream<L, R> interceptable() {
+        if(this instanceof InterceptableEitherEventStream) {
+            return (InterceptableEitherEventStream<L, R>) this;
+        } else {
+            return new InterceptableEitherEventStreamImpl<L, R>(this);
+        }
+    }
+
+    @Override
+    default EitherEventStream<L, R> threadBridge(
+            Executor sourceThreadExecutor,
+            Executor targetThreadExecutor) {
+        return new EitherThreadBridge<L, R>(this, sourceThreadExecutor, targetThreadExecutor);
+    }
+
+    @Override
+    default EitherEventStream<L, R> threadBridgeFromFx(Executor targetThreadExecutor) {
+        return threadBridge(Platform::runLater, targetThreadExecutor);
+    }
+
+    @Override
+    default EitherEventStream<L, R> threadBridgeToFx(Executor sourceThreadExecutor) {
+        return threadBridge(sourceThreadExecutor, Platform::runLater);
+    }
+
+    @Override
+    default EitherEventStream<L, R> guardedBy(Guardian... guardians) {
+        return new GuardedEitherStream<>(this, guardians);
+    }
+}

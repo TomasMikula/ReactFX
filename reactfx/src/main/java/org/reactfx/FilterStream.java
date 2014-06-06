@@ -3,6 +3,7 @@ package org.reactfx;
 import java.util.function.BiPredicate;
 import java.util.function.Predicate;
 
+import org.reactfx.util.Either;
 import org.reactfx.util.TriPredicate;
 
 class FilterStream<T> extends LazilyBoundStream<T> {
@@ -66,4 +67,16 @@ class FilterTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
             }
         });
     }
+}
+
+class FilterEitherStream<L, R>
+extends FilterStream<Either<L, R>>
+implements EitherEventStream<L, R> {
+
+    public FilterEitherStream(
+            EventStream<Either<L, R>> source,
+            Predicate<? super Either<L, R>> predicate) {
+        super(source, predicate);
+    }
+
 }

@@ -1,5 +1,11 @@
 package org.reactfx;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Function;
+
+import javafx.collections.ObservableSet;
+
 @FunctionalInterface
 public interface Subscription {
     void unsubscribe();
@@ -26,6 +32,44 @@ public interface Subscription {
             case 2: return new BiSubscription(subs[0], subs[1]);
             default: return new MultiSubscription(subs);
         }
+    }
+
+    /**
+     * Dynamically subscribes to all elements of the given observable set.
+     * When an element is added to the set, it is automatically subscribed to.
+     * When an element is removed from the set, it is automatically unsubscribed
+     * from.
+     * @param elems observable set of elements that will be subscribed to
+     * @param f function to subscribe to an element of the set.
+     * @return An aggregate subscription that tracks elementary subscriptions.
+     * When the returned subscription is unsubscribed, all elementary
+     * subscriptions are unsubscribed as well, and no new elementary
+     * subscriptions will be created.
+     */
+    static <T> Subscription multi(
+            ObservableSet<T> elems,
+            Function<? super T, ? extends Subscription> f) {
+
+        Map<T, Subscription> elemSubs = new HashMap<>();
+        elems.forEach(t -> elemSubs.put(t, f.apply(t)));
+
+        Subscription setSub = EventStreams.changesOf(elems).subscribe(ch -> {
+            if(ch.wasRemoved()) {
+                Subscription sub = elemSubs.remove(ch.getElementRemoved());
+                assert sub != null;
+                sub.unsubscribe();
+            }
+            if(ch.wasAdded()) {
+                T elem = ch.getElementAdded();
+                assert !elemSubs.containsKey(elem);
+                elemSubs.put(elem, f.apply(elem));
+            }
+        });
+
+        return () -> {
+            setSub.unsubscribe();
+            elemSubs.forEach((t, sub) -> sub.unsubscribe());
+        };
     }
 }
 

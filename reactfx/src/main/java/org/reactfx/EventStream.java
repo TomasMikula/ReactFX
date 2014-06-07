@@ -306,6 +306,45 @@ public interface EventStream<T> {
 
     /**
      * Returns an event stream that accumulates events emitted from this event
+     * stream and emits the accumulated value every time this stream emits a
+     * value.
+     * @param reduction function to reduce two events into one.
+     */
+    default EventStream<T> accumulate(BinaryOperator<T> reduction) {
+        return accumulate(Function.identity(), reduction);
+    }
+
+    /**
+     * Returns an event stream that accumulates events emitted from this event
+     * stream and emits the accumulated value every time this stream emits a
+     * value.
+     * @param unit initial value of the accumulated value.
+     * @param reduction function to add an event to the accumulated value.
+     */
+    default <U> EventStream<U> accumulate(
+            U unit,
+            BiFunction<? super U, ? super T, ? extends U> reduction) {
+        return accumulate(t -> reduction.apply(unit, t), reduction);
+    }
+
+    /**
+     * Returns an event stream that accumulates events emitted from this event
+     * stream and emits the accumulated value every time this stream emits a
+     * value.
+     * @param initialTransformation function to transform the first event from
+     * this stream to an event that can be emitted from the returned stream.
+     * Subsequent events emitted from this stream are accumulated to the value
+     * returned from this function.
+     * @param reduction function to add an event to the accumulated value.
+     */
+    default <U> EventStream<U> accumulate(
+            Function<? super T, ? extends U> initialTransformation,
+            BiFunction<? super U, ? super T, ? extends U> reduction) {
+        return new AccumulatingStream<>(this, initialTransformation, reduction);
+    }
+
+    /**
+     * Returns an event stream that accumulates events emitted from this event
      * stream in close temporal succession. After an event is emitted from this
      * stream, the returned stream waits for up to {@code timeout} for the next
      * event from this stream. If the next event arrives within timeout, it is
@@ -327,7 +366,7 @@ public interface EventStream<T> {
             BinaryOperator<T> reduction,
             Duration timeout) {
 
-        return reduceSuccessions(t -> t, reduction, timeout);
+        return reduceSuccessions(Function.identity(), reduction, timeout);
     }
 
     /**
@@ -344,7 +383,7 @@ public interface EventStream<T> {
      * @param initialTransformation function to transform a single event
      * from this stream to an event that can be emitted from the returned
      * stream.
-     * @param reduction function to accumulate an event to the stored value
+     * @param reduction function to add an event to the accumulated value.
      * @param timeout the maximum time difference between two subsequent
      * events that can still be accumulated.
      * @param <U> type of events emitted from the returned stream.
@@ -379,7 +418,7 @@ public interface EventStream<T> {
      *
      * @param unitSupplier function that provides the unit element
      * (i.e. initial value for accumulation) of type {@code U}
-     * @param reduction function to accumulate an event to the stored value
+     * @param reduction function to add an event to the accumulated value.
      * @param timeout the maximum time difference between two subsequent
      * events that can still be accumulated.
      *
@@ -414,7 +453,8 @@ public interface EventStream<T> {
             Executor eventThreadExecutor) {
 
         return reduceSuccessions(
-                t -> t, reduction, timeout, scheduler, eventThreadExecutor);
+                Function.identity(), reduction, timeout,
+                scheduler, eventThreadExecutor);
     }
 
     /**

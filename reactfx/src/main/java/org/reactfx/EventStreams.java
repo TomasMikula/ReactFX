@@ -4,6 +4,7 @@ import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 import javafx.beans.InvalidationListener;
@@ -217,6 +218,41 @@ public class EventStreams {
                         .map(i -> i.subscribe(this::emit))
                         .toArray(n -> new Subscription[n]);
                 return Subscription.multi(subs);
+            }
+        };
+    }
+
+    /**
+     * Returns an event stream that emits all the events emitted from any of
+     * the event streams in the given observable set. When an event stream is
+     * added to the set, the returned stream will start emitting its events.
+     * When an event stream is removed from the set, its events will no longer
+     * be emitted from the returned stream.
+     */
+    public static <T> EventStream<T> merge(
+            ObservableSet<? extends EventStream<T>> set) {
+        return new LazilyBoundStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return Subscription.multi(set, t -> t.subscribe(this::emit));
+            }
+        };
+    }
+
+    /**
+     * A more general version of {@link #merge(ObservableSet)} for a set of
+     * arbitrary element type and a function to obtain an event stream from
+     * the element.
+     * @param set observable set of elements
+     * @param f function to obtain an event stream from an element
+     */
+    public static <T, U> EventStream<U> merge(
+            ObservableSet<? extends T> set,
+            Function<? super T, ? extends EventStream<U>> f) {
+        return new LazilyBoundStream<U>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return Subscription.multi(set, t -> f.apply(t).subscribe(this::emit));
             }
         };
     }

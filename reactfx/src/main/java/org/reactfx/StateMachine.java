@@ -15,8 +15,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import javafx.beans.binding.Binding;
-import javafx.beans.value.ObservableValueBase;
-import javafx.collections.ObservableList;
 
 import org.reactfx.StateMachine.InitialState;
 import org.reactfx.StateMachine.ObservableStateBuilder;
@@ -32,6 +30,12 @@ public class StateMachine {
 
     public interface ObservableStateBuilder<S> {
         <I> ObservableStateBuilderOn<S, I> on(EventStream<I> input);
+
+        /**
+         * Returns an event stream that emits the current state of the state
+         * machine every time it changes.
+         */
+        EventStream<S> toStateStream();
 
         /**
          * Returns a binding that reflects the current state of the state
@@ -106,53 +110,39 @@ class ObservableStateBuilderImpl<S> implements ObservableStateBuilder<S> {
     }
 
     @Override
+    public EventStream<S> toStateStream() {
+        return new StateStream<>(initialState, transitions);
+    }
+
+    @Override
     public Binding<S> toObservableState() {
-        return new ObservableState<>(initialState, transitions);
+        return toStateStream().toBinding(initialState);
     }
 }
 
-class ObservableState<S> extends ObservableValueBase<S> implements Binding<S> {
-    private final Subscription subscription;
+class StateStream<S> extends LazilyBoundStream<S> {
+    private final InputHandler[] inputHandlers;
+
     private S state;
 
-    public ObservableState(S initialState, LL<TransitionBuilder<S>> transitions) {
-        state = initialState;
-
-        Subscription[] subs = transitions.stream()
+    public StateStream(S initialState, LL<TransitionBuilder<S>> transitions) {
+        inputHandlers = transitions.stream()
                 .map(t -> t.build(this::handleTransition))
+                .toArray(n -> new InputHandler[n]);
+        state = initialState;
+    }
+
+    @Override
+    protected Subscription subscribeToInputs() {
+        Subscription[] subs = Stream.of(inputHandlers)
                 .map(InputHandler::subscribeToInput)
                 .toArray(n -> new Subscription[n]);
-        subscription = Subscription.multi(subs);
+        return Subscription.multi(subs);
     }
 
     private void handleTransition(Function<S, S> transition) {
         state = transition.apply(state);
-        fireValueChangedEvent();
-    }
-
-    @Override
-    public S getValue() {
-        return state;
-    }
-
-    @Override
-    public void dispose() {
-        subscription.unsubscribe();
-    }
-
-    @Override
-    public ObservableList<?> getDependencies() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void invalidate() {
-        // do nothing
-    }
-
-    @Override
-    public boolean isValid() {
-        return true;
+        emit(state);
     }
 }
 

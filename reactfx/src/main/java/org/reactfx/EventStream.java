@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Binding;
+import javafx.beans.value.WritableValue;
 import javafx.concurrent.Task;
 
 import org.reactfx.util.Either;
@@ -49,6 +50,15 @@ public interface EventStream<T> {
      */
     default Subscription feedTo(EventSink<? super T> sink) {
         return subscribe(sink::push);
+    }
+
+    /**
+     * Starts setting all events emitted by this stream as the value of the
+     * given writable value. This is a shortcut for
+     * {@code subscribe(dest::setValue)}.
+     */
+    default Subscription feedTo(WritableValue<? super T> dest) {
+        return subscribe(dest::setValue);
     }
 
     /**

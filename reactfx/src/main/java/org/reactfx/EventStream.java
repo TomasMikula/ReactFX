@@ -311,7 +311,7 @@ public interface EventStream<T> {
      * @param reduction function to reduce two events into one.
      */
     default EventStream<T> accumulate(BinaryOperator<T> reduction) {
-        return accumulate(Function.identity(), reduction);
+        return accumulate(reduction, Function.identity());
     }
 
     /**
@@ -324,22 +324,22 @@ public interface EventStream<T> {
     default <U> EventStream<U> accumulate(
             U unit,
             BiFunction<? super U, ? super T, ? extends U> reduction) {
-        return accumulate(t -> reduction.apply(unit, t), reduction);
+        return accumulate(reduction, t -> reduction.apply(unit, t));
     }
 
     /**
      * Returns an event stream that accumulates events emitted from this event
      * stream and emits the accumulated value every time this stream emits a
      * value.
+     * @param reduction function to add an event to the accumulated value.
      * @param initialTransformation function to transform the first event from
      * this stream to an event that can be emitted from the returned stream.
      * Subsequent events emitted from this stream are accumulated to the value
      * returned from this function.
-     * @param reduction function to add an event to the accumulated value.
      */
     default <U> EventStream<U> accumulate(
-            Function<? super T, ? extends U> initialTransformation,
-            BiFunction<? super U, ? super T, ? extends U> reduction) {
+            BiFunction<? super U, ? super T, ? extends U> reduction,
+            Function<? super T, ? extends U> initialTransformation) {
         return new AccumulatingStream<>(this, initialTransformation, reduction);
     }
 

@@ -164,6 +164,22 @@ public abstract class Either<L, R> {
         return new Right<>(r);
     }
 
+    public static <L, R> Either<L, R> leftOrNull(Optional<L> l) {
+        return leftOrDefault(l, null);
+    }
+
+    public static <L, R> Either<L, R> rightOrNull(Optional<R> r) {
+        return rightOrDefault(r, null);
+    }
+
+    public static <L, R> Either<L, R> leftOrDefault(Optional<L> l, R r) {
+        return l.isPresent() ? left(l.get()) : right(r);
+    }
+
+    public static <L, R> Either<L, R> rightOrDefault(Optional<R> r, L l) {
+        return r.isPresent() ? right(r.get()) : left(l);
+    }
+
     // private constructor to prevent subclassing
     private Either() {}
 

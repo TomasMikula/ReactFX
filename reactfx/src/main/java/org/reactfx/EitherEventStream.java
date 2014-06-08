@@ -70,6 +70,24 @@ public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
         return split(either -> either.mapRight(f));
     }
 
+    default <L1, R1> EitherEventStream<L1, R1> split(
+            Function<? super L, Either<L1, R1>> leftMap,
+            Function<? super R, Either<L1, R1>> rightMap) {
+        return split(either -> either.isLeft()
+                ? leftMap.apply(either.getLeft())
+                : rightMap.apply(either.getRight()));
+    }
+
+    default <L1> EitherEventStream<L1, R> splitLeft(
+            Function<? super L, Either<L1, R>> leftMap) {
+        return split(leftMap, Either::right);
+    }
+
+    default <R1> EitherEventStream<L, R1> splitRight(
+            Function<? super R, Either<L, R1>> rightMap) {
+        return split(Either::left, rightMap);
+    }
+
     default <T> EventStream<T> unify(
             Function<? super L, ? extends T> leftMap,
             Function<? super R, ? extends T> rightMap) {

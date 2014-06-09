@@ -27,6 +27,14 @@ public class Tuple3<A, B, C> {
         return t(_1, _2, c);
     }
 
+    public <T> T map(TriFunction<? super A, ? super B, ? super C, ? extends T> f) {
+        return f.apply(_1, _2, _3);
+    }
+
+    public boolean test(TriPredicate<? super A, ? super B, ? super C> f) {
+        return f.test(_1, _2, _3);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple3) {

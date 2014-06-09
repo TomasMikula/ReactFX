@@ -45,6 +45,14 @@ public class Tuple6<A, B, C, D, E, F> {
         return t(_1, _2, _3, _4, _5, f);
     }
 
+    public <T> T map(HexaFunction<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f) {
+        return f.apply(_1, _2, _3, _4, _5, _6);
+    }
+
+    public boolean test(HexaPredicate<? super A, ? super B, ? super C, ? super D, ? super E, ? super F> f) {
+        return f.test(_1, _2, _3, _4, _5, _6);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple6) {

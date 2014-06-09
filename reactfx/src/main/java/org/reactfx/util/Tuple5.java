@@ -39,6 +39,14 @@ public class Tuple5<A, B, C, D, E> {
         return t(_1, _2, _3, _4, e);
     }
 
+    public <T> T map(PentaFunction<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f) {
+        return f.apply(_1, _2, _3, _4, _5);
+    }
+
+    public boolean test(PentaPredicate<? super A, ? super B, ? super C, ? super D, ? super E> f) {
+        return f.test(_1, _2, _3, _4, _5);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple5) {

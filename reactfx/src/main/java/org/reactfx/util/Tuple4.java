@@ -33,6 +33,14 @@ public class Tuple4<A, B, C, D> {
         return t(_1, _2, _3, d);
     }
 
+    public <T> T map(TetraFunction<? super A, ? super B, ? super C, ? super D, ? extends T> f) {
+        return f.apply(_1, _2, _3, _4);
+    }
+
+    public boolean test(TetraPredicate<? super A, ? super B, ? super C, ? super D> f) {
+        return f.test(_1, _2, _3, _4);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple4) {

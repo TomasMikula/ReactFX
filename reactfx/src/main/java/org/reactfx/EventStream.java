@@ -174,6 +174,15 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns a new event stream that, for event {@code e} emitted from this
+     * stream, emits {@code left(e)} if {@code e} passes the given test, and
+     * emits {@code right(e)} if {@code e} does not pass the test.
+     */
+    default EitherEventStream<T, T> test(Predicate<? super T> test) {
+        return split(t -> test.test(t) ? Either.left(t) : Either.right(t));
+    }
+
+    /**
      * Similar to {@link #map(Function)}, but the returned stream is a
      * {@link CompletionStageStream}, which can be used to await the results
      * of asynchronous computation.

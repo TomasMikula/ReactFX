@@ -134,10 +134,9 @@ class StateStream<S> extends LazilyBoundStream<S> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription[] subs = Stream.of(inputHandlers)
-                .map(InputHandler::subscribeToInput)
-                .toArray(n -> new Subscription[n]);
-        return Subscription.multi(subs);
+        return Subscription.multi(
+                InputHandler::subscribeToInput,
+                inputHandlers);
     }
 
     private void handleTransition(Function<S, S> transition) {
@@ -204,10 +203,9 @@ class StatefulStream<S, O> extends LazilyBoundStream<O> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription[] subs = inputHandlers.stream()
-                .map(InputHandler::subscribeToInput)
-                .toArray(n -> new Subscription[n]);
-        return Subscription.multi(subs);
+        return Subscription.multi(
+                InputHandler::subscribeToInput,
+                inputHandlers);
     }
 
     private void handleTransition(Function<S, S> transition) {

@@ -1,8 +1,10 @@
 package org.reactfx;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javafx.collections.ObservableSet;
 
@@ -32,6 +34,30 @@ public interface Subscription {
             case 2: return new BiSubscription(subs[0], subs[1]);
             default: return new MultiSubscription(subs);
         }
+    }
+
+    /**
+     * Subscribes to all elements by the given function and returns an aggregate
+     * subscription that can be used to cancel all element subscriptions.
+     */
+    @SafeVarargs
+    static <T> Subscription multi(
+            Function<? super T, ? extends Subscription> f,
+            T... elems) {
+        return multi(Stream.of(elems).map(f)
+                .<Subscription>toArray(n -> new Subscription[n]));
+    }
+
+    /**
+     * Subscribes to all elements of the given collection by the given function
+     * and returns an aggregate subscription that can be used to cancel all
+     * element subscriptions.
+     */
+    static <T> Subscription multi(
+            Function<? super T, ? extends Subscription> f,
+            Collection<T> elems) {
+        return multi(elems.stream().map(f)
+                .<Subscription>toArray(n -> new Subscription[n]));
     }
 
     /**

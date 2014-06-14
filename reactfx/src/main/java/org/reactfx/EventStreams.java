@@ -244,7 +244,7 @@ public class EventStreams {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                return Subscription.multi(set, s -> subscribeTo(s, this::emit));
+                return Subscription.dynamic(set, s -> subscribeTo(s, this::emit));
             }
         };
     }
@@ -262,7 +262,7 @@ public class EventStreams {
         return new LazilyBoundStream<U>() {
             @Override
             protected Subscription subscribeToInputs() {
-                return Subscription.multi(
+                return Subscription.dynamic(
                         set,
                         t -> subscribeTo(f.apply(t), this::emit));
             }

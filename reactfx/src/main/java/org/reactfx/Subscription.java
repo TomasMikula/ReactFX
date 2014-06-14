@@ -72,7 +72,7 @@ public interface Subscription {
      * subscriptions are unsubscribed as well, and no new elementary
      * subscriptions will be created.
      */
-    static <T> Subscription multi(
+    static <T> Subscription dynamic(
             ObservableSet<T> elems,
             Function<? super T, ? extends Subscription> f) {
 

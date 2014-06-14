@@ -18,12 +18,12 @@ class EmitOnStream<T> extends LazilyBoundStream<T> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription s1 = source.subscribe(v -> {
+        Subscription s1 = subscribeTo(source, v -> {
             hasValue = true;
             value = v;
         });
 
-        Subscription s2 = impulse.subscribe(i -> {
+        Subscription s2 = subscribeTo(impulse, i -> {
             if(hasValue) {
                 T val = value;
                 hasValue = false;

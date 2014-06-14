@@ -15,12 +15,12 @@ class EmitBothOnEachStream<A, I> extends LazilyBoundBiStream<A, I> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription s1 = source.subscribe(a -> {
+        Subscription s1 = subscribeTo(source, a -> {
             hasValue = true;
             this.a = a;
         });
 
-        Subscription s2 = impulse.subscribe(i -> {
+        Subscription s2 = subscribeTo(impulse, i -> {
             if(hasValue) {
                 emit(a, i);
             }
@@ -47,13 +47,13 @@ class EmitAll3OnEachStream<A, B, I> extends LazilyBoundTriStream<A, B, I> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription s1 = source.subscribe((a, b) -> {
+        Subscription s1 = subscribeTo(source, (a, b) -> {
             hasValue = true;
             this.a = a;
             this.b = b;
         });
 
-        Subscription s2 = impulse.subscribe(i -> {
+        Subscription s2 = subscribeTo(impulse, i -> {
             if(hasValue) {
                 emit(a, b, i);
             }

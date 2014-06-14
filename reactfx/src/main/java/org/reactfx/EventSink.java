@@ -1,6 +1,5 @@
 package org.reactfx;
 
-@FunctionalInterface
 public interface EventSink<T> {
     void push(T value);
 

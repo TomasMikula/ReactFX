@@ -14,7 +14,7 @@ class OrStream<L, R> extends LazilyBoundStream<Either<L, R>> implements EitherEv
     @Override
     protected Subscription subscribeToInputs() {
         return Subscription.multi(
-                left.subscribe(l -> emit(Either.<L, R>left(l))),
-                right.subscribe(r -> emit(Either.<L, R>right(r))));
+                subscribeTo(left, l -> emit(Either.<L, R>left(l))),
+                subscribeTo(right, r -> emit(Either.<L, R>right(r))));
     }
 }

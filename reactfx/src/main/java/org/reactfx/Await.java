@@ -11,12 +11,88 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
 import javafx.concurrent.Task;
 
-abstract class AwaitBase<T, F> extends LazilyBoundStream<T> implements AwaitingEventStream<T> {
+import org.reactfx.util.TriConsumer;
+import org.reactfx.util.Try;
+
+class Await<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream<R> {
+
+    public static <T> AwaitingEventStream<T> awaitCompletionStage(
+            EventStream<CompletionStage<T>> source,
+            Executor clientThreadExecutor) {
+        return new Await<>(
+                source,
+                (future, handler) -> addCompletionHandler(future, handler, clientThreadExecutor),
+                reportingEmitter());
+    }
+
+    public static <T> AwaitingEventStream<Try<T>> tryAwaitCompletionStage(
+            EventStream<CompletionStage<T>> source,
+            Executor clientThreadExecutor) {
+        return new Await<>(
+                source,
+                (future, handler) -> addCompletionHandler(future, handler, clientThreadExecutor),
+                tryEmitter());
+    }
+
+    public static <T> AwaitingEventStream<T> awaitTask(
+            EventStream<Task<T>> source) {
+        return new Await<>(source, Await::addCompletionHandler, reportingEmitter());
+    }
+
+    public static <T> AwaitingEventStream<Try<T>> tryAwaitTask(
+            EventStream<Task<T>> source) {
+        return new Await<>(source, Await::addCompletionHandler, tryEmitter());
+    }
+
+    static <T> void addCompletionHandler(
+            CompletionStage<T> future,
+            TriConsumer<T, Throwable, Boolean> handler,
+            Executor executor) {
+        future.whenCompleteAsync((result, error) -> {
+            handler.accept(result, error, false);
+        }, executor);
+    }
+
+    static <T> void addCompletionHandler(
+            Task<T> t,
+            TriConsumer<T, Throwable, Boolean> handler) {
+        t.addEventHandler(WORKER_STATE_SUCCEEDED, e -> handler.accept(t.getValue(), null, false));
+        t.addEventHandler(WORKER_STATE_FAILED, e -> handler.accept(null, t.getException(), false));
+        t.addEventHandler(WORKER_STATE_CANCELLED, e -> handler.accept(null, null, true));
+    }
+
+    static <T> TriConsumer<LazilyBoundStream<T>, T, Throwable> reportingEmitter() {
+        return (stream, value, error) -> {
+            if(error == null) {
+                stream.emit(value);
+            } else {
+                stream.reportError(error);
+            }
+        };
+    }
+
+    static <T> TriConsumer<LazilyBoundStream<Try<T>>, T, Throwable> tryEmitter() {
+        return (stream, value, error) -> {
+            if(error == null) {
+                stream.emit(Try.success(value));
+            } else {
+                stream.emit(Try.failure(error));
+            }
+        };
+    }
+
     private final EventStream<F> source;
     private final Indicator pending = new Indicator();
+    private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
+    private final TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter;
 
-    public AwaitBase(EventStream<F> source) {
+    private Await(
+            EventStream<F> source,
+            BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler,
+            TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter) {
         this.source = source;
+        this.addCompletionHandler = addCompletionHandler;
+        this.emitter = emitter;
     }
 
     @Override
@@ -31,63 +107,131 @@ abstract class AwaitBase<T, F> extends LazilyBoundStream<T> implements AwaitingE
 
     @Override
     protected final Subscription subscribeToInputs() {
-        return source.subscribe(future -> {
+        return subscribeTo(source, future -> {
             Guard g = pending.on();
-            addCompletionHandler(future, (result, success) -> {
-                if(success) {
-                    emit(result);
+            addCompletionHandler.accept(future, (result, error, cancelled) -> {
+                if(!cancelled) {
+                    emitter.accept(this, result, error);
                 }
                 g.close();
             });
         });
     }
-
-    protected abstract void addCompletionHandler(F future, BiConsumer<T, Boolean> action);
 }
 
-class AwaitCompletionStage<T> extends AwaitBase<T, CompletionStage<T>> {
-    private final Executor clientThreadExecutor;
 
-    public AwaitCompletionStage(
+class AwaitLatest<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream<R> {
+
+    public static <T> AwaitingEventStream<T> awaitCompletionStage(
             EventStream<CompletionStage<T>> source,
             Executor clientThreadExecutor) {
-        super(source);
-        this.clientThreadExecutor = clientThreadExecutor;
+        return new AwaitLatest<>(
+                source,
+                EventStreams.never(), // no cancel impulse
+                future -> {}, // cannot cancel a CompletionStage
+                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
+                Await.reportingEmitter());
     }
 
-    @Override
-    protected void addCompletionHandler(CompletionStage<T> future, BiConsumer<T, Boolean> f) {
-        future.whenCompleteAsync((result, error) -> {
-            f.accept(result, error == null);
-        }, clientThreadExecutor);
-    }
-}
-
-class AwaitTask<T> extends AwaitBase<T, Task<T>> {
-
-    public AwaitTask(EventStream<Task<T>> source) {
-        super(source);
+    public static <T> AwaitingEventStream<Try<T>> tryAwaitCompletionStage(
+            EventStream<CompletionStage<T>> source,
+            Executor clientThreadExecutor) {
+        return new AwaitLatest<>(
+                source,
+                EventStreams.never(), // no cancel impulse
+                future -> {}, // cannot cancel a CompletionStage
+                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
+                Await.tryEmitter());
     }
 
-    @Override
-    protected void addCompletionHandler(Task<T> t, BiConsumer<T, Boolean> f) {
-        t.addEventHandler(WORKER_STATE_SUCCEEDED, e -> f.accept(t.getValue(), true));
-        t.addEventHandler(WORKER_STATE_FAILED, e -> f.accept(null, false));
-        t.addEventHandler(WORKER_STATE_CANCELLED, e -> f.accept(null, false));
+    public static <T> AwaitingEventStream<T> awaitTask(
+            EventStream<Task<T>> source) {
+        return new AwaitLatest<>(
+                source,
+                EventStreams.never(), // no cancel impulse
+                Task::cancel,
+                Await::addCompletionHandler,
+                Await.reportingEmitter());
     }
-}
 
+    public static <T> AwaitingEventStream<Try<T>> tryAwaitTask(
+            EventStream<Task<T>> source) {
+        return new AwaitLatest<>(
+                source,
+                EventStreams.never(), // no cancel impulse
+                Task::cancel,
+                Await::addCompletionHandler,
+                Await.tryEmitter());
+    }
 
-abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> implements AwaitingEventStream<T> {
+    public static <T> AwaitingEventStream<T> awaitCompletionStage(
+            EventStream<CompletionStage<T>> source,
+            EventStream<?> cancelImpulse,
+            Executor clientThreadExecutor) {
+        return new AwaitLatest<>(
+                source,
+                cancelImpulse,
+                future -> {}, // cannot cancel a CompletionStage
+                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
+                Await.reportingEmitter());
+    }
+
+    public static <T> AwaitingEventStream<Try<T>> tryAwaitCompletionStage(
+            EventStream<CompletionStage<T>> source,
+            EventStream<?> cancelImpulse,
+            Executor clientThreadExecutor) {
+        return new AwaitLatest<>(
+                source,
+                cancelImpulse,
+                future -> {}, // cannot cancel a CompletionStage
+                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
+                Await.tryEmitter());
+    }
+
+    public static <T> AwaitingEventStream<T> awaitTask(
+            EventStream<Task<T>> source,
+            EventStream<?> cancelImpulse) {
+        return new AwaitLatest<>(
+                source,
+                cancelImpulse,
+                Task::cancel,
+                Await::addCompletionHandler,
+                Await.reportingEmitter());
+    }
+
+    public static <T> AwaitingEventStream<Try<T>> tryAwaitTask(
+            EventStream<Task<T>> source,
+            EventStream<?> cancelImpulse) {
+        return new AwaitLatest<>(
+                source,
+                cancelImpulse,
+                Task::cancel,
+                Await::addCompletionHandler,
+                Await.tryEmitter());
+    }
+
     private final EventStream<F> source;
+    private final EventStream<?> cancelImpulse;
+    private final Consumer<F> canceller;
+    private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
+    private final TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter;
 
     private long revision = 0;
     private F expectedFuture = null;
 
     private BooleanBinding pending = null;
 
-    public AwaitLatestBase(EventStream<F> source) {
+    private AwaitLatest(
+            EventStream<F> source,
+            EventStream<?> cancelImpulse,
+            Consumer<F> canceller,
+            BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler,
+            TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter) {
         this.source = source;
+        this.cancelImpulse = cancelImpulse;
+        this.canceller = canceller;
+        this.addCompletionHandler = addCompletionHandler;
+        this.emitter = emitter;
     }
 
     @Override
@@ -110,27 +254,28 @@ abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> implements Awa
 
     @Override
     protected Subscription subscribeToInputs() {
-        return source.subscribe(future -> {
+        Subscription s1 = subscribeTo(source, future -> {
             long rev = replaceExpected(future);
-            addResultHandler(future, t -> {
+            addCompletionHandler.accept(future, (result, error, cancelled) -> {
                 if(rev == revision) {
-                    emit(t);
-                    setExpected(null);
-                }
-            });
-            addErrorHandler(future, () -> {
-                if(rev == revision) {
+                    if(!cancelled) {
+                        emitter.accept(this, result, error); // emit before setting pending to false
+                    }
                     setExpected(null);
                 }
             });
         });
+
+        Subscription s2 = subscribeTo(cancelImpulse, x -> replaceExpected(null));
+
+        return s1.and(s2);
     }
 
     private final long replaceExpected(F newExpected) {
+        ++revision; // increment before cancelling, so that the cancellation handler is not executed
         if(expectedFuture != null) {
-            cancel(expectedFuture);
+            canceller.accept(expectedFuture);
         }
-        ++revision;
         setExpected(newExpected);
         return revision;
     }
@@ -140,101 +285,5 @@ abstract class AwaitLatestBase<T, F> extends LazilyBoundStream<T> implements Awa
         if(pending != null) {
             pending.invalidate();
         }
-    }
-
-    protected final void cancelExpected() {
-        replaceExpected(null);
-    }
-
-    protected abstract void addResultHandler(F future, Consumer<T> action);
-    protected abstract void addErrorHandler(F future, Runnable action);
-    protected abstract void cancel(F future);
-}
-
-class AwaitLatestCompletionStage<T> extends AwaitLatestBase<T, CompletionStage<T>> {
-    private final Executor clientThreadExecutor;
-
-    public AwaitLatestCompletionStage(
-            EventStream<CompletionStage<T>> source,
-            Executor clientThreadExecutor) {
-        super(source);
-        this.clientThreadExecutor = clientThreadExecutor;
-    }
-
-    @Override
-    protected void addResultHandler(CompletionStage<T> future, Consumer<T> f) {
-        future.thenAcceptAsync(f, clientThreadExecutor);
-    }
-
-    @Override
-    protected void addErrorHandler(CompletionStage<T> future, Runnable action) {
-        future.whenCompleteAsync((u, error) -> {
-            if(error != null) {
-                action.run();
-            }
-        }, clientThreadExecutor);
-    }
-
-    @Override
-    protected void cancel(CompletionStage<T> future) {
-        // do nothing (cannot cancel a CompletionStage)
-    }
-}
-
-class CancellableAwaitLatestCompletionStage<T> extends AwaitLatestCompletionStage<T> {
-    private final EventStream<?> canceller;
-
-    public CancellableAwaitLatestCompletionStage(
-            EventStream<CompletionStage<T>> source,
-            EventStream<?> canceller,
-            Executor clientThreadExecutor) {
-        super(source, clientThreadExecutor);
-        this.canceller = canceller;
-    }
-
-    @Override
-    protected Subscription subscribeToInputs() {
-        Subscription s1 = super.subscribeToInputs();
-        Subscription s2 = canceller.subscribe(x -> cancelExpected());
-        return s1.and(s2);
-    }
-}
-
-class AwaitLatestTask<T> extends AwaitLatestBase<T, Task<T>> {
-    public AwaitLatestTask(EventStream<Task<T>> source) {
-        super(source);
-    }
-
-    @Override
-    protected void addResultHandler(Task<T> t, Consumer<T> f) {
-        t.addEventHandler(WORKER_STATE_SUCCEEDED, e -> f.accept(t.getValue()));
-    }
-
-    @Override
-    protected void addErrorHandler(Task<T> t, Runnable f) {
-        t.addEventHandler(WORKER_STATE_FAILED, e -> f.run());
-    }
-
-    @Override
-    protected void cancel(Task<T> task) {
-        task.cancel();
-    }
-}
-
-class CancellableAwaitLatestTask<T> extends AwaitLatestTask<T> {
-    private final EventStream<?> canceller;
-
-    public CancellableAwaitLatestTask(
-            EventStream<Task<T>> source,
-            EventStream<?> canceller) {
-        super(source);
-        this.canceller = canceller;
-    }
-
-    @Override
-    protected Subscription subscribeToInputs() {
-        Subscription s1 = super.subscribeToInputs();
-        Subscription s2 = canceller.subscribe(x -> cancelExpected());
-        return s1.and(s2);
     }
 }

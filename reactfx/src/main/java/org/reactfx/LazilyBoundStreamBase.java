@@ -14,12 +14,20 @@ public abstract class LazilyBoundStreamBase<S> extends EventStreamBase<S> {
 
     @Override
     protected final void firstSubscriber() {
-        subscription = subscribeToInputs();
+        try {
+            subscription = subscribeToInputs();
+        } catch(Throwable t) {
+            reportError(t);
+        }
     }
 
     @Override
     protected final void noSubscribers() {
-        subscription.unsubscribe();
-        subscription = null;
+        try {
+            subscription.unsubscribe();
+            subscription = null;
+        } catch(Throwable t) {
+            reportError(t);
+        }
     }
 }

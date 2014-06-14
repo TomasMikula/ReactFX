@@ -16,7 +16,7 @@ class DistinctStream<T> extends LazilyBoundStream<T> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe(value -> {
+        return subscribeTo(input, value -> {
             Object prevToCompare = previous;
             previous = value;
             if (!Objects.equals(value, prevToCompare)) {
@@ -37,7 +37,7 @@ class DistinctBiStream<A, B> extends LazilyBoundBiStream<A, B> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe((a, b) -> {
+        return subscribeTo(input, (a, b) -> {
             Object aPrevToCompare = previousA;
             previousA = a;
             Object bPrevToCompare = previousB;
@@ -63,7 +63,7 @@ class DistinctTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe((a, b, c) -> {
+        return subscribeTo(input, (a, b, c) -> {
             Object aPrevToCompare = previousA;
             previousA = a;
             Object bPrevToCompare = previousB;

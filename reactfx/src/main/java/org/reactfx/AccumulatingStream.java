@@ -23,7 +23,7 @@ class AccumulatingStream<T, U> extends LazilyBoundStream<U> {
 
     @Override
     protected final Subscription subscribeToInputs() {
-        return input.subscribe(i -> {
+        return subscribeTo(input, i -> {
             event = hasEvent
                     ? reduction.apply(event, i)
                     : initialTransformation.apply(i);

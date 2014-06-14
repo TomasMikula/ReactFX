@@ -3,10 +3,10 @@ package org.reactfx;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import org.reactfx.util.Timer;
-
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.value.ObservableBooleanValue;
+
+import org.reactfx.util.Timer;
 
 class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements AwaitingEventStream<O> {
     private final EventStream<I> input;
@@ -50,7 +50,7 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements Awa
 
     @Override
     protected final Subscription subscribeToInputs() {
-        return input.subscribe(i -> handleEvent(i));
+        return subscribeTo(input, i -> handleEvent(i));
     }
 
     private void handleEvent(I i) {

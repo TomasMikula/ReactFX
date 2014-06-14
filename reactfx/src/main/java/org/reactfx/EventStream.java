@@ -20,6 +20,7 @@ import javafx.concurrent.Task;
 import org.reactfx.util.Either;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
+import org.reactfx.util.Try;
 
 /**
  * Stream of values (events).
@@ -32,12 +33,23 @@ import org.reactfx.util.Timer;
 public interface EventStream<T> {
 
     /**
-     * Get notified every time this stream emits a value.
+     * Get notified every time this event stream emits a value.
      * @param subscriber function to call on the emitted value.
      * @return subscription that can be used to stop observing
      * this event stream.
      */
     Subscription subscribe(Consumer<? super T> subscriber);
+
+    /**
+     * Get notified every time this event stream encounters an error. An error
+     * is encountered when a user provided function (e.g. an event subscriber
+     * or an argument to a stream combinator, such as {@link #map(Function)}),
+     * throws an exception.
+     * @param monitor function to call for the encountered error.
+     * @return subscription that can be used to stop monitoring this event
+     * stream.
+     */
+    Subscription monitor(Consumer<? super Throwable> monitor);
 
     /**
      * Starts pushing all events emitted by this stream to the given event sink.
@@ -620,5 +632,40 @@ public interface EventStream<T> {
      */
     default EventStream<T> guardedBy(Guardian... guardians) {
         return new GuardedStream<>(this, guardians);
+    }
+
+    /**
+     * Returns a new event stream that emits every event {@code e} emitted from
+     * this stream as {@code Try.success(e)} and emits every error {@code err}
+     * reported by this stream as {@code Try.failure(err)}.
+     *
+     * <p>In other words, errors reported by this stream are not propagated
+     * through the returned stream's error-reporting mechanism, but rather
+     * materialized in the event type.
+     *
+     * <p>Note, however, that the returned stream may report errors of its own,
+     * caused by its subscribers.
+     */
+    default EventStream<Try<T>> materializeErrors() {
+        return new LazilyBoundStream<Try<T>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                Subscription s1 = EventStream.this.subscribe(t -> emit(Try.success(t)));
+                Subscription s2 = EventStream.this.monitor(er -> emit(Try.failure(er)));
+                return s1.and(s2);
+            }
+        };
+    }
+
+    /**
+     * Returns a stream of errors reported by this event stream.
+     */
+    default EventStream<Throwable> errors() {
+        return new LazilyBoundStream<Throwable>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return EventStream.this.monitor(error -> emit(error));
+            }
+        };
     }
 }

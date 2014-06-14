@@ -5,7 +5,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -28,11 +27,25 @@ import org.reactfx.util.Timer;
 
 public class EventStreams {
 
+    private static final EventStream<?> NEVER = new EventStream<Object>() {
+
+        @Override
+        public Subscription subscribe(Consumer<? super Object> subscriber) {
+            return Subscription.EMPTY;
+        }
+
+        @Override
+        public Subscription monitor(Consumer<? super Throwable> subscriber) {
+            return Subscription.EMPTY;
+        }
+    };
+
     /**
      * Returns an event stream that never emits any value.
      */
+    @SuppressWarnings("unchecked")
     public static <T> EventStream<T> never() {
-        return consumer -> Subscription.EMPTY;
+        return (EventStream<T>) NEVER;
     }
 
     public static EventStream<Void> invalidationsOf(Observable observable) {
@@ -214,10 +227,7 @@ public class EventStreams {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription[] subs = Stream.of(inputs)
-                        .map(i -> i.subscribe(this::emit))
-                        .toArray(n -> new Subscription[n]);
-                return Subscription.multi(subs);
+                return Subscription.multi(i -> subscribeTo(i, this::emit), inputs);
             }
         };
     }
@@ -234,7 +244,7 @@ public class EventStreams {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                return Subscription.multi(set, t -> t.subscribe(this::emit));
+                return Subscription.multi(set, s -> subscribeTo(s, this::emit));
             }
         };
     }
@@ -252,7 +262,9 @@ public class EventStreams {
         return new LazilyBoundStream<U>() {
             @Override
             protected Subscription subscribeToInputs() {
-                return Subscription.multi(set, t -> f.apply(t).subscribe(this::emit));
+                return Subscription.multi(
+                        set,
+                        t -> subscribeTo(f.apply(t), this::emit));
             }
         };
     }
@@ -267,8 +279,8 @@ public class EventStreams {
                 pocketA.clear();
                 pocketB.clear();
                 return Subscription.multi(
-                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
-                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }));
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }));
             }
 
             protected void tryEmit() {
@@ -291,9 +303,9 @@ public class EventStreams {
                 pocketB.clear();
                 pocketC.clear();
                 return Subscription.multi(
-                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
-                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
-                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }));
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
+                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }));
             }
 
             protected void tryEmit() {
@@ -314,8 +326,8 @@ public class EventStreams {
                 pocketA.clear();
                 pocketB.clear();
                 return Subscription.multi(
-                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
-                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }));
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }));
             }
 
             void tryEmit() {
@@ -338,9 +350,9 @@ public class EventStreams {
                 pocketB.clear();
                 pocketC.clear();
                 return Subscription.multi(
-                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
-                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
-                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }));
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
+                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }));
             }
 
             void tryEmit() {

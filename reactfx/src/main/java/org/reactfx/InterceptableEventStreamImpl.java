@@ -27,7 +27,7 @@ class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements In
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe(event -> consumer.consume(event));
+        return subscribeTo(input, event -> consumer.consume(event));
     }
 
     @Override

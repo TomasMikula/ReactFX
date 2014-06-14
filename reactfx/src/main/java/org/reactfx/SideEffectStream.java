@@ -17,7 +17,7 @@ class SideEffectStream<T> extends LazilyBoundStream<T> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return source.subscribe(t -> {
+        return subscribeTo(source, t -> {
             sideEffect.accept(t);
             emit(t);
         });
@@ -35,7 +35,7 @@ class SideEffectBiStream<A, B> extends LazilyBoundBiStream<A, B> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return source.subscribe((a, b) -> {
+        return subscribeTo(source, (a, b) -> {
             sideEffect.accept(a, b);
             emit(a, b);
         });
@@ -54,7 +54,7 @@ class SideEffectTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return source.subscribe((a, b, c) -> {
+        return subscribeTo(source, (a, b, c) -> {
             sideEffect.accept(a, b, c);
             emit(a, b, c);
         });

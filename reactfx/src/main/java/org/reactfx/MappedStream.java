@@ -22,7 +22,7 @@ class MappedStream<T, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe(value -> {
+        return subscribeTo(input, value -> {
             emit(f.apply(value));
         });
     }
@@ -41,7 +41,7 @@ class MappedBiStream<A, B, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe((a, b) -> {
+        return subscribeTo(input, (a, b) -> {
             emit(f.apply(a, b));
         });
     }
@@ -60,7 +60,7 @@ class MappedTriStream<A, B, C, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return input.subscribe((a, b, c) -> {
+        return subscribeTo(input, (a, b, c) -> {
             emit(f.apply(a, b, c));
         });
     }

@@ -18,7 +18,7 @@ class FlatMapStream<T, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription s = source.subscribe(t -> {
+        Subscription s = subscribeTo(source, t -> {
             mappedSubscription.unsubscribe();
             mappedSubscription = mapper.apply(t).subscribe(u -> emit(u));
         });
@@ -43,6 +43,8 @@ class FlatMapOptStream<T, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return source.subscribe(t -> mapper.apply(t).ifPresent(u -> emit(u)));
+        return subscribeTo(
+                source,
+                t -> mapper.apply(t).ifPresent(this::emit));
     }
 }

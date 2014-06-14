@@ -25,9 +25,14 @@ class ThreadBridge<T> extends LazilyBoundStream<T> {
     protected Subscription subscribeToInputs() {
         CompletableFuture<Subscription> subscription = new CompletableFuture<>();
         sourceThreadExecutor.execute(() -> {
-            subscription.complete(input.subscribe(e -> {
-                targetThreadExecutor.execute(() -> emit(e));
-            }));
+            subscription.complete(
+                    Subscription.multi(
+                            input.subscribe(e -> {
+                                targetThreadExecutor.execute(() -> emit(e));
+                            }),
+                            input.monitor(error -> {
+                                targetThreadExecutor.execute(() -> reportError(error));
+                            })));
         });
         return () -> {
             subscription.thenAcceptAsync(

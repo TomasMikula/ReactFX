@@ -644,7 +644,7 @@ public interface EventStream<T> {
      * materialized in the event type.
      *
      * <p>Note, however, that the returned stream may report errors of its own,
-     * caused by its subscribers.
+     * thrown by its subscribers.
      */
     default EventStream<Try<T>> materializeErrors() {
         return new LazilyBoundStream<Try<T>>() {
@@ -658,13 +658,32 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns a new event stream that emits the same events as this event
+     * stream, but does not propagate any of this stream's errors. Instead,
+     * errors reported by this stream are passed to the given handler.
+     *
+     * <p>Note that the returned stream may report errors of its own, thrown
+     * by its subscribers.
+     */
+    default EventStream<T> handleErrors(Consumer<? super Throwable> handler) {
+        return new LazilyBoundStream<T>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                Subscription s1 = EventStream.this.subscribe(this::emit);
+                Subscription s2 = EventStream.this.monitor(handler);
+                return s1.and(s2);
+            }
+        };
+    }
+
+    /**
      * Returns a stream of errors reported by this event stream.
      */
     default EventStream<Throwable> errors() {
         return new LazilyBoundStream<Throwable>() {
             @Override
             protected Subscription subscribeToInputs() {
-                return EventStream.this.monitor(error -> emit(error));
+                return EventStream.this.monitor(this::emit);
             }
         };
     }

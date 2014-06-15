@@ -376,6 +376,12 @@ rect.beingUpdatedProperty().onWhile(() -> {
 ```
 
 
+Error handling
+--------------
+
+From version 1.2.0, ReactFX has a mechanism to handle errors encountered by event streams. You can read more about this mechanism on the [Error Handling wiki page](https://github.com/TomasMikula/ReactFX/wiki/Error-Handling).
+
+
 Use ReactFX in your project
 ---------------------------
 

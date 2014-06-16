@@ -32,7 +32,7 @@ class GuardedBiStream<A, B> extends LazilyBoundBiStream<A, B> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return subscribeTo(source, (a, b) -> {
+        return subscribeToBi(source, (a, b) -> {
             try(Guard g = guardian.guard()) {
                 emit(a, b);
             }
@@ -51,7 +51,7 @@ class GuardedTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return subscribeTo(source, (a, b, c) -> {
+        return subscribeToTri(source, (a, b, c) -> {
             try(Guard g = guardian.guard()) {
                 emit(a, b, c);
             }

@@ -30,4 +30,8 @@ public abstract class LazilyBoundStreamBase<S> extends EventStreamBase<S> {
             reportError(t);
         }
     }
+
+    protected final boolean isBound() {
+        return subscription != null;
+    }
 }

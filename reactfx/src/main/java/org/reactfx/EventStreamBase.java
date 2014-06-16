@@ -97,7 +97,7 @@ public abstract class EventStreamBase<S> {
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
-    protected final <A, B> Subscription subscribeTo(
+    protected final <A, B> Subscription subscribeToBi(
             BiEventStream<A, B> stream,
             BiConsumer<? super A, ? super B> subscriber) {
         return oversee(stream).and(stream.subscribe(subscriber));
@@ -109,7 +109,7 @@ public abstract class EventStreamBase<S> {
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
-    protected final <A, B, C> Subscription subscribeTo(
+    protected final <A, B, C> Subscription subscribeToTri(
             TriEventStream<A, B, C> stream,
             TriConsumer<? super A, ? super B, ? super C> subscriber) {
         return oversee(stream).and(stream.subscribe(subscriber));

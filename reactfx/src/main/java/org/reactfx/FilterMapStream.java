@@ -48,7 +48,7 @@ class FilterMapBiStream<A, B, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return subscribeTo(source, (a, b) -> {
+        return subscribeToBi(source, (a, b) -> {
             if(predicate.test(a, b)) {
                 emit(f.apply(a, b));
             }
@@ -72,7 +72,7 @@ class FilterMapTriStream<A, B, C, U> extends LazilyBoundStream<U> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        return subscribeTo(source, (a, b, c) -> {
+        return subscribeToTri(source, (a, b, c) -> {
             if(predicate.test(a, b, c)) {
                 emit(f.apply(a, b, c));
             }

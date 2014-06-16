@@ -47,7 +47,7 @@ class EmitAll3OnEachStream<A, B, I> extends LazilyBoundTriStream<A, B, I> {
 
     @Override
     protected Subscription subscribeToInputs() {
-        Subscription s1 = subscribeTo(source, (a, b) -> {
+        Subscription s1 = subscribeToBi(source, (a, b) -> {
             hasValue = true;
             this.a = a;
             this.b = b;

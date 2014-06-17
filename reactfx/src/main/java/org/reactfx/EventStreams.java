@@ -1,10 +1,12 @@
 package org.reactfx;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
@@ -138,6 +140,48 @@ public class EventStreams {
                 MapChangeListener<K, V> listener = c -> emit(c);
                 map.addListener(listener);
                 return () -> map.removeListener(listener);
+            }
+        };
+    }
+
+    public static <C extends Collection<?> & Observable> EventStream<Integer> sizeOf(C collection) {
+        return create(() -> collection.size(), collection);
+    }
+
+    public static EventStream<Integer> sizeOf(ObservableMap<?, ?> map) {
+        return create(() -> map.size(), map);
+    }
+
+    private static <T> EventStream<T> create(Supplier<? extends T> computeValue, Observable... dependencies) {
+        return new LazilyBoundStream<T>() {
+            private T previousValue;
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                InvalidationListener listener = obs -> {
+                    T value = computeValue.get();
+                    if(value != previousValue) {
+                        previousValue = value;
+                        emit(value);
+                    }
+                };
+                for(Observable dep: dependencies) {
+                    dep.addListener(listener);
+                }
+
+                return () -> {
+                    for(Observable dep: dependencies) {
+                        dep.removeListener(listener);
+                    }
+                };
+            }
+
+            @Override
+            protected void newSubscriber(Consumer<? super T> subscriber) {
+                if(!isBound()) { // this is the first subscriber
+                    previousValue = computeValue.get();
+                }
+                subscriber.accept(previousValue);
             }
         };
     }

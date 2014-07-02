@@ -52,6 +52,18 @@ public interface EventStream<T> {
     Subscription monitor(Consumer<? super Throwable> monitor);
 
     /**
+     * Convenient method to subscribe to and monitor this stream. Is equivalent
+     * to {@code subscribe(subscriber).and(monitor(monitor))}.
+     * @see #subscribe(Consumer)
+     * @see #monitor(Consumer)
+     */
+    default Subscription watch(
+            Consumer<? super T> subscriber,
+            Consumer<? super Throwable> monitor) {
+        return subscribe(subscriber).and(monitor(monitor));
+    }
+
+    /**
      * Starts pushing all events emitted by this stream to the given event sink.
      * <p>{@code stream.feedTo(sink)} is equivalent to
      * {@code sink.feedFrom(stream)}

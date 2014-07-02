@@ -25,6 +25,12 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
         return subscribe((a, b, c) -> subscriber.accept(t(a, b, c)));
     }
 
+    default Subscription watch(
+            TriConsumer<? super A, ? super B, ? super C> subscriber,
+            Consumer<? super Throwable> monitor) {
+        return subscribe(subscriber).and(monitor(monitor));
+    }
+
     default Subscription feedTo3(TriEventSink<? super A, ? super B, ? super C> sink) {
         return subscribe((a, b, c) -> sink.push(a, b, c));
     }

@@ -20,6 +20,13 @@ public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
         });
     }
 
+    default Subscription watch(
+            Consumer<? super L> leftSubscriber,
+            Consumer<? super R> rightSubscriber,
+            Consumer<? super Throwable> monitor) {
+        return subscribe(leftSubscriber, rightSubscriber).and(monitor(monitor));
+    }
+
     default EventStream<L> left() {
         return filterMap(Either::isLeft, Either::getLeft);
     }

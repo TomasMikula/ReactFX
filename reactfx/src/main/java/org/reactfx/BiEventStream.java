@@ -25,6 +25,12 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return subscribe((a, b) -> subscriber.accept(t(a, b)));
     }
 
+    default Subscription watch(
+            BiConsumer<? super A, ? super B> subscriber,
+            Consumer<? super Throwable> monitor) {
+        return subscribe(subscriber).and(monitor(monitor));
+    }
+
     default Subscription feedTo2(BiEventSink<? super A, ? super B> sink) {
         return subscribe((a, b) -> sink.push(a, b));
     }

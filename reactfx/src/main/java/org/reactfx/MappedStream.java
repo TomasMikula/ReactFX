@@ -132,6 +132,7 @@ implements TaskStream<U> {
     }
 }
 
+@Deprecated
 class MappedToEitherStream<T, L, R>
 extends MappedStream<T, Either<L, R>>
 implements EitherEventStream<L, R> {
@@ -143,6 +144,7 @@ implements EitherEventStream<L, R> {
     }
 }
 
+@Deprecated
 class MappedToEitherBiStream<A, B, L, R>
 extends MappedBiStream<A, B, Either<L, R>>
 implements EitherEventStream<L, R> {
@@ -154,6 +156,7 @@ implements EitherEventStream<L, R> {
     }
 }
 
+@Deprecated
 class MappedToEitherTriStream<A, B, C, L, R>
 extends MappedTriStream<A, B, C, Either<L, R>>
 implements EitherEventStream<L, R> {

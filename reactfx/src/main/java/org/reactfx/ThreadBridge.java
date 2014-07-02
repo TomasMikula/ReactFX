@@ -62,6 +62,7 @@ implements PoorMansTriStream<A, B, C> {
     }
 }
 
+@Deprecated
 class EitherThreadBridge<L, R>
 extends ThreadBridge<Either<L, R>>
 implements EitherEventStream<L, R> {

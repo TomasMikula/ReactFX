@@ -191,7 +191,10 @@ public interface EventStream<T> {
      * Like {@link #map(Function)}, but returns an {@link EitherEventStream}
      * that provides additional convenient methods on a stream of
      * {@link Either}.
+     *
+     * @deprecated See deprecation comment at {@link EitherEventStream}.
      */
+    @Deprecated
     default <L, R> EitherEventStream<L, R> split(
             Function<? super T, Either<L, R>> f) {
         return new MappedToEitherStream<>(this, f);
@@ -201,9 +204,22 @@ public interface EventStream<T> {
      * Returns a new event stream that, for event {@code e} emitted from this
      * stream, emits {@code left(e)} if {@code e} passes the given test, and
      * emits {@code right(e)} if {@code e} does not pass the test.
+     *
+     * @deprecated See deprecation comment at {@link EitherEventStream}.
+     * You can use {@link #splitBy(Predicate)} as an alternative.
      */
+    @Deprecated
     default EitherEventStream<T, T> test(Predicate<? super T> test) {
         return split(t -> test.test(t) ? Either.left(t) : Either.right(t));
+    }
+
+    /**
+     * Returns a new event stream that, for event {@code e} emitted from this
+     * stream, emits {@code left(e)} if {@code e} passes the given test, and
+     * emits {@code right(e)} if {@code e} does not pass the test.
+     */
+    default EventStream<Either<T, T>> splitBy(Predicate<? super T> test) {
+        return map(t -> test.test(t) ? Either.left(t) : Either.right(t));
     }
 
     /**
@@ -228,8 +244,25 @@ public interface EventStream<T> {
      * A more efficient equivalent to
      * {@code filter(predicate).map(f)}.
      */
-    default <U> EventStream<U> filterMap(Predicate<? super T> predicate, Function<? super T, ? extends U> f) {
+    default <U> EventStream<U> filterMap(
+            Predicate<? super T> predicate,
+            Function<? super T, ? extends U> f) {
         return new FilterMapStream<>(this, predicate, f);
+    }
+
+    /**
+     * Equivalent to
+     * <pre>
+     * {@code
+     * map(f)
+     *     .filter(Optional::isPresent)
+     *     .map(Optional::get)
+     * }
+     * </pre>
+     * with more efficient implementation.
+     */
+    default <U> EventStream<U> filterMap(Function<? super T, Optional<U>> f) {
+        return new FlatMapOptStream<T, U>(this, f);
     }
 
     /**
@@ -255,9 +288,11 @@ public interface EventStream<T> {
      *     .map(Optional::get)
      * }
      * </pre>
+     * @deprecated Since 1.2.1. Renamed to {@link #filterMap(Function)}.
      */
+    @Deprecated
     default <U> EventStream<U> flatMapOpt(Function<? super T, Optional<U>> f) {
-        return new FlatMapOptStream<T, U>(this, f);
+        return filterMap(f);
     }
 
     /**
@@ -269,8 +304,16 @@ public interface EventStream<T> {
      *
      * @see EventStreams#merge(EventStream...)
      */
-    default <U> EitherEventStream<T, U> or(EventStream<? extends U> right) {
-        return new OrStream<>(this, right);
+    default <U> EventStream<Either<T, U>> or(EventStream<? extends U> right) {
+        EventStream<T> left = this;
+        return new LazilyBoundStream<Either<T, U>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                return Subscription.multi(
+                        subscribeTo(left, l -> emit(Either.<T, U>left(l))),
+                        subscribeTo(right, r -> emit(Either.<T, U>right(r))));
+            }
+        };
     }
 
     /**

@@ -59,6 +59,7 @@ class GuardedTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
     }
 }
 
+@Deprecated
 class GuardedEitherStream<L, R>
 extends GuardedStream<Either<L, R>>
 implements EitherEventStream<L, R> {

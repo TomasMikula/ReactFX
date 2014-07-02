@@ -55,6 +55,10 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
         return new MappedTriStream<>(this, f);
     }
 
+    /**
+     * @deprecated See deprecation comment at {@link EitherEventStream}.
+     */
+    @Deprecated
     default <L, R> EitherEventStream<L, R> split(
             TriFunction<? super A, ? super B, ? super C, Either<L, R>> f) {
         return new MappedToEitherTriStream<>(this, f);
@@ -76,10 +80,18 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
         return new FilterMapTriStream<>(this, predicate, f);
     }
 
+    default <U> EventStream<U> filterMap(TriFunction<? super A, ? super B, ? super C, Optional<U>> f) {
+        return filterMap(t -> f.apply(t._1, t._2, t._3));
+    }
+
     default <U> EventStream<U> flatMap(TriFunction<? super A, ? super B, ? super C, ? extends EventStream<U>> f) {
         return flatMap(t -> f.apply(t._1, t._2, t._3));
     }
 
+    /**
+     * @deprecated Since 1.2.1. Renamed to {@link #filterMap(TriFunction)}.
+     */
+    @Deprecated
     default <U> EventStream<U> flatMapOpt(TriFunction<? super A, ? super B, ? super C, Optional<U>> f) {
         return flatMapOpt(t -> f.apply(t._1, t._2, t._3));
     }

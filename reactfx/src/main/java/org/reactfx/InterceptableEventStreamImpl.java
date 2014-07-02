@@ -271,6 +271,7 @@ implements InterceptableTriEventStream<A, B, C>, PoorMansTriStream<A, B, C> {
 }
 
 
+@Deprecated
 class InterceptableEitherEventStreamImpl<L, R>
 extends InterceptableEventStreamImpl<Either<L, R>>
 implements InterceptableEitherEventStream<L, R> {

@@ -56,6 +56,7 @@ implements PoorMansTriStream<A, B, C> {
     }
 }
 
+@Deprecated
 class RepeatOnEitherStream<L, R>
 extends RepeatOnStream<Either<L, R>>
 implements EitherEventStream<L, R> {

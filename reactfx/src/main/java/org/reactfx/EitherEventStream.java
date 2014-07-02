@@ -9,6 +9,13 @@ import javafx.application.Platform;
 
 import org.reactfx.util.Either;
 
+/**
+ * @deprecated Since 1.2.1. The utility of {@code EitherEventStream<L, R>} over
+ * just {@code EventStream<Either<L, R>>} is questionable and probably not worth
+ * maintaining a special implementation. Let us know if you use it and your code
+ * would get much less readable without it.
+ */
+@Deprecated
 public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
 
     default Subscription subscribe(

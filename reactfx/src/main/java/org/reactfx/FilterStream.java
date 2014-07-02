@@ -69,6 +69,7 @@ class FilterTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
     }
 }
 
+@Deprecated
 class FilterEitherStream<L, R>
 extends FilterStream<Either<L, R>>
 implements EitherEventStream<L, R> {

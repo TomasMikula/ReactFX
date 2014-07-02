@@ -55,6 +55,10 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return new MappedBiStream<>(this, f);
     }
 
+    /**
+     * @deprecated See deprecation comment at {@link EitherEventStream}.
+     */
+    @Deprecated
     default <L, R> EitherEventStream<L, R> split(
             BiFunction<? super A, ? super B, Either<L, R>> f) {
         return new MappedToEitherBiStream<>(this, f);
@@ -76,10 +80,18 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return new FilterMapBiStream<>(this, predicate, f);
     }
 
+    default <U> EventStream<U> filterMap(BiFunction<? super A, ? super B, Optional<U>> f) {
+        return filterMap(t -> f.apply(t._1, t._2));
+    }
+
     default <U> EventStream<U> flatMap(BiFunction<? super A, ? super B, ? extends EventStream<U>> f) {
         return flatMap(t -> f.apply(t._1, t._2));
     }
 
+    /**
+     * @deprecated Since 1.2.1. Renamed to {@link #filterMap(BiFunction)}.
+     */
+    @Deprecated
     default <U> EventStream<U> flatMapOpt(BiFunction<? super A, ? super B, Optional<U>> f) {
         return flatMapOpt(t -> f.apply(t._1, t._2));
     }

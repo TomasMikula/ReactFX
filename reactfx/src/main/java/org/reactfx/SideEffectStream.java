@@ -61,6 +61,7 @@ class SideEffectTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
     }
 }
 
+@Deprecated
 class SideEffectEitherStream<L, R>
 extends SideEffectStream<Either<L, R>>
 implements EitherEventStream<L, R> {

@@ -15,6 +15,7 @@ import javafx.concurrent.Task;
 
 import org.reactfx.util.Either;
 import org.reactfx.util.Tuple2;
+import org.reactfx.util.Tuple3;
 
 public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
 
@@ -53,6 +54,14 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
     default <U> EventStream<U> map(
             BiFunction<? super A, ? super B, ? extends U> f) {
         return new MappedBiStream<>(this, f);
+    }
+
+    default <C, D> BiEventStream<C, D> mapToBi(BiFunction<? super A, ? super B, Tuple2<C, D>> f) {
+        return new MappedBiToBiStream<>(this, f);
+    }
+
+    default <C, D, E> TriEventStream<C, D, E> mapToTri(BiFunction<? super A, ? super B, Tuple3<C, D, E>> f) {
+        return new MappedBiToTriStream<>(this, f);
     }
 
     /**

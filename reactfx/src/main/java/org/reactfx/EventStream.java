@@ -21,6 +21,8 @@ import org.reactfx.util.Either;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Try;
+import org.reactfx.util.Tuple2;
+import org.reactfx.util.Tuple3;
 
 /**
  * Stream of values (events).
@@ -175,6 +177,14 @@ public interface EventStream<T> {
      */
     default <U> EventStream<U> map(Function<? super T, ? extends U> f) {
         return new MappedStream<>(this, f);
+    }
+
+    default <A, B> BiEventStream<A, B> mapToBi(Function<? super T, Tuple2<A, B>> f) {
+        return new MappedToBiStream<>(this, f);
+    }
+
+    default <A, B, C> TriEventStream<A, B, C> mapToTri(Function<? super T, Tuple3<A, B, C>> f) {
+        return new MappedToTriStream<>(this, f);
     }
 
     /**

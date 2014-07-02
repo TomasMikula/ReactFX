@@ -14,6 +14,7 @@ import org.reactfx.util.Either;
 import org.reactfx.util.TriConsumer;
 import org.reactfx.util.TriFunction;
 import org.reactfx.util.TriPredicate;
+import org.reactfx.util.Tuple2;
 import org.reactfx.util.Tuple3;
 
 public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
@@ -53,6 +54,14 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
     default <U> EventStream<U> map(
             TriFunction<? super A, ? super B, ? super C, ? extends U> f) {
         return new MappedTriStream<>(this, f);
+    }
+
+    default <D, E> BiEventStream<D, E> mapToBi(TriFunction<? super A, ? super B, ? super C, Tuple2<D, E>> f) {
+        return new MappedTriToBiStream<>(this, f);
+    }
+
+    default <D, E, F> TriEventStream<D, E, F> mapToTri(TriFunction<? super A, ? super B, ? super C, Tuple3<D, E, F>> f) {
+        return new MappedTriToTriStream<>(this, f);
     }
 
     /**

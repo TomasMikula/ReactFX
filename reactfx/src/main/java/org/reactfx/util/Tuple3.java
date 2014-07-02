@@ -35,6 +35,10 @@ public class Tuple3<A, B, C> {
         return f.test(_1, _2, _3);
     }
 
+    public void exec(TriConsumer<? super A, ? super B, ? super C> f) {
+        f.accept(_1, _2, _3);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple3) {

@@ -41,6 +41,10 @@ public class Tuple4<A, B, C, D> {
         return f.test(_1, _2, _3, _4);
     }
 
+    public void exec(TetraConsumer<? super A, ? super B, ? super C, ? super D> f) {
+        f.accept(_1, _2, _3, _4);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple4) {

@@ -47,6 +47,10 @@ public class Tuple5<A, B, C, D, E> {
         return f.test(_1, _2, _3, _4, _5);
     }
 
+    public void exec(PentaConsumer<? super A, ? super B, ? super C, ? super D, ? super E> f) {
+        f.accept(_1, _2, _3, _4, _5);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple5) {

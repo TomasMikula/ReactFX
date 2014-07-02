@@ -53,6 +53,10 @@ public class Tuple6<A, B, C, D, E, F> {
         return f.test(_1, _2, _3, _4, _5, _6);
     }
 
+    public void exec(HexaConsumer<? super A, ? super B, ? super C, ? super D, ? super E, ? super F> f) {
+        f.accept(_1, _2, _3, _4, _5, _6);
+    }
+
     @Override
     public boolean equals(Object other) {
         if(other instanceof Tuple6) {

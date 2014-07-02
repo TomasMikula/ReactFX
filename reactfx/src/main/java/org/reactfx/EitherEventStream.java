@@ -37,10 +37,7 @@ public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
     default EitherEventStream<L, R> hook(
             Consumer<? super L> leftSideEffect,
             Consumer<? super R> rightSideEffect) {
-        return hook(either -> {
-            either.ifLeft(leftSideEffect);
-            either.ifRight(rightSideEffect);
-        });
+        return hook(either -> either.exec(leftSideEffect, rightSideEffect));
     }
 
     @Override
@@ -73,19 +70,17 @@ public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
     default <L1, R1> EitherEventStream<L1, R1> split(
             Function<? super L, Either<L1, R1>> leftMap,
             Function<? super R, Either<L1, R1>> rightMap) {
-        return split(either -> either.isLeft()
-                ? leftMap.apply(either.getLeft())
-                : rightMap.apply(either.getRight()));
+        return split(either -> either.flatMap(leftMap, rightMap));
     }
 
     default <L1> EitherEventStream<L1, R> splitLeft(
             Function<? super L, Either<L1, R>> leftMap) {
-        return split(leftMap, Either::right);
+        return split(either -> either.flatMapLeft(leftMap));
     }
 
     default <R1> EitherEventStream<L, R1> splitRight(
             Function<? super R, Either<L, R1>> rightMap) {
-        return split(Either::left, rightMap);
+        return split(either -> either.flatMapRight(rightMap));
     }
 
     default <T> EventStream<T> unify(

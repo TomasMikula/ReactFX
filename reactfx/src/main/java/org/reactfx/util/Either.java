@@ -38,6 +38,13 @@ public abstract class Either<L, R> {
         public void ifRight(Consumer<? super R> f) { /* do nothing */ }
 
         @Override
+        public void exec(
+                Consumer<? super L> ifLeft,
+                Consumer<? super R> ifRight) {
+            ifLeft.accept(value);
+        }
+
+        @Override
         public <L2> Either<L2, R> mapLeft(Function<? super L, ? extends L2> f) {
             return left(f.apply(value));
         }
@@ -52,6 +59,25 @@ public abstract class Either<L, R> {
                 Function<? super L, ? extends L2> f,
                 Function<? super R, ? extends R2> g) {
             return left(f.apply(value));
+        }
+
+        @Override
+        public <L2, R2> Either<L2, R2> flatMap(
+                Function<? super L, Either<L2, R2>> f,
+                Function<? super R, Either<L2, R2>> g) {
+            return f.apply(value);
+        }
+
+        @Override
+        public <L2> Either<L2, R> flatMapLeft(
+                Function<? super L, Either<L2, R>> f) {
+            return f.apply(value);
+        }
+
+        @Override
+        public <R2> Either<L, R2> flatMapRight(
+                Function<? super R, Either<L, R2>> f) {
+            return left(value);
         }
 
         @Override
@@ -112,6 +138,13 @@ public abstract class Either<L, R> {
         public void ifRight(Consumer<? super R> f) { f.accept(value); }
 
         @Override
+        public void exec(
+                Consumer<? super L> ifLeft,
+                Consumer<? super R> ifRight) {
+            ifRight.accept(value);
+        }
+
+        @Override
         public <L2> Either<L2, R> mapLeft(Function<? super L, ? extends L2> f) {
             return right(value);
         }
@@ -126,6 +159,25 @@ public abstract class Either<L, R> {
                 Function<? super L, ? extends L2> f,
                 Function<? super R, ? extends R2> g) {
             return right(g.apply(value));
+        }
+
+        @Override
+        public <L2, R2> Either<L2, R2> flatMap(
+                Function<? super L, Either<L2, R2>> f,
+                Function<? super R, Either<L2, R2>> g) {
+            return g.apply(value);
+        }
+
+        @Override
+        public <L2> Either<L2, R> flatMapLeft(
+                Function<? super L, Either<L2, R>> f) {
+            return right(value);
+        }
+
+        @Override
+        public <R2> Either<L, R2> flatMapRight(
+                Function<? super R, Either<L, R2>> f) {
+            return f.apply(value);
         }
 
         @Override
@@ -191,11 +243,23 @@ public abstract class Either<L, R> {
     public abstract Optional<R> asRight();
     public abstract void ifLeft(Consumer<? super L> f);
     public abstract void ifRight(Consumer<? super R> f);
-    public abstract <L2> Either<L2, R> mapLeft(Function<? super L, ? extends L2> f);
-    public abstract <R2> Either<L, R2> mapRight(Function<? super R, ? extends R2> f);
+    public abstract void exec(
+            Consumer<? super L> ifLeft,
+            Consumer<? super R> ifRight);
+    public abstract <L2> Either<L2, R> mapLeft(
+            Function<? super L, ? extends L2> f);
+    public abstract <R2> Either<L, R2> mapRight(
+            Function<? super R, ? extends R2> f);
     public abstract <L2, R2> Either<L2, R2> map(
             Function<? super L, ? extends L2> f,
             Function<? super R, ? extends R2> g);
+    public abstract <L2, R2> Either<L2, R2> flatMap(
+            Function<? super L, Either<L2, R2>> f,
+            Function<? super R, Either<L2, R2>> g);
+    public abstract <L2> Either<L2, R> flatMapLeft(
+            Function<? super L, Either<L2, R>> f);
+    public abstract <R2> Either<L, R2> flatMapRight(
+            Function<? super R, Either<L, R2>> f);
     public abstract <T> T unify(
             Function<? super L, ? extends T> f,
             Function<? super R, ? extends T> g);

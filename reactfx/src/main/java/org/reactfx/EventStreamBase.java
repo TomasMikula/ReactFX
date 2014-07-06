@@ -46,8 +46,8 @@ public abstract class EventStreamBase<S> {
      * Overriding this method is a convenient way for subclasses
      * to handle this event.
      *
-     * <p>This method is called after the {@link #newSubscriber(Object)}
-     * method.</p>
+     * <p>This method is called <em>before</em> the
+     * {@link #newSubscriber(Object)} method.</p>
      */
     protected void firstSubscriber() {
         // default implementation is empty
@@ -57,6 +57,9 @@ public abstract class EventStreamBase<S> {
      * Called for each new subscriber.
      * Overriding this method is a convenient way for subclasses
      * to handle this event, for example to publish some initial events.
+     *
+     * <p>This method is called <em>after</em> the
+     * {@link #firstSubscriber()} method.</p>
      */
     protected void newSubscriber(S subscriber) {
         // default implementation is empty
@@ -117,10 +120,10 @@ public abstract class EventStreamBase<S> {
 
     public final Subscription subscribe(S subscriber) {
         subscribers = ListHelper.add(subscribers, subscriber);
-        newSubscriber(subscriber);
         if(ListHelper.size(subscribers) == 1) {
             firstSubscriber();
         }
+        newSubscriber(subscriber);
         return () -> unsubscribe(subscriber);
     }
 

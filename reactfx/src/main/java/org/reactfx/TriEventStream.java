@@ -29,7 +29,7 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
     default Subscription watch(
             TriConsumer<? super A, ? super B, ? super C> subscriber,
             Consumer<? super Throwable> monitor) {
-        return subscribe(subscriber).and(monitor(monitor));
+        return monitor(monitor).and(subscribe(subscriber));
     }
 
     default Subscription feedTo3(TriEventSink<? super A, ? super B, ? super C> sink) {

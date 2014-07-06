@@ -168,6 +168,7 @@ public class EventStreams {
                 for(Observable dep: dependencies) {
                     dep.addListener(listener);
                 }
+                previousValue = computeValue.get();
 
                 return () -> {
                     for(Observable dep: dependencies) {
@@ -178,9 +179,6 @@ public class EventStreams {
 
             @Override
             protected void newSubscriber(Consumer<? super T> subscriber) {
-                if(!isBound()) { // this is the first subscriber
-                    previousValue = computeValue.get();
-                }
                 subscriber.accept(previousValue);
             }
         };

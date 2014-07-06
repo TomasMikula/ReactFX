@@ -55,14 +55,14 @@ public interface EventStream<T> {
 
     /**
      * Convenient method to subscribe to and monitor this stream. Is equivalent
-     * to {@code subscribe(subscriber).and(monitor(monitor))}.
+     * to {@code monitor(monitor).and(subscribe(subscriber))}.
      * @see #subscribe(Consumer)
      * @see #monitor(Consumer)
      */
     default Subscription watch(
             Consumer<? super T> subscriber,
             Consumer<? super Throwable> monitor) {
-        return subscribe(subscriber).and(monitor(monitor));
+        return monitor(monitor).and(subscribe(subscriber));
     }
 
     /**
@@ -715,8 +715,8 @@ public interface EventStream<T> {
         return new LazilyBoundStream<Try<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription s1 = EventStream.this.subscribe(t -> emit(Try.success(t)));
                 Subscription s2 = EventStream.this.monitor(er -> emit(Try.failure(er)));
+                Subscription s1 = EventStream.this.subscribe(t -> emit(Try.success(t)));
                 return s1.and(s2);
             }
         };
@@ -734,8 +734,8 @@ public interface EventStream<T> {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription s1 = EventStream.this.subscribe(this::emit);
                 Subscription s2 = EventStream.this.monitor(handler);
+                Subscription s1 = EventStream.this.subscribe(this::emit);
                 return s1.and(s2);
             }
         };

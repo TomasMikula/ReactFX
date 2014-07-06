@@ -37,48 +37,48 @@ signArchives.onlyIf {
     project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')
 }
 
-uploadArchives {
-    repositories.mavenDeployer {
-        beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+def doUploadArchives = project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')
+if(doUploadArchives) {
+    uploadArchives {
+        repositories.mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
 
-        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-          authentication(userName: sonatypeUsername, password: sonatypePassword)
-        }
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+              authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
 
-        snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
-            authentication(userName: sonatypeUsername, password: sonatypePassword)
-        }
+            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
+                authentication(userName: sonatypeUsername, password: sonatypePassword)
+            }
 
-        pom.project {
-           name 'ReactFX'
-           packaging 'jar'
-           description 'Reactive event streams for JavaFX'
-           url 'http://www.reactfx.org/'
+            pom.project {
+               name 'ReactFX'
+               packaging 'jar'
+               description 'Reactive event streams for JavaFX'
+               url 'http://www.reactfx.org/'
 
-           scm {
-               url 'scm:git@github.com:TomasMikula/ReactFX.git'
-               connection 'scm:git@github.com:TomasMikula/ReactFX.git'
-               developerConnection 'scm:git@github.com:TomasMikula/ReactFX.git'
-           }
+               scm {
+                   url 'scm:git@github.com:TomasMikula/ReactFX.git'
+                   connection 'scm:git@github.com:TomasMikula/ReactFX.git'
+                   developerConnection 'scm:git@github.com:TomasMikula/ReactFX.git'
+               }
 
-           licenses {
-               license {
-                   name 'The BSD 2-Clause License'
-                   url 'http://opensource.org/licenses/BSD-2-Clause'
-                   distribution 'repo'
+               licenses {
+                   license {
+                       name 'The BSD 2-Clause License'
+                       url 'http://opensource.org/licenses/BSD-2-Clause'
+                       distribution 'repo'
+                   }
+               }
+
+               developers {
+                   developer {
+                       name 'Tomas Mikula'
+                   }
                }
            }
-
-           developers {
-               developer {
-                   name 'Tomas Mikula'
-               }
-           }
-       }
+        }
     }
 }
 
-
-uploadArchives.onlyIf {
-    project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')
-}
+uploadArchives.onlyIf { doUploadArchives }

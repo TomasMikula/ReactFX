@@ -52,31 +52,31 @@ if(doUploadArchives) {
             }
 
             pom.project {
-               name 'ReactFX'
-               packaging 'jar'
-               description 'Reactive event streams for JavaFX'
-               url 'http://www.reactfx.org/'
-
-               scm {
-                   url 'scm:git@github.com:TomasMikula/ReactFX.git'
-                   connection 'scm:git@github.com:TomasMikula/ReactFX.git'
-                   developerConnection 'scm:git@github.com:TomasMikula/ReactFX.git'
-               }
-
-               licenses {
-                   license {
-                       name 'The BSD 2-Clause License'
-                       url 'http://opensource.org/licenses/BSD-2-Clause'
-                       distribution 'repo'
-                   }
-               }
-
-               developers {
-                   developer {
-                       name 'Tomas Mikula'
-                   }
-               }
-           }
+                name 'ReactFX'
+                packaging 'jar'
+                description 'Reactive event streams for JavaFX'
+                url 'http://www.reactfx.org/'
+               
+                scm {
+                    url 'scm:git@github.com:TomasMikula/ReactFX.git'
+                    connection 'scm:git@github.com:TomasMikula/ReactFX.git'
+                    developerConnection 'scm:git@github.com:TomasMikula/ReactFX.git'
+                }
+               
+                licenses {
+                    license {
+                        name 'The BSD 2-Clause License'
+                        url 'http://opensource.org/licenses/BSD-2-Clause'
+                        distribution 'repo'
+                    }
+                }
+               
+                developers {
+                    developer {
+                        name 'Tomas Mikula'
+                    }
+                }
+            }
         }
     }
 }

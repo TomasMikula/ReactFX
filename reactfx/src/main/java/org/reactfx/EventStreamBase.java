@@ -117,10 +117,10 @@ public abstract class EventStreamBase<S> {
 
     public final Subscription subscribe(S subscriber) {
         subscribers = ListHelper.add(subscribers, subscriber);
-        newSubscriber(subscriber);
         if(ListHelper.size(subscribers) == 1) {
             firstSubscriber();
         }
+        newSubscriber(subscriber);
         return () -> unsubscribe(subscriber);
     }
 

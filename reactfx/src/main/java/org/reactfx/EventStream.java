@@ -715,8 +715,8 @@ public interface EventStream<T> {
         return new LazilyBoundStream<Try<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription s1 = EventStream.this.subscribe(t -> emit(Try.success(t)));
                 Subscription s2 = EventStream.this.monitor(er -> emit(Try.failure(er)));
+                Subscription s1 = EventStream.this.subscribe(t -> emit(Try.success(t)));
                 return s1.and(s2);
             }
         };
@@ -734,8 +734,8 @@ public interface EventStream<T> {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription s1 = EventStream.this.subscribe(this::emit);
                 Subscription s2 = EventStream.this.monitor(handler);
+                Subscription s1 = EventStream.this.subscribe(this::emit);
                 return s1.and(s2);
             }
         };

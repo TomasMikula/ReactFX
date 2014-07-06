@@ -387,31 +387,31 @@ Use ReactFX in your project
 
 ### Stable release
 
-Current stable release is 1.2.1.
+Current stable release is 1.2.2.
 
 #### Maven coordinates
 
 | Group ID    | Artifact ID | Version |
 | :---------: | :---------: | :-----: |
-| org.reactfx | reactfx     | 1.2.1   |
+| org.reactfx | reactfx     | 1.2.2   |
 
 #### Gradle example
 
 ```groovy
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '1.2.1'
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.2.2'
 }
 ```
 
 #### Sbt example
 
 ```scala
-libraryDependencies += "org.reactfx" % "reactfx" % "1.2.1"
+libraryDependencies += "org.reactfx" % "reactfx" % "1.2.2"
 ```
 
 #### Manual download
 
-[Download](https://github.com/TomasMikula/ReactFX/releases/download/v1.2.1/reactfx-1.2.1.jar) the JAR file and place it on your classpath.
+[Download](https://github.com/TomasMikula/ReactFX/releases/download/v1.2.2/reactfx-1.2.2.jar) the JAR file and place it on your classpath.
 
 
 ### Snapshot releases
@@ -422,7 +422,7 @@ Snapshot releases are deployed to Sonatype snapshot repository.
 
 | Group ID    | Artifact ID | Version        |
 | :---------: | :---------: | :------------: |
-| org.reactfx | reactfx     | 1.2.2-SNAPSHOT |
+| org.reactfx | reactfx     | 1.2.3-SNAPSHOT |
 
 #### Gradle example
 
@@ -434,7 +434,7 @@ repositories {
 }
 
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '1.2.2-SNAPSHOT'
+    compile group: 'org.reactfx', name: 'reactfx', version: '1.2.3-SNAPSHOT'
 }
 ```
 
@@ -443,12 +443,12 @@ dependencies {
 ```scala
 resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
 
-libraryDependencies += "org.reactfx" % "reactfx" % "1.2.2-SNAPSHOT"
+libraryDependencies += "org.reactfx" % "reactfx" % "1.2.3-SNAPSHOT"
 ```
 
 #### Manual download
 
-[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.2.2-SNAPSHOT/) the latest JAR file and place it on your classpath.
+[Download](https://oss.sonatype.org/content/repositories/snapshots/org/reactfx/reactfx/1.2.3-SNAPSHOT/) the latest JAR file and place it on your classpath.
 
 
 Links

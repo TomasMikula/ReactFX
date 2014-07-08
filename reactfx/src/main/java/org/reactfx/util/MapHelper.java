@@ -3,6 +3,7 @@ package org.reactfx.util;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -30,6 +31,14 @@ public abstract class MapHelper<K, V> {
             return mapHelper;
         } else {
             return mapHelper.remove(key);
+        }
+    }
+
+    public static <K, V> K chooseKey(MapHelper<K, V> mapHelper) {
+        if(mapHelper == null) {
+            throw new NoSuchElementException("empty map");
+        } else {
+            return mapHelper.chooseKey();
         }
     }
 
@@ -77,6 +86,8 @@ public abstract class MapHelper<K, V> {
 
     protected abstract MapHelper<K, V> remove(K key);
 
+    protected abstract K chooseKey();
+
     protected abstract void replaceAll(BiFunction<? super K, ? super V, ? extends V> f);
 
     protected abstract boolean containsKey(K key);
@@ -116,6 +127,11 @@ public abstract class MapHelper<K, V> {
             } else {
                 return this;
             }
+        }
+
+        @Override
+        protected K chooseKey() {
+            return key;
         }
 
         @Override
@@ -171,6 +187,11 @@ public abstract class MapHelper<K, V> {
                 default:
                     return this;
             }
+        }
+
+        @Override
+        protected K chooseKey() {
+            return entries.keySet().iterator().next();
         }
 
         @Override

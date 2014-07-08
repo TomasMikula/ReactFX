@@ -16,6 +16,18 @@ public abstract class EventStreamBase<S> {
     private ListHelper<Consumer<? super Throwable>> monitors = null;
     private boolean reporting = false;
 
+    protected final int getSubscriberCount() {
+        return ListHelper.size(subscribers);
+    }
+
+    protected final void tryRun(Runnable action) {
+        try {
+            action.run();
+        } catch(Throwable t) {
+            reportError(t);
+        }
+    }
+
     protected final void forEachSubscriber(Consumer<S> action) {
         ListHelper.forEach(subscribers, s -> {
             try {

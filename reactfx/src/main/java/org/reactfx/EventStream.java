@@ -1,6 +1,8 @@
 package org.reactfx;
 
 import java.time.Duration;
+import java.util.Deque;
+import java.util.LinkedList;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -11,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.ToIntFunction;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Binding;
@@ -638,6 +641,50 @@ public interface EventStream<T> {
             Executor eventThreadExecutor) {
 
         return reduceSuccessions((a, b) -> b, timeout, scheduler, eventThreadExecutor);
+    }
+
+    default <A> EventStream<T> onRecurseAccumulate(
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> reduction,
+            ToIntFunction<? super A> size,
+            Function<? super A, ? extends T> head,
+            Function<? super A, ? extends A> tail) {
+        return new OnRecurseAccumulateStream<>(
+                this, initialTransformation, reduction, size, head, tail);
+    }
+
+    default <A> EventStream<T> onRecurseAccumulate(
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> reduction,
+            ToIntFunction<? super A> size,
+            Function<? super A, ? extends T> head,
+            Function<? super A, ? extends A> tail) {
+        Function<? super T, ? extends A> initialTransformation =
+                t -> reduction.apply(unit.get(), t);
+        return onRecurseAccumulate(
+                initialTransformation, reduction, size, head, tail);
+    }
+
+    default EventStream<T> onRecurseAccumulate(BinaryOperator<T> reduction) {
+        return onRecurseAccumulate(
+                Function.identity(),
+                reduction,
+                t -> 1,
+                Function.identity(),
+                t -> { throw new UnsupportedOperationException(); });
+    }
+
+    default EventStream<T> onRecurseQueue() {
+        return onRecurseAccumulate(
+                () -> new LinkedList<T>(), // unit element is an empty queue
+                (q, t) -> { q.addLast(t); return q; }, // reduction is appending to the end of the queue
+                Deque::size,
+                Deque::getFirst,
+                q -> { q.removeFirst(); return q; });
+    }
+
+    default EventStream<T> onRecurseRetainLatest() {
+        return onRecurseAccumulate((a, b) -> b);
     }
 
     /**

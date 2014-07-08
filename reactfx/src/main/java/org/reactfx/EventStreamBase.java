@@ -14,6 +14,7 @@ public abstract class EventStreamBase<S> {
 
     private ListHelper<S> subscribers = null;
     private ListHelper<Consumer<? super Throwable>> monitors = null;
+    private boolean reporting = false;
 
     protected final void forEachSubscriber(Consumer<S> action) {
         ListHelper.forEach(subscribers, s -> {
@@ -25,20 +26,27 @@ public abstract class EventStreamBase<S> {
         });
     }
 
+    /**
+     * Notifies all registered error handlers of the given error.
+     */
     protected final void reportError(Throwable thrown) {
-        ListHelper.forEach(monitors, m -> {
-            try {
-                m.accept(thrown);
-            } catch(Throwable another) {
-                ListHelper.forEach(monitors, n -> {
-                    try {
-                        n.accept(another);
-                    } catch(Throwable t) {
-                        // ignore
-                    }
-                });
-            }
-        });
+        if(!reporting) { // prevent loops (StackOverflows) in error reporting
+            reporting = true;
+            ListHelper.forEach(monitors, m -> {
+                try {
+                    m.accept(thrown);
+                } catch(Throwable another) {
+                    ListHelper.forEach(monitors, n -> {
+                        try {
+                            n.accept(another);
+                        } catch(Throwable t) {
+                            // ignore
+                        }
+                    });
+                }
+            });
+            reporting = false;
+        }
     }
 
     /**
@@ -75,47 +83,42 @@ public abstract class EventStreamBase<S> {
     }
 
     /**
-     * Forwards errors reported by the given stream to this stream.
-     * @return subscription that can be used to stop forwarding the errors.
-     */
-    protected final Subscription oversee(EventStream<?> stream) {
-        return stream.monitor(this::reportError);
-    }
-
-    /**
      * Subscribes to the given event stream by the given subscriber and also
-     * forwards errors reported by the given stream to this stream.
+     * forwards errors reported by the given stream to this stream. This is
+     * equivalent to {@code stream.watch(subscriber, this::reportError)}.
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
     protected final <T> Subscription subscribeTo(
             EventStream<T> stream,
             Consumer<? super T> subscriber) {
-        return oversee(stream).and(stream.subscribe(subscriber));
+        return stream.watch(subscriber, this::reportError);
     }
 
     /**
      * Subscribes to the given event stream by the given subscriber and also
-     * forwards errors reported by the given stream to this stream.
+     * forwards errors reported by the given stream to this stream. This is
+     * equivalent to {@code stream.watch(subscriber, this::reportError)}.
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
     protected final <A, B> Subscription subscribeToBi(
             BiEventStream<A, B> stream,
             BiConsumer<? super A, ? super B> subscriber) {
-        return oversee(stream).and(stream.subscribe(subscriber));
+        return stream.watch(subscriber, this::reportError);
     }
 
     /**
      * Subscribes to the given event stream by the given subscriber and also
-     * forwards errors reported by the given stream to this stream.
+     * forwards errors reported by the given stream to this stream. This is
+     * equivalent to {@code stream.watch(subscriber, this::reportError)}.
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
     protected final <A, B, C> Subscription subscribeToTri(
             TriEventStream<A, B, C> stream,
             TriConsumer<? super A, ? super B, ? super C> subscriber) {
-        return oversee(stream).and(stream.subscribe(subscriber));
+        return stream.watch(subscriber, this::reportError);
     }
 
     public final Subscription subscribe(S subscriber) {

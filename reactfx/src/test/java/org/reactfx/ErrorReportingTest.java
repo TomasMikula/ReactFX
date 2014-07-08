@@ -51,6 +51,26 @@ public class ErrorReportingTest {
         ex1.shutdown();
         ex2.shutdown();
     }
+
+    @Test
+    public void errorReportingLoopPreventionTest() {
+        ConnectableEventSource<Integer> cs = new ConnectableEventSource<>();
+        EventStream<Integer> mapped = cs.map(x -> { throw new RuntimeException(); });
+
+        EventCounter csErrorCounter = new EventCounter();
+        EventCounter mappedErrorCounter = new EventCounter();
+        cs.monitor(csErrorCounter);
+        mapped.monitor(mappedErrorCounter);
+
+        cs.connectTo(mapped);
+        mapped.pin();
+
+        cs.push(5);
+
+        assertEquals(1, csErrorCounter.get());
+        assertEquals(1, mappedErrorCounter.get());
+    }
+
     /**
      * Stream of property values should work normally even when the first value
      * in the stream (property value at the moment of subscription) produces an

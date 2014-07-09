@@ -201,43 +201,34 @@ Binding<T> binding = stream.toBinding(initial);
 `binding` maintains an active subscription to `stream` until its `dispose()` method is called.
 
 
-Interceptable streams
----------------------
+Suspendable streams
+-------------------
 
-`InterceptableEventStream` is an event stream whose event emission can be temporarily intercepted. `EventStream` provides the method `interceptable()` that returns an interceptable version of the event stream.
+`SuspendableEventStream` is an event stream whose event emission can be temporarily suspended. There are several types of suspendable event streams that differ in what events, if any, are emitted when their emission is resumed.
 
-```java
-EventStream<T> stream = ...;
-InterceptableEventStream iStream = stream.interceptable();
-```
+### suppressible
 
-`InterceptableEventStream` provides multiple ways to intercept the emission of events. They differ in what gets emitted when the interception ends.
-
-Examples in the rest of this section build up on this code:
+When a suppressible stream is suspended, all events that would normally be emitted during this period are lost.
 
 ```java
 EventSource<Integer> src = new EventSource<>();
-InterceptableEventStream<Integer> iStream = src.interceptable();
-iStream.subscribe(i -> System.out.println(i));
-```
-
-### mute
-
-If you mute a stream temporarily, all events that would normally be emitted during this period are lost.
-
-```java
-iStream.muteWhile(() -> {
-    src.push(1); // nothing is printed, 1 is never emitted from iStream
+SuspendableEventStream<Integer> stream = src.suppressible();
+stream.subscribe(i -> System.out.println(i));
+stream.suspendWhile(() -> {
+    src.push(1); // nothing is printed, 1 is never emitted from stream
 });
 ```
 
 
-### pause
+### pausable
 
-When you pause the stream, events that would normally be emitted are buffered and emitted when the stream is unpaused.
+When a pausable stream is suspended, events that would normally be emitted are buffered and emitted when event emission is resumed.
 
 ```java
-iStream.pauseWhile(() -> {
+EventSource<Integer> src = new EventSource<>();
+SuspendableEventStream<Integer> stream = src.pausable();
+stream.subscribe(i -> System.out.println(i));
+stream.suspendWhile(() -> {
     src.push(2);
     src.push(3);
     // nothing has been printed so far
@@ -246,12 +237,15 @@ iStream.pauseWhile(() -> {
 ```
 
 
-### retainLatest
+### forgetful
 
-Instructs the stream to remember only the latest event that would normally be emitted. This event is emitted when the interception ends.
+When a forgetful stream is suspended, only the latest event that would normally be emitted is remembered. This event is emitted when event emission is resumed.
 
 ```java
-iStream.retainLatestWhile(() -> {
+EventSource<Integer> src = new EventSource<>();
+SuspendableEventStream<Integer> stream = src.forgetful();
+stream.subscribe(i -> System.out.println(i));
+stream.suspendWhile(() -> {
     src.push(4);
     src.push(5);
     // nothing has been printed so far
@@ -260,12 +254,15 @@ iStream.retainLatestWhile(() -> {
 ```
 
 
-### reduce
+### reducible
 
-While intercepted, keep _reducing_ (accumulating) the events together. The result of reduction is emitted when the interception ends.
+When a reducible stream is suspended, it keeps _reducing_ the incoming events together. The result of reduction is emitted when event emission is resumed.
 
 ```java
-iStream.reduceWhile((a, b) -> a + b, () -> {
+EventSource<Integer> src = new EventSource<>();
+SuspendableEventStream<Integer> stream = src.reducible((a, b) -> a + b);
+stream.subscribe(i -> System.out.println(i));
+stream.suspendWhile(() -> {
     src.push(6);
     src.push(7);
     src.push(8);
@@ -274,37 +271,30 @@ iStream.reduceWhile((a, b) -> a + b, () -> {
 // now "21" gets printed
 ```
 
-Note that `reduceWhile((a, b) -> b, runnable)` is equivalent to `retainLatestWhile(runnable)`.
+Note that `forgetful()` is equivalent to `reducible((a, b) -> b)`.
 
 
-### tryReduce
+### accumulative
 
-Sometimes reduction is not defined for every pair of events. Sometimes two events _annihilate_ (cancel each other out). This type of interception tries to reduce or annihilate the events when possible, and retains both events for later emmision when not possible. In the following example, two integers reduce (here add up) if their sum is less than 20 and annihilate if their sum is 0.
+When an accumulative stream is suspended, it keeps _accumulating_ the incoming events into a cumulative value (accumulator), which may be of a different type than the events. When event emission is resumed, the accumulated value is _deconstructed_ into a sequence of events that are emitted from the stream. This is a generalization of all previous suspendable streams.
+
+`reducible(reduction)` can be modeled like this:
 
 ```java
-BiFunction<Integer, Integer, ReductionResult<Integer>> reduction = (a, b) -> {
-    if(a + b == 0) {
-        return ReductionResult.annihilated();
-    } else if(a + b < 20) {
-        return ReductionResult.reduced(a + b);
-    } else {
-        return ReductionResult.failed();
-    }
-};
-
-iStream.tryReduceWhile(reduction, () -> {
-    src.push(9);
-    src.push(10);
-    src.push(11);
-    src.push(-5);
-    src.push(-6);
-    src.push(12);
-    // nothing has been printed so far
-});
-// now "19" and "12" get printed
+accumulative(t -> t, reduction, t -> Collections.singletonList(t))
 ```
 
-Note that `tryReduceWhile((a, b) -> ReductionResult.failed(), runnable)` is equivalent to `pauseWhile(runnable)`.
+`suppressible()` can be modeled like this:
+
+```java
+accumulative(t -> (Void) null, (a, t) -> a, a -> Collections.emptyList())
+```
+
+`pausable()` can be modeled like this:
+
+```java
+accumulative(ArrayList<T>::new, (l, t) -> { l.add(t); return l; }, l -> l)
+```
 
 
 InhiBeans

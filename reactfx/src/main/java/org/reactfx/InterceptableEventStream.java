@@ -4,6 +4,23 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Supplier;
 
+/**
+ * @deprecated since 1.2.3. Use individual suspendable streams instead,
+ * according to the desired interception:
+ * <ul>
+ *   <li>Use {@link #suppressible()}{@code .suspend()} instead of
+ *    {@code interceptable().mute()}.
+ *   <li>Use {@link #pausable()}{@code .suspend()} instead of
+ *    {@code interceptable().pause()}.
+ *   <li>Use {@link #forgetful()}{@code .suspend()} instead of
+ *    {@code interceptable().retainLatest()}.
+ *   <li>Use {@link #reducible(BinaryOperator)}{@code .suspend()} instead of
+ *    {@code interceptable().reduce(reduction)}.
+ *   <li>Use {@code accumulative(...).suspend()} instead of
+ *    {@code interceptable().tryReduce(reduction)}.
+ * </ul>
+ */
+@Deprecated
 public interface InterceptableEventStream<T> extends EventStream<T> {
 
     Guard mute();

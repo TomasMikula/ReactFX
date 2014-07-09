@@ -3,6 +3,7 @@ package org.reactfx;
 import java.time.Duration;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -373,12 +374,115 @@ public interface EventStream<T> {
         return new RepeatOnStream<>(this, impulse);
     }
 
+    /**
+     * @deprecated since 1.2.3. See deprecation comment at
+     * {@link InterceptableEventStream}.
+     */
+    @Deprecated
     default InterceptableEventStream<T> interceptable() {
         if(this instanceof InterceptableEventStream) {
             return (InterceptableEventStream<T>) this;
         } else {
             return new InterceptableEventStreamImpl<>(this);
         }
+    }
+
+    /**
+     * Returns a suspendable event stream that, when suspended, suppresses
+     * any events emitted by this event stream.
+     */
+    default SuspendableEventStream<T> suppressible() {
+        return new SuppressibleEventStream<>(this);
+    }
+
+    /**
+     * Returns a suspendable event stream that, when suspended, stores the
+     * events emitted by this event stream and emits them when the returned
+     * stream's emission is resumed.
+     */
+    default SuspendableEventStream<T> pausable() {
+        return new PausableEventStream<>(this);
+    }
+
+    /**
+     * Returns a suspendable event stream that, when suspended, forgets all but
+     * the latest event emitted by this event stream. The remembered event, if
+     * any, is emitted from the returned stream upon resume.
+     */
+    default SuspendableEventStream<T> forgetful() {
+        return new ForgetfulEventStream<>(this);
+    }
+
+    /**
+     * Returns a suspendable event stream that, when suspended, reduces incoming
+     * events by the given {@code reduction} function into one. The reduced
+     * event is emitted from the returned stream upon resume.
+     *
+     * <p>Note that {@link #forgetful()} is equivalent to
+     * {@code reducible((a, b) -> b)}.
+     */
+    default SuspendableEventStream<T> reducible(BinaryOperator<T> reduction) {
+        return new ReducibleEventStream<>(this, reduction);
+    }
+
+    /**
+     * Returns a suspendable event stream that, when suspended, accumulates
+     * incoming events to a cumulative value of type {@code A}. When the
+     * returned stream is resumed, the accumulated value is deconstructed into
+     * a sequence of events that are emitted from the returned stream.
+     *
+     * <p>Note that {@link #suppressible()} is equivalent to
+     * {@code accumulative(t -> (Void) null, (a, t) -> a, a -> Collections.emptyList())}.
+     *
+     * <p>Note that {@code reducible(reduction)} is equivalent to
+     * {@code accumulative(t -> t, reduction, t -> Collections.singletonList(t))}.
+     *
+     * @param initialTransformation Used to convert the first event after
+     * suspension to the cumulative value.
+     * @param accumulation Used to accumulate further incoming events to the
+     * cumulative value.
+     * @param deconstruction Used to deconstruct a cumulative value into a
+     * sequence of events.
+     * @param <A> type of the cumulative value
+     */
+    default <A> SuspendableEventStream<T> accumulative(
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        return new AccumulativeEventStream<>(
+                this, initialTransformation, accumulation, deconstruction);
+    }
+
+    /**
+     * A variation on {@link #accumulative(Function, BiFunction, Function)} to
+     * use when it is more convenient to provide a unit element of the
+     * accumulation than to transform the initial event to a cumulative
+     * value. It is equivalent to
+     * {@code accumulative(t -> accumulation.apply(unit.get(), t), accumulation, deconstruction)},
+     * i.e. the initial transformation is achieved by accumulating the initial
+     * event to the unit element.
+     *
+     * <p>Note that {@link #pausable()} is equivalent to
+     * {@code accumulative(ArrayList<T>::new, (l, t) -> { l.add(t); return l; }, l -> l)},
+     * i.e. the unit element is an empty list, accumulation is addition to the
+     * list and deconstruction of the accumulated value is a no-op, since the
+     * accumulated value is already a list of events.
+     *
+     * @param unit Function that supplies unit element of the accumulation.
+     * @param accumulation Used to accumulate further incoming events to the
+     * cumulative value.
+     * @param deconstruction Used to deconstruct a cumulative value into a
+     * sequence of events.
+     * @param <A> type of the cumulative value
+     */
+    default <A> SuspendableEventStream<T> accumulative(
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        Function<? super T, ? extends A> initialTransformation =
+                t -> accumulation.apply(unit.get(), t);
+        return accumulative(
+                initialTransformation, accumulation, deconstruction);
     }
 
     /**

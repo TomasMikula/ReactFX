@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+@Deprecated
 public class InterceptableEventStreamTest {
 
     @Test

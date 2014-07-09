@@ -9,6 +9,7 @@ import org.reactfx.util.Either;
 import org.reactfx.util.Tuple2;
 import org.reactfx.util.Tuple3;
 
+@Deprecated
 class InterceptableEventStreamImpl<T> extends LazilyBoundStream<T> implements InterceptableEventStream<T> {
 
     private final EventStream<T> input;
@@ -211,6 +212,7 @@ class ReduceConsumer<T> extends StackedConsumer<T> {
     }
 }
 
+@Deprecated
 class ReduceOptionallyConsumer<T> extends StackedConsumer<T> {
     private final BiFunction<T, T, ReductionResult<T>> reduction;
     private final List<T> buffer = new ArrayList<>();
@@ -251,6 +253,7 @@ class ReduceOptionallyConsumer<T> extends StackedConsumer<T> {
 }
 
 
+@Deprecated
 class InterceptableBiEventStreamImpl<A, B>
 extends InterceptableEventStreamImpl<Tuple2<A, B>>
 implements InterceptableBiEventStream<A, B>, PoorMansBiStream<A, B> {
@@ -261,6 +264,7 @@ implements InterceptableBiEventStream<A, B>, PoorMansBiStream<A, B> {
 }
 
 
+@Deprecated
 class InterceptableTriEventStreamImpl<A, B, C>
 extends InterceptableEventStreamImpl<Tuple3<A, B, C>>
 implements InterceptableTriEventStream<A, B, C>, PoorMansTriStream<A, B, C> {

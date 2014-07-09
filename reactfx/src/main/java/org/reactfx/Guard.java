@@ -16,6 +16,9 @@ public interface Guard extends AutoCloseable {
         return new CloseableOnceGuard(this);
     }
 
+    static Guard closeableOnce(Guard guard) {
+        return guard.closeableOnce();
+    }
 
     /**
      * Returns a guard that is a composition of multiple guards.

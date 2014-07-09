@@ -2,6 +2,7 @@ package org.reactfx;
 
 import java.util.NoSuchElementException;
 
+@Deprecated
 public abstract class ReductionResult<T> {
 
     private static final ReductionResult<?> ANNIHILATED = new ReductionResult<Void>() {

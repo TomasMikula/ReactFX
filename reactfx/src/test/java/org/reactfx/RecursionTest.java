@@ -11,6 +11,34 @@ import org.junit.Test;
 public class RecursionTest {
 
     @Test
+    public void allowRecursionWithOneSubscriber() {
+        List<Integer> emitted = new ArrayList<>();
+        List<Throwable> errors = new ArrayList<>();
+        EventSource<Integer> source = new EventSource<>();
+        source.hook(emitted::add).watch(
+                i -> { if(i > 0) source.push(i-1); },
+                errors::add);
+        source.push(5);
+        assertEquals(Arrays.asList(5, 4, 3, 2, 1, 0), emitted);
+        assertEquals(0, errors.size());
+    }
+
+    @Test
+    public void preventRecursionWithTwoSubscribers() {
+        List<Integer> emitted = new ArrayList<>();
+        List<Throwable> errors = new ArrayList<>();
+        EventSource<Integer> source = new EventSource<>();
+        source.subscribe(emitted::add);
+        source.subscribe(i -> {
+            if(i > 0) source.push(i-1);
+        });
+        source.monitor(errors::add);
+        source.push(5);
+        assertTrue("At most one event got emitted", emitted.size() <= 1);
+        assertEquals(1, errors.size());
+    }
+
+    @Test
     public void onRecurseQueueTest() {
         EventSource<Integer> source = new EventSource<>();
         EventStream<Integer> stream = source.onRecurseQueue();

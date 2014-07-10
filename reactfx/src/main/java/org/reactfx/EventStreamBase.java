@@ -15,6 +15,7 @@ public abstract class EventStreamBase<S> {
     private ListHelper<S> subscribers = null;
     private ListHelper<Consumer<? super Throwable>> monitors = null;
     private boolean reporting = false;
+    private boolean unnotifiedSubscribers = false;
 
     protected final int getSubscriberCount() {
         return ListHelper.size(subscribers);
@@ -29,6 +30,22 @@ public abstract class EventStreamBase<S> {
     }
 
     protected final void forEachSubscriber(Consumer<S> action) {
+        if(unnotifiedSubscribers) {
+            try {
+                throw new IllegalStateException("Cannot recursively emit"
+                        + " before all subscribers were notified of the"
+                        + " previous event");
+            } catch(IllegalStateException e) {
+                e.printStackTrace();
+                reportError(e);
+            }
+            return;
+        }
+
+        if(ListHelper.size(subscribers) > 1) {
+            // prevent recursion when there are 2 or more subscribers
+            unnotifiedSubscribers = true;
+        }
         ListHelper.forEach(subscribers, s -> {
             try {
                 action.accept(s);
@@ -36,6 +53,7 @@ public abstract class EventStreamBase<S> {
                 reportError(t);
             }
         });
+        unnotifiedSubscribers = false;
     }
 
     /**

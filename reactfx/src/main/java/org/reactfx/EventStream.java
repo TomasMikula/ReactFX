@@ -1,6 +1,8 @@
 package org.reactfx;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
@@ -486,6 +488,180 @@ public interface EventStream<T> {
                 t -> accumulation.apply(unit.get(), t);
         return accumulative(
                 initialTransformation, accumulation, deconstruction);
+    }
+
+    /**
+     * Version of {@link #accumulateUntilLater(Function, BiFunction, Function)}
+     * for event streams that don't live on the JavaFX application thread.
+     * @param eventThreadExecutor executor that executes actions on the thread
+     * from which this event stream is accessed.
+     */
+    default <A> EventStream<T> accumulateUntilLater(
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction,
+            Executor eventThreadExecutor) {
+        return new AccumulateUntilLaterStream<>(
+                this,
+                initialTransformation,
+                accumulation,
+                deconstruction,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that, when an event is emitted from this stream,
+     * transforms the event to a cumulative value using the
+     * {@code initialTransformation} function and schedules emission using
+     * {@link Platform#runLater(Runnable)}, if not already scheduled. Any new
+     * event that arrives from this stream before the scheduled emission is
+     * executed is accumulated to the stored cumulative value using the given
+     * {@code accumulation} function. When the scheduled emission is finally
+     * executed, the accumulated value is deconstructed into a sequence of
+     * events using the {@code deconstruction} function and the events are
+     * emitted from the returned stream.
+     *
+     * <p>Note that {@code reduceUntilLater(reduction)} is equivalent to
+     * {@code accumulateUntilLater(t -> t, reduction, t -> Collections::singletonList)}.
+     *
+     * @param <A> type of the cumulative value (accumulator)
+     */
+    default <A> EventStream<T> accumulateUntilLater(
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        return accumulateUntilLater(
+                initialTransformation,
+                accumulation,
+                deconstruction,
+                Platform::runLater);
+    }
+
+    /**
+     * Version of {@link #accumulateUntilLater(Supplier, BiFunction, Function)}
+     * for event streams that don't live on the JavaFX application thread.
+     * @param eventThreadExecutor executor that executes actions on the thread
+     * from which this event stream is accessed.
+     */
+    default <A> EventStream<T> accumulateUntilLater(
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction,
+            Executor eventThreadExecutor) {
+        return accumulateUntilLater(
+                t -> accumulation.apply(unit.get(), t),
+                accumulation,
+                deconstruction,
+                eventThreadExecutor);
+    }
+
+    /**
+     * A variation on
+     * {@link #accumulateUntilLater(Function, BiFunction, Function)}
+     * to use when it is more convenient to provide a unit element of the
+     * accumulation than to transform the initial event to a cumulative
+     * value. It is equivalent to
+     * {@code accumulateUntilLater(t -> accumulation.apply(unit.get(), t), accumulation, deconstruction)},
+     * i.e. the initial transformation is achieved by accumulating the initial
+     * event to the unit element.
+     *
+     * <p>Note that {@link #queueUntilLater()} is equivalent to
+     * {@code accumulateUntilLater(ArrayList<T>::new, (l, t) -> { l.add(t); return l; }, l -> l)},
+     * i.e. the unit element is an empty list, accumulation is addition to the
+     * list and deconstruction of the accumulated value is a no-op, since the
+     * accumulated value is already a list of events.
+     *
+     * @param <A> type of the cumulative value (accumulator)
+     */
+    default <A> EventStream<T> accumulateUntilLater(
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        return accumulateUntilLater(
+                unit,
+                accumulation,
+                deconstruction,
+                Platform::runLater);
+    }
+
+    /**
+     * Version of {@link #reduceUntilLater(BinaryOperator)} for event streams
+     * that don't live on the JavaFX application thread.
+     * @param eventThreadExecutor executor that executes actions on the thread
+     * from which this event stream is accessed.
+     */
+    default EventStream<T> reduceUntilLater(
+            BinaryOperator<T> reduction,
+            Executor eventThreadExecutor) {
+        return accumulateUntilLater(
+                Function.<T>identity(),
+                reduction,
+                Collections::singletonList,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that, when an event is emitted from this stream,
+     * stores the event for emission and schedules emission using
+     * {@link Platform#runLater(Runnable)}, if not already scheduled. Any new
+     * event that arrives from this stream before the scheduled emission is
+     * executed is accumulated into the stored event using the given
+     * {@code reduction} function. When the scheduled emission is finally
+     * executed, the stored event is emitted from the returned stream.
+     *
+     * <p>Note that {@link #retainLatestUntilLater()} is equivalent to
+     * {@code reduceUntilLater((a, b) -> b)}.
+     */
+    default EventStream<T> reduceUntilLater(BinaryOperator<T> reduction) {
+        return reduceUntilLater(reduction, Platform::runLater);
+    }
+
+    /**
+     * Version of {@link #retainLatestUntilLater()} for event streams that
+     * don't live on the JavaFX application thread.
+     * @param eventThreadExecutor executor that executes actions on the thread
+     * from which this event stream is accessed.
+     */
+    default EventStream<T> retainLatestUntilLater(Executor eventThreadExecutor) {
+        return reduceUntilLater((a, b) -> b, eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that, when an event is emitted from this stream,
+     * stores the event for emission and schedules emission using
+     * {@link Platform#runLater(Runnable)}, if not already scheduled. If a new
+     * event arrives from this stream before the scheduled emission is executed,
+     * the stored event is overwritten by the new event and only the new event is
+     * emitted when the scheduled emission is finally executed.
+     */
+    default EventStream<T> retainLatestUntilLater() {
+        return retainLatestUntilLater(Platform::runLater);
+    }
+
+    /**
+     * Version of {@link #queueUntilLater()} for event streams that don't live
+     * on the JavaFX application thread.
+     * @param eventThreadExecutor executor that executes actions on the thread
+     * from which this event stream is accessed.
+     */
+    default EventStream<T> queueUntilLater(Executor eventThreadExecutor) {
+        return accumulateUntilLater(
+                (Supplier<List<T>>) ArrayList::new,
+                (l, t) -> { l.add(t); return l; },
+                l -> l,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that, when an event is emitted from this stream,
+     * enqueues the event for emission and schedules emission using
+     * {@link Platform#runLater(Runnable)}, if not already scheduled. Any events
+     * that arrive from this stream before a scheduled emission is executed are
+     * enqueued as well and emitted (in order) when the scheduled emission is
+     * finally executed.
+     */
+    default EventStream<T> queueUntilLater() {
+        return queueUntilLater(Platform::runLater);
     }
 
     /**

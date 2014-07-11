@@ -36,12 +36,17 @@ class AccumulativeEventStream<T, A> extends SuspendableEventStreamBase<T> {
     @Override
     protected void onResume() {
         if(hasValue) {
-            hasValue = false;
             List<T> toEmit = deconstruction.apply(accum);
-            accum = null;
+            reset();
             for(T t: toEmit) {
                 emit(t);
             }
         }
+    }
+
+    @Override
+    protected void reset() {
+        hasValue = false;
+        accum = null;
     }
 }

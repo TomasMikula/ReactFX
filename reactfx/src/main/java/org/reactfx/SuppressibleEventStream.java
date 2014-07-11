@@ -11,4 +11,9 @@ class SuppressibleEventStream<T> extends SuspendableEventStreamBase<T> {
     protected void handleEventWhenSuspended(T event) {
         // do nothing, ignore the event
     }
+
+    @Override
+    protected void reset() {
+        // do nothing, no state to reset
+    }
 }

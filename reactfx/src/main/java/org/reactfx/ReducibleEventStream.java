@@ -27,10 +27,15 @@ class ReducibleEventStream<T> extends SuspendableEventStreamBase<T> {
     @Override
     protected void onResume() {
         if(hasValue) {
-            hasValue = false;
             T toEmit = value;
-            value = null;
+            reset();
             emit(toEmit);
         }
+    }
+
+    @Override
+    protected void reset() {
+        hasValue = false;
+        value = null;
     }
 }

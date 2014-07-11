@@ -43,6 +43,7 @@ implements SuspendableEventStream<T> {
     }
 
     protected abstract void handleEventWhenSuspended(T event);
+    protected abstract void reset();
 
     protected void onSuspend() {}
     protected void onResume() {}
@@ -62,7 +63,8 @@ implements SuspendableEventStream<T> {
 
     @Override
     protected final Subscription subscribeToInputs() {
-        return subscribeTo(source, this::handleEvent);
+        Subscription sub = subscribeTo(source, this::handleEvent);
+        return sub.and(this::reset);
     }
 
     private void resume() {

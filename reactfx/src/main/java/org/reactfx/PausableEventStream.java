@@ -24,10 +24,15 @@ class PausableEventStream<T> extends SuspendableEventStreamBase<T> {
     protected void onResume() {
         if(pendingEvents != null) {
             List<T> toEmit = pendingEvents;
-            pendingEvents = null;
+            reset();
             for(T t: toEmit) {
                 emit(t);
             }
         }
+    }
+
+    @Override
+    protected void reset() {
+        pendingEvents = null;
     }
 }

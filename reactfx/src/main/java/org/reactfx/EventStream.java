@@ -556,6 +556,95 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns an event stream that, when an event arrives from this stream,
+     * transforms it into a cumulative value using the
+     * {@code initialTransformation} function. Any further events that arrive
+     * from this stream are accumulated to the cumulative value using the
+     * {@code accumulation} function. When an event arrives from the
+     * {@code ticks} stream, the accumulated value is deconstructed into a
+     * sequence of events using the {@code deconstruction} function and the
+     * events are emitted from the returned stream.
+     *
+     * <p>Note that {@code reduceBetween(ticks, reduction)} is equivalent to
+     * {@code accumulateBetween(ticks, t -> t, reduction, Collections::singletonList)}.
+     */
+    default <A> EventStream<T> accumulateBetween(
+            EventStream<?> ticks,
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        return new AccumulateBetweenStream<>(
+                this, ticks, initialTransformation, accumulation, deconstruction);
+    }
+
+    /**
+     * A variation on
+     * {@link #accumulateBetween(EventStream, Function, BiFunction, Function)}
+     * to use when it is more convenient to provide a unit element of the
+     * accumulation than to transform the initial event to a cumulative
+     * value. It is equivalent to
+     * {@code accumulateBetween(ticks, t -> accumulation.apply(unit.get(), t), accumulation, deconstruction)},
+     * i.e. the initial transformation is achieved by accumulating the initial
+     * event to the unit element.
+     *
+     * <p>Note that {@code queueBetween(ticks)} is equivalent to
+     * {@code accumulateBetween(ticks, ArrayList<T>::new, (l, t) -> { l.add(t); return l; }, l -> l)},
+     * i.e. the unit element is an empty list, accumulation is addition to the
+     * list and deconstruction of the accumulated value is a no-op, since the
+     * accumulated value is already a list of events.
+     */
+    default <A> EventStream<T> accumulateBetween(
+            EventStream<?> ticks,
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        Function<? super T, ? extends A> initialTransformation =
+                t -> accumulation.apply(unit.get(), t);
+        return accumulateBetween(
+                ticks, initialTransformation, accumulation, deconstruction);
+    }
+
+    /**
+     * Returns an event stream that, when an event arrives from this stream,
+     * stores it for emission. Any further events that arrive from this stream
+     * are reduced into the stored event using the {@code reduction} function.
+     * The stored event is emitted from the returned stream when a <i>tick</i>
+     * arrives from the {@code ticks} stream.
+     *
+     * <p>Note that {@code retainLatestBetween(ticks)} is equivalent to
+     * {@code reduceBetween(ticks, (a, b) -> b)}.
+     */
+    default EventStream<T> reduceBetween(
+            EventStream<?> ticks,
+            BinaryOperator<T> reduction) {
+        return accumulateBetween(
+                ticks,
+                Function.<T>identity(),
+                reduction,
+                Collections::singletonList);
+    }
+
+    /**
+     * Returns an event stream that, when an event arrives from this stream,
+     * enqueues it for emission. Queued events are emitted from the returned
+     * stream when a <i>tick</i> arrives from the {@code ticks} stream.
+     */
+    default EventStream<T> queueBetween(EventStream<?> ticks) {
+        return accumulateBetween(
+                ticks,
+                (Supplier<List<T>>) ArrayList::new,
+                (l, t) -> { l.add(t); return l; },
+                Function.identity());
+    }
+
+    /**
+     * Equivalent to {@link #emitOn(EventStream)}.
+     */
+    default EventStream<T> retainLatestBetween(EventStream<?> ticks) {
+        return emitOn(ticks);
+    }
+
+    /**
      * Version of {@link #accumulateUntilLater(Function, BiFunction, Function)}
      * for event streams that don't live on the JavaFX application thread.
      * @param eventThreadExecutor executor that executes actions on the thread

@@ -1102,7 +1102,7 @@ public interface EventStream<T> {
                 initialTransformation, reduction, size, head, tail);
     }
 
-    default EventStream<T> onRecurseAccumulate(BinaryOperator<T> reduction) {
+    default EventStream<T> onRecurseReduce(BinaryOperator<T> reduction) {
         return onRecurseAccumulate(
                 Function.identity(),
                 reduction,
@@ -1121,7 +1121,7 @@ public interface EventStream<T> {
     }
 
     default EventStream<T> onRecurseRetainLatest() {
-        return onRecurseAccumulate((a, b) -> b);
+        return onRecurseReduce((a, b) -> b);
     }
 
     /**

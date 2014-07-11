@@ -20,6 +20,7 @@ import java.util.function.ToIntFunction;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Binding;
+import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import javafx.concurrent.Task;
 
@@ -401,12 +402,26 @@ public interface EventStream<T> {
     }
 
     /**
+     * Shortcut for {@code suppressible().suspendWhen(condition)}.
+     */
+    default EventStream<T> suppressWhen(ObservableValue<Boolean> condition) {
+        return suppressible().suspendWhen(condition);
+    }
+
+    /**
      * Returns a suspendable event stream that, when suspended, stores the
      * events emitted by this event stream and emits them when the returned
      * stream's emission is resumed.
      */
     default SuspendableEventStream<T> pausable() {
         return new PausableEventStream<>(this);
+    }
+
+    /**
+     * Shortcut for {@code pausable().suspendWhen(condition)}.
+     */
+    default EventStream<T> pauseWhen(ObservableValue<Boolean> condition) {
+        return pausable().suspendWhen(condition);
     }
 
     /**
@@ -419,6 +434,13 @@ public interface EventStream<T> {
     }
 
     /**
+     * Shortcut for {@code forgetful().suspendWhen(condition)}.
+     */
+    default EventStream<T> retainLatestWhen(ObservableValue<Boolean> condition) {
+        return forgetful().suspendWhen(condition);
+    }
+
+    /**
      * Returns a suspendable event stream that, when suspended, reduces incoming
      * events by the given {@code reduction} function into one. The reduced
      * event is emitted from the returned stream upon resume.
@@ -428,6 +450,15 @@ public interface EventStream<T> {
      */
     default SuspendableEventStream<T> reducible(BinaryOperator<T> reduction) {
         return new ReducibleEventStream<>(this, reduction);
+    }
+
+    /**
+     * Shortcut for {@code reducible(reduction).suspendWhen(condition)}.
+     */
+    default EventStream<T> reduceWhen(
+            ObservableValue<Boolean> condition,
+            BinaryOperator<T> reduction) {
+        return reducible(reduction).suspendWhen(condition);
     }
 
     /**
@@ -456,6 +487,23 @@ public interface EventStream<T> {
             Function<? super A, List<T>> deconstruction) {
         return new AccumulativeEventStream<>(
                 this, initialTransformation, accumulation, deconstruction);
+    }
+
+    /**
+     * Shortcut for
+     * <pre>
+     * {@code
+     * accumulative(initialTransformation, accumulation, deconstruction)
+     *     .suspendWhen(condition)}
+     * </pre>
+     */
+    default <A> EventStream<T> accumulateWhen(
+            ObservableValue<Boolean> condition,
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        return accumulative(initialTransformation, accumulation, deconstruction)
+                .suspendWhen(condition);
     }
 
     /**
@@ -488,6 +536,23 @@ public interface EventStream<T> {
                 t -> accumulation.apply(unit.get(), t);
         return accumulative(
                 initialTransformation, accumulation, deconstruction);
+    }
+
+    /**
+     * Shortcut for
+     * <pre>
+     * {@code
+     * accumulative(unit, accumulation, deconstruction)
+     *     .suspendWhen(condition)}
+     * </pre>
+     */
+    default <A> EventStream<T> accumulateWhen(
+            ObservableValue<Boolean> condition,
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> accumulation,
+            Function<? super A, List<T>> deconstruction) {
+        return accumulative(unit, accumulation, deconstruction)
+                .suspendWhen(condition);
     }
 
     /**

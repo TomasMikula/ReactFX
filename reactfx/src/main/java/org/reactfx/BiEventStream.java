@@ -19,17 +19,26 @@ import org.reactfx.util.Tuple3;
 
 public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
 
-    Subscription subscribe(BiConsumer<? super A, ? super B> subscriber);
+    Subscription subscribe(
+            BiConsumer<? super A, ? super B> subscriber,
+            Consumer<? super Throwable> onError);
 
-    @Override
-    default Subscription subscribe(Consumer<? super Tuple2<A, B>> subscriber) {
-        return subscribe((a, b) -> subscriber.accept(t(a, b)));
+    default Subscription subscribe(BiConsumer<? super A, ? super B> subscriber) {
+        return subscribe(subscriber, Throwable::printStackTrace);
     }
 
+    @Override
+    default Subscription subscribe(
+            Consumer<? super Tuple2<A, B>> subscriber,
+            Consumer<? super Throwable> onError) {
+        return subscribe((a, b) -> subscriber.accept(t(a, b)), onError);
+    }
+
+    @Deprecated
     default Subscription watch(
             BiConsumer<? super A, ? super B> subscriber,
             Consumer<? super Throwable> monitor) {
-        return monitor(monitor).and(subscribe(subscriber));
+        return subscribe(subscriber, monitor);
     }
 
     default Subscription feedTo2(BiEventSink<? super A, ? super B> sink) {

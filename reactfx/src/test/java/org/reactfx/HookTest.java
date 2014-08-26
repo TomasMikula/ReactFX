@@ -15,7 +15,7 @@ public class HookTest {
         EventCounter eventCounter = new EventCounter();
         EventCounter errorCounter = new EventCounter();
         EventSource<Integer> source = new EventSource<>();
-        source.hook(i -> source.push(i-1)).watch(eventCounter, errorCounter);
+        source.hook(i -> source.push(i-1)).subscribe(eventCounter, errorCounter);
         source.push(5);
         assertEquals(0, eventCounter.get());
         assertEquals(1, errorCounter.get());

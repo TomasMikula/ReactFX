@@ -42,34 +42,48 @@ import org.reactfx.util.Tuple3;
 public interface EventStream<T> {
 
     /**
+     * Get notified every time this event stream emits a value or encounters
+     * an error. An error is encountered when a user provided function (e.g.
+     * an event subscriber or an argument to a stream combinator, such as
+     * {@link #map(Function)}), throws an exception.
+     * @param subscriber function to call on the emitted value.
+     * @param onError function to call for the encountered error.
+     * @return subscription that can be used to stop observing
+     * this event stream.
+     */
+    Subscription subscribe(
+            Consumer<? super T> subscriber,
+            Consumer<? super Throwable> onError);
+
+    /**
      * Get notified every time this event stream emits a value.
      * @param subscriber function to call on the emitted value.
      * @return subscription that can be used to stop observing
      * this event stream.
      */
-    Subscription subscribe(Consumer<? super T> subscriber);
+    default Subscription subscribe(Consumer<? super T> subscriber) {
+        return subscribe(subscriber, Throwable::printStackTrace);
+    }
 
     /**
      * Get notified every time this event stream encounters an error. An error
      * is encountered when a user provided function (e.g. an event subscriber
      * or an argument to a stream combinator, such as {@link #map(Function)}),
      * throws an exception.
-     * @param monitor function to call for the encountered error.
+     * @param onError function to call for the encountered error.
      * @return subscription that can be used to stop monitoring this event
      * stream.
      */
-    Subscription monitor(Consumer<? super Throwable> monitor);
+    Subscription monitor(Consumer<? super Throwable> onError);
 
     /**
-     * Convenient method to subscribe to and monitor this stream. Is equivalent
-     * to {@code monitor(monitor).and(subscribe(subscriber))}.
-     * @see #subscribe(Consumer)
-     * @see #monitor(Consumer)
+     * @deprecated renamed to {@link #subscribe(Consumer, Consumer)}.
      */
+    @Deprecated
     default Subscription watch(
             Consumer<? super T> subscriber,
             Consumer<? super Throwable> monitor) {
-        return monitor(monitor).and(subscribe(subscriber));
+        return subscribe(subscriber, monitor);
     }
 
     /**
@@ -1199,9 +1213,9 @@ public interface EventStream<T> {
         return new LazilyBoundStream<Try<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription s2 = EventStream.this.monitor(er -> emit(Try.failure(er)));
-                Subscription s1 = EventStream.this.subscribe(t -> emit(Try.success(t)));
-                return s1.and(s2);
+                return EventStream.this.subscribe(
+                        t -> emit(Try.success(t)),
+                        er -> emit(Try.failure(er)));
             }
         };
     }
@@ -1218,9 +1232,7 @@ public interface EventStream<T> {
         return new LazilyBoundStream<T>() {
             @Override
             protected Subscription subscribeToInputs() {
-                Subscription s2 = EventStream.this.monitor(handler);
-                Subscription s1 = EventStream.this.subscribe(this::emit);
-                return s1.and(s2);
+                return EventStream.this.subscribe(this::emit, handler);
             }
         };
     }

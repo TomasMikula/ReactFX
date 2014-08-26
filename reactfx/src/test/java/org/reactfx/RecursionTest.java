@@ -15,7 +15,7 @@ public class RecursionTest {
         List<Integer> emitted = new ArrayList<>();
         List<Throwable> errors = new ArrayList<>();
         EventSource<Integer> source = new EventSource<>();
-        source.hook(emitted::add).watch(
+        source.hook(emitted::add).subscribe(
                 i -> { if(i > 0) source.push(i-1); },
                 errors::add);
         source.push(5);

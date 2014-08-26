@@ -19,17 +19,26 @@ import org.reactfx.util.Tuple3;
 
 public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
 
-    Subscription subscribe(TriConsumer<? super A, ? super B, ? super C> subscriber);
+    Subscription subscribe(
+            TriConsumer<? super A, ? super B, ? super C> subscriber,
+            Consumer<? super Throwable> onError);
 
-    @Override
-    default Subscription subscribe(Consumer<? super Tuple3<A, B, C>> subscriber) {
-        return subscribe((a, b, c) -> subscriber.accept(t(a, b, c)));
+    default Subscription subscribe(TriConsumer<? super A, ? super B, ? super C> subscriber) {
+        return subscribe(subscriber, Throwable::printStackTrace);
     }
 
+    @Override
+    default Subscription subscribe(
+            Consumer<? super Tuple3<A, B, C>> subscriber,
+            Consumer<? super Throwable> onError) {
+        return subscribe((a, b, c) -> subscriber.accept(t(a, b, c)), onError);
+    }
+
+    @Deprecated
     default Subscription watch(
             TriConsumer<? super A, ? super B, ? super C> subscriber,
             Consumer<? super Throwable> monitor) {
-        return monitor(monitor).and(subscribe(subscriber));
+        return subscribe(subscriber, monitor);
     }
 
     default Subscription feedTo3(TriEventSink<? super A, ? super B, ? super C> sink) {

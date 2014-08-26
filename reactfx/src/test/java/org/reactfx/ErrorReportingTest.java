@@ -120,7 +120,7 @@ public class ErrorReportingTest {
                     }
                     return String.valueOf(i);
                 })
-                .watch(emitted::add, errors::add);
+                .subscribe(emitted::add, errors::add);
 
         intProperty.set(10);
         intProperty.set(-2);

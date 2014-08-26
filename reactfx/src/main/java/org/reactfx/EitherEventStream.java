@@ -20,18 +20,20 @@ public interface EitherEventStream<L, R> extends EventStream<Either<L, R>> {
 
     default Subscription subscribe(
             Consumer<? super L> leftSubscriber,
-            Consumer<? super R> rightSubscriber) {
+            Consumer<? super R> rightSubscriber,
+            Consumer<? super Throwable> onError) {
         return subscribe(either -> {
             either.ifLeft(leftSubscriber);
             either.ifRight(rightSubscriber);
-        });
+        }, onError);
     }
 
+    @Deprecated
     default Subscription watch(
             Consumer<? super L> leftSubscriber,
             Consumer<? super R> rightSubscriber,
             Consumer<? super Throwable> monitor) {
-        return subscribe(leftSubscriber, rightSubscriber).and(monitor(monitor));
+        return subscribe(leftSubscriber, rightSubscriber, monitor);
     }
 
     default EventStream<L> left() {

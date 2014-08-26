@@ -32,12 +32,14 @@ public class EventStreams {
     private static final EventStream<?> NEVER = new EventStream<Object>() {
 
         @Override
-        public Subscription subscribe(Consumer<? super Object> subscriber) {
+        public Subscription subscribe(
+                Consumer<? super Object> subscriber,
+                Consumer<? super Throwable> onError) {
             return Subscription.EMPTY;
         }
 
         @Override
-        public Subscription monitor(Consumer<? super Throwable> subscriber) {
+        public Subscription monitor(Consumer<? super Throwable> onError) {
             return Subscription.EMPTY;
         }
     };

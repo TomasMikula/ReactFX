@@ -115,49 +115,54 @@ public abstract class EventStreamBase<S> {
     /**
      * Subscribes to the given event stream by the given subscriber and also
      * forwards errors reported by the given stream to this stream. This is
-     * equivalent to {@code stream.watch(subscriber, this::reportError)}.
+     * equivalent to {@code stream.subscribe(subscriber, this::reportError)}.
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
     protected final <T> Subscription subscribeTo(
             EventStream<T> stream,
             Consumer<? super T> subscriber) {
-        return stream.watch(subscriber, this::reportError);
+        return stream.subscribe(subscriber, this::reportError);
     }
 
     /**
      * Subscribes to the given event stream by the given subscriber and also
      * forwards errors reported by the given stream to this stream. This is
-     * equivalent to {@code stream.watch(subscriber, this::reportError)}.
+     * equivalent to {@code stream.subscribe(subscriber, this::reportError)}.
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
     protected final <A, B> Subscription subscribeToBi(
             BiEventStream<A, B> stream,
             BiConsumer<? super A, ? super B> subscriber) {
-        return stream.watch(subscriber, this::reportError);
+        return stream.subscribe(subscriber, this::reportError);
     }
 
     /**
      * Subscribes to the given event stream by the given subscriber and also
      * forwards errors reported by the given stream to this stream. This is
-     * equivalent to {@code stream.watch(subscriber, this::reportError)}.
+     * equivalent to {@code stream.subscribe(subscriber, this::reportError)}.
      * @return subscription used to unsubscribe {@code subscriber} from
      * {@code stream} and stop forwarding the errors.
      */
     protected final <A, B, C> Subscription subscribeToTri(
             TriEventStream<A, B, C> stream,
             TriConsumer<? super A, ? super B, ? super C> subscriber) {
-        return stream.watch(subscriber, this::reportError);
+        return stream.subscribe(subscriber, this::reportError);
     }
 
-    public final Subscription subscribe(S subscriber) {
+    public final Subscription subscribe(
+            S subscriber,
+            Consumer<? super Throwable> onError) {
+        Subscription s1 = monitor(onError);
+
         subscribers = ListHelper.add(subscribers, subscriber);
         if(ListHelper.size(subscribers) == 1) {
             firstSubscriber();
         }
         newSubscriber(subscriber);
-        return () -> unsubscribe(subscriber);
+
+        return s1.and(() -> unsubscribe(subscriber));
     }
 
     public final Subscription monitor(Consumer<? super Throwable> monitor) {

@@ -1,14 +1,16 @@
 ReactFX
 =======
 
-This project is an exploration of reactive programming techniques for JavaFX. A lot of inspiration is drawn from the [rxJava library](https://github.com/Netflix/RxJava/wiki) and the excellent [Principles of Reactive Programming](https://www.coursera.org/course/reactive) course. Since ReactFX specifically targets JavaFX applications, its design and use can be significantly simpler than that of rxJava. Most importantly, all UI events in JavaFX applications are handled on the JavaFX application thread. Therefore, ReactFX does not need to worry about asynchrony, schedulers, etc.
+ReactFX is an exploration of (functional) reactive programming techniques for JavaFX. These techniques usually result in more concise code, less side effects and less inversion of control, all of which improve the readability of code.
 
-Help and discussion
+Initial inspiration came from the [Principles of Reactive Programming](https://www.coursera.org/course/reactive) course and the [RxJava library](https://github.com/Netflix/RxJava/wiki). There are, however, important [differences from RxJava](https://github.com/TomasMikula/ReactFX/wiki/ReactFX-vs-ReactiveX).
+
+Help and Discussion
 -------------------
 
 Use [reactfx](http://stackoverflow.com/tags/reactfx) tag on StackOverflow to ask specific questions. For more general discussions about the design of ReactFX and reactive programming for JavaFX, use the [reactfx-dev mailing list](https://groups.google.com/forum/#!forum/reactfx-dev).
 
-Event streams
+Event Streams
 -------------
 
 An `EventStream` emits values (events). You can subscribe to an event stream to get notified each time a value is emitted.
@@ -52,8 +54,19 @@ EventStream<Tuple2<A, B>> eventStream = ...;
 eventStream.subscribe(tuple -> f(tuple._1, tuple._2));
 ```
 
+Event Streams vs Observable Values
+----------------------------------
 
-Event streams in JavaFX
+JavaFX has a representation of a _time-varying value_, namely [ObservableValue](http://docs.oracle.com/javase/8/javafx/api/javafx/beans/value/ObservableValue.html). `ObservableValue` holds a value at any point in time. This value can be requested with [getValue()](http://docs.oracle.com/javase/8/javafx/api/javafx/beans/value/ObservableValue.html#getValue--).
+
+Events, on the other hand, are _ephemeral_&mdash;they come and go. You can only be notified of an event when it occurs;&mdash;it does not make sense to ask the event stream about the _"current event"_.
+
+JavaFX has means to compose observable values to form new observable values, either using the _fluent API_ (methods of ObservableValue subclasses), or using the [Bindings](http://docs.oracle.com/javase/8/javafx/api/javafx/beans/binding/Bindings.html) helper class. Some useful compositions of observable values are also provided by the [EasyBind](https://github.com/TomasMikula/EasyBind) library.
+
+JavaFX, however, does not have a nice way to compose streams of events. The user is left with event handlers/listeners, which are not composable and inherently side-effectful. EventStreams try to fill this gap.
+
+
+Event Streams in JavaFX
 -----------------------
 
 Although it has no notion of an event stream, there are many event streams already hiding in JavaFX. ReactFX provides adapter methods to materialize them as `EventStream` instances.

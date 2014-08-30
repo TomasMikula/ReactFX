@@ -364,11 +364,11 @@ interface Rectangle {
 }
 
 Rectangle rect = ...;
-EventStream<Void> widthInvalidations = EventStreams.invalidationsOf(rect.widthProperty());
-EventStream<Void> heightInvalidations = EventStreams.invalidationsOf(rect.heightProperty());
-EventStream<Void> needsRepaint = EventStreams.merge(widthInvalidations, heightInvalidations);
-EventStream<Void> doneUpdating = beingUpdatedProperty().offs();
-EventStream<Void> repaintImpulse = EventStreams.emit(needsRepaint).on(doneUpdating);
+EventStream<?> widthInvalidations = EventStreams.invalidationsOf(rect.widthProperty());
+EventStream<?> heightInvalidations = EventStreams.invalidationsOf(rect.heightProperty());
+EventStream<?> needsRepaint = EventStreams.merge(widthInvalidations, heightInvalidations);
+EventStream<?> doneUpdating = beingUpdatedProperty().offs();
+EventStream<?> repaintImpulse = needsRepaint.emitOn(doneUpdating);
 repaintImpulse.subscribe(i -> repaint());
 
 rect.beingUpdatedProperty().onWhile(() -> {

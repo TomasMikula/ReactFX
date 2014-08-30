@@ -60,19 +60,18 @@ public abstract class EventStreamBase<S> {
      * Notifies all registered error handlers of the given error.
      */
     protected final void reportError(Throwable thrown) {
-        if(!reporting) { // prevent loops (StackOverflows) in error reporting
+        if(reporting) {
+            // Error reporting caused another error in the same stream.
+            // Don't notify handlers again (likely to cause an error again).
+            // Just print the stack trace.
+            thrown.printStackTrace();
+        } else {
             reporting = true;
             ListHelper.forEach(monitors, m -> {
                 try {
                     m.accept(thrown);
-                } catch(Throwable another) {
-                    ListHelper.forEach(monitors, n -> {
-                        try {
-                            n.accept(another);
-                        } catch(Throwable t) {
-                            // ignore
-                        }
-                    });
+                } catch(Throwable another) { // error handler threw an exception
+                    another.printStackTrace();
                 }
             });
             reporting = false;

@@ -933,10 +933,6 @@ public interface EventStream<T> {
             BiFunction<? super U, ? super T, ? extends U> reduction,
             Duration timeout) {
 
-        if(!Platform.isFxApplicationThread()) {
-            throw new IllegalStateException("Not on FX application thread");
-        }
-
         Function<Runnable, Timer> timerFactory =
                 action -> FxTimer.create(timeout, action);
         return new SuccessionReducingStream<T, U>(

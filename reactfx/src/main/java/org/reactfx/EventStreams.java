@@ -52,6 +52,10 @@ public class EventStreams {
         return (EventStream<T>) NEVER;
     }
 
+    /**
+     * Creates an event stream that emits an impulse on every invalidation
+     * of the given observable.
+     */
     public static EventStream<Void> invalidationsOf(Observable observable) {
         return new LazilyBoundStream<Void>() {
             @Override
@@ -63,6 +67,33 @@ public class EventStreams {
         };
     }
 
+    /**
+     * Creates an event stream that emits the given observable immediately for
+     * every subscriber and re-emits it on every subsequent invalidation of the
+     * observable.
+     */
+    public static <O extends Observable>
+    EventStream<O> repeatOnInvalidation(O observable) {
+        return new LazilyBoundStream<O>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                InvalidationListener listener = obs -> emit(observable);
+                observable.addListener(listener);
+                return () -> observable.removeListener(listener);
+            }
+
+            @Override
+            protected void newSubscriber(Consumer<? super O> consumer) {
+                consumer.accept(observable);
+            }
+        };
+    }
+
+    /**
+     * Creates an event stream that emits the value of the given
+     * {@code ObservableValue} immediately for every subscriber and then on
+     * every change.
+     */
     public static <T> EventStream<T> valuesOf(ObservableValue<T> observable) {
         return new LazilyBoundStream<T>() {
             @Override

@@ -50,27 +50,31 @@ class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements Awa
 
     @Override
     protected final Subscription subscribeToInputs() {
-        return subscribeTo(input, i -> handleEvent(i));
+        return subscribeTo(input, this::handleEvent);
     }
 
     private void handleEvent(I i) {
         if(hasEvent) {
             event = reduction.apply(event, i);
         } else {
+            assert event == null;
             event = initial.apply(i);
-            setHasEvent(true);
+            hasEvent = true;
+            invalidatePending();
         }
         timer.restart();
     }
 
     private void handleTimeout() {
-        emit(event);
+        assert hasEvent;
+        hasEvent = false;
+        O toEmit = event;
         event = null;
-        setHasEvent(false);
+        emit(toEmit);
+        invalidatePending();
     }
 
-    private void setHasEvent(boolean value) {
-        hasEvent = value;
+    private void invalidatePending() {
         if(pending != null) {
             pending.invalidate();
         }

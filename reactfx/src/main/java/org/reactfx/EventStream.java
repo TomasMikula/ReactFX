@@ -1090,6 +1090,169 @@ public interface EventStream<T> {
         return reduceSuccessions((a, b) -> b, timeout, scheduler, eventThreadExecutor);
     }
 
+    /**
+     * Returns an event stream that emits the first event emitted from this
+     * stream and then, if the next event arrives within the given duration
+     * since the last emitted event, it is converted to an accumulator value
+     * using {@code initialTransformation}. Any further events that still
+     * arrive within {@code duration} are accumulated to the accumulator value
+     * using the given reduction function. After {@code duration} has passed
+     * since the last emitted event, the accumulator value is deconstructed
+     * into a series of events using the given {@code deconstruction} function
+     * and these events are emitted, the accumulator value is cleared and any
+     * events that arrive within {@code duration} are accumulated, and so on.
+     */
+    default <A> EventStream<T> thenAccumulateFor(
+            Duration duration,
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> reduction,
+            Function<? super A, List<T>> deconstruction) {
+        return new ThenAccumulateForStream<>(
+                this,
+                initialTransformation,
+                reduction,
+                deconstruction,
+                action -> FxTimer.create(duration, action));
+    }
+
+    default <A> EventStream<T> thenAccumulateFor(
+            Duration duration,
+            Function<? super T, ? extends A> initialTransformation,
+            BiFunction<? super A, ? super T, ? extends A> reduction,
+            Function<? super A, List<T>> deconstruction,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+        Function<Runnable, Timer> timerFactory = action ->
+                ScheduledExecutorServiceTimer.create(
+                        duration, action, scheduler, eventThreadExecutor);
+        return new ThenAccumulateForStream<>(
+                this,
+                initialTransformation,
+                reduction,
+                deconstruction,
+                timerFactory);
+    }
+
+    /**
+     * A variant of
+     * {@link #thenAccumulateFor(Duration, Function, BiFunction, Function)}
+     * for cases when it is more convenient to provide a unit element for
+     * accumulation than the initial transformation.
+     */
+    default <A> EventStream<T> thenAccumulateFor(
+            Duration duration,
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> reduction,
+            Function<? super A, List<T>> deconstruction) {
+        Function<? super T, ? extends A> initialTransformation =
+                t -> reduction.apply(unit.get(), t);
+        return thenAccumulateFor(
+                duration,
+                initialTransformation,
+                reduction,
+                deconstruction);
+    }
+
+    default <A> EventStream<T> thenAccumulateFor(
+            Duration duration,
+            Supplier<? extends A> unit,
+            BiFunction<? super A, ? super T, ? extends A> reduction,
+            Function<? super A, List<T>> deconstruction,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+        Function<? super T, ? extends A> initialTransformation =
+                t -> reduction.apply(unit.get(), t);
+        return thenAccumulateFor(
+                duration,
+                initialTransformation,
+                reduction,
+                deconstruction,
+                scheduler,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that emits the first event emitted from this
+     * stream and then reduces all following events that arrive within the
+     * given duration into a single event using the given reduction function.
+     * The resulting event, if any, is emitted after {@code duration} has
+     * passed. Then again, any events that arrive within {@code duration} are
+     * reduced into a single event, that is emitted after {@code duration} has
+     * passed, and so on.
+     */
+    default EventStream<T> thenReduceFor(
+            Duration duration,
+            BinaryOperator<T> reduction) {
+        return thenAccumulateFor(
+                duration,
+                Function.identity(),
+                reduction,
+                Collections::singletonList);
+    }
+
+    default EventStream<T> thenReduceFor(
+            Duration duration,
+            BinaryOperator<T> reduction,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+        return thenAccumulateFor(
+                duration,
+                Function.identity(),
+                reduction,
+                Collections::singletonList,
+                scheduler,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that emits the first event emitted from this
+     * stream and then remembers, but does not emit, the latest event emitted
+     * from this stream. The remembered event is emitted after the given
+     * duration from the last emitted event. This repeats after each emitted
+     * event.
+     */
+    default EventStream<T> thenRetainLatestFor(Duration duration) {
+        return thenReduceFor(duration, (a, b) -> b);
+    }
+
+    default EventStream<T> thenRetainLatestFor(
+            Duration duration,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+        return thenReduceFor(
+                duration,
+                (a, b) -> b,
+                scheduler,
+                eventThreadExecutor);
+    }
+
+    /**
+     * Returns an event stream that emits the first event emitted from this
+     * stream and then ignores the following events for the given duration.
+     * The first event that arrives after the given duration is emitted and
+     * following events are ignored for the given duration again, and so on.
+     */
+    default EventStream<T> thenIgnoreFor(Duration duration) {
+        return thenAccumulateFor(
+                duration,
+                t -> Collections.<T>emptyList(),
+                (l, t) -> l,
+                Function.<List<T>>identity());
+    }
+
+    default EventStream<T> thenIgnoreFor(
+            Duration duration,
+            ScheduledExecutorService scheduler,
+            Executor eventThreadExecutor) {
+        return thenAccumulateFor(
+                duration,
+                t -> Collections.<T>emptyList(),
+                (l, t) -> l,
+                Function.<List<T>>identity(),
+                scheduler,
+                eventThreadExecutor);
+    }
+
     default <A> EventStream<T> onRecurseAccumulate(
             Function<? super T, ? extends A> initialTransformation,
             BiFunction<? super A, ? super T, ? extends A> reduction,

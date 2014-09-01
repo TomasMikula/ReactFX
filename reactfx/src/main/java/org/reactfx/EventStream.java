@@ -1102,7 +1102,7 @@ public interface EventStream<T> {
      * and these events are emitted, the accumulator value is cleared and any
      * events that arrive within {@code duration} are accumulated, and so on.
      */
-    default <A> EventStream<T> thenAccumulateFor(
+    default <A> AwaitingEventStream<T> thenAccumulateFor(
             Duration duration,
             Function<? super T, ? extends A> initialTransformation,
             BiFunction<? super A, ? super T, ? extends A> reduction,
@@ -1115,7 +1115,7 @@ public interface EventStream<T> {
                 action -> FxTimer.create(duration, action));
     }
 
-    default <A> EventStream<T> thenAccumulateFor(
+    default <A> AwaitingEventStream<T> thenAccumulateFor(
             Duration duration,
             Function<? super T, ? extends A> initialTransformation,
             BiFunction<? super A, ? super T, ? extends A> reduction,
@@ -1139,7 +1139,7 @@ public interface EventStream<T> {
      * for cases when it is more convenient to provide a unit element for
      * accumulation than the initial transformation.
      */
-    default <A> EventStream<T> thenAccumulateFor(
+    default <A> AwaitingEventStream<T> thenAccumulateFor(
             Duration duration,
             Supplier<? extends A> unit,
             BiFunction<? super A, ? super T, ? extends A> reduction,
@@ -1153,7 +1153,7 @@ public interface EventStream<T> {
                 deconstruction);
     }
 
-    default <A> EventStream<T> thenAccumulateFor(
+    default <A> AwaitingEventStream<T> thenAccumulateFor(
             Duration duration,
             Supplier<? extends A> unit,
             BiFunction<? super A, ? super T, ? extends A> reduction,
@@ -1180,7 +1180,7 @@ public interface EventStream<T> {
      * reduced into a single event, that is emitted after {@code duration} has
      * passed, and so on.
      */
-    default EventStream<T> thenReduceFor(
+    default AwaitingEventStream<T> thenReduceFor(
             Duration duration,
             BinaryOperator<T> reduction) {
         return thenAccumulateFor(
@@ -1190,7 +1190,7 @@ public interface EventStream<T> {
                 Collections::singletonList);
     }
 
-    default EventStream<T> thenReduceFor(
+    default AwaitingEventStream<T> thenReduceFor(
             Duration duration,
             BinaryOperator<T> reduction,
             ScheduledExecutorService scheduler,
@@ -1211,11 +1211,11 @@ public interface EventStream<T> {
      * duration from the last emitted event. This repeats after each emitted
      * event.
      */
-    default EventStream<T> thenRetainLatestFor(Duration duration) {
+    default AwaitingEventStream<T> thenRetainLatestFor(Duration duration) {
         return thenReduceFor(duration, (a, b) -> b);
     }
 
-    default EventStream<T> thenRetainLatestFor(
+    default AwaitingEventStream<T> thenRetainLatestFor(
             Duration duration,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {
@@ -1232,7 +1232,7 @@ public interface EventStream<T> {
      * The first event that arrives after the given duration is emitted and
      * following events are ignored for the given duration again, and so on.
      */
-    default EventStream<T> thenIgnoreFor(Duration duration) {
+    default AwaitingEventStream<T> thenIgnoreFor(Duration duration) {
         return thenAccumulateFor(
                 duration,
                 t -> Collections.<T>emptyList(),
@@ -1240,7 +1240,7 @@ public interface EventStream<T> {
                 Function.<List<T>>identity());
     }
 
-    default EventStream<T> thenIgnoreFor(
+    default AwaitingEventStream<T> thenIgnoreFor(
             Duration duration,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {

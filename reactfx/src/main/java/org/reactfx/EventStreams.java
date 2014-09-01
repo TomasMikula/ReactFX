@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import static org.reactfx.util.Tuples.*;
+
 import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.Executor;
@@ -26,6 +28,9 @@ import javafx.scene.Scene;
 
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
+import org.reactfx.util.Tuple4;
+import org.reactfx.util.Tuple5;
+import org.reactfx.util.Tuple6;
 
 public class EventStreams {
 
@@ -391,7 +396,9 @@ public class EventStreams {
         };
     }
 
-    public static <A, B> BiEventStream<A, B> combine(EventStream<A> srcA, EventStream<B> srcB) {
+    public static <A, B> BiEventStream<A, B> combine(
+            EventStream<A> srcA,
+            EventStream<B> srcB) {
         return new LazilyBoundBiStream<A, B>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
@@ -413,7 +420,10 @@ public class EventStreams {
         };
     }
 
-    public static <A, B, C> TriEventStream<A, B, C> combine(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC) {
+    public static <A, B, C> TriEventStream<A, B, C> combine(
+            EventStream<A> srcA,
+            EventStream<B> srcB,
+            EventStream<C> srcC) {
         return new LazilyBoundTriStream<A, B, C>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
@@ -433,6 +443,125 @@ public class EventStreams {
             void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
                     emit(pocketA.get(), pocketB.get(), pocketC.get());
+                }
+            }
+        };
+    }
+
+    public static <A, B, C, D> EventStream<Tuple4<A, B, C, D>> combine(
+            EventStream<A> srcA,
+            EventStream<B> srcB,
+            EventStream<C> srcC,
+            EventStream<D> srcD) {
+        return new LazilyBoundStream<Tuple4<A, B, C, D>>() {
+            Pocket<A> pocketA = new Pocket<>();
+            Pocket<B> pocketB = new Pocket<>();
+            Pocket<C> pocketC = new Pocket<>();
+            Pocket<D> pocketD = new Pocket<>();
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                pocketA.clear();
+                pocketB.clear();
+                pocketC.clear();
+                pocketD.clear();
+                return Subscription.multi(
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
+                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }),
+                        subscribeTo(srcD, d -> { pocketD.set(d); tryEmit(); }));
+            }
+
+            void tryEmit() {
+                if(pocketA.hasValue() && pocketB.hasValue()
+                        && pocketC.hasValue() && pocketD.hasValue()) {
+
+                    emit(t(pocketA.get(), pocketB.get(),
+                            pocketC.get(), pocketD.get()));
+                }
+            }
+        };
+    }
+
+    public static <A, B, C, D, E> EventStream<Tuple5<A, B, C, D, E>> combine(
+            EventStream<A> srcA,
+            EventStream<B> srcB,
+            EventStream<C> srcC,
+            EventStream<D> srcD,
+            EventStream<E> srcE) {
+        return new LazilyBoundStream<Tuple5<A, B, C, D, E>>() {
+            Pocket<A> pocketA = new Pocket<>();
+            Pocket<B> pocketB = new Pocket<>();
+            Pocket<C> pocketC = new Pocket<>();
+            Pocket<D> pocketD = new Pocket<>();
+            Pocket<E> pocketE = new Pocket<>();
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                pocketA.clear();
+                pocketB.clear();
+                pocketC.clear();
+                pocketD.clear();
+                pocketE.clear();
+                return Subscription.multi(
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
+                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }),
+                        subscribeTo(srcD, d -> { pocketD.set(d); tryEmit(); }),
+                        subscribeTo(srcE, e -> { pocketE.set(e); tryEmit(); }));
+            }
+
+            void tryEmit() {
+                if(pocketA.hasValue() && pocketB.hasValue()
+                        && pocketC.hasValue() && pocketD.hasValue()
+                        && pocketE.hasValue()) {
+
+                    emit(t(pocketA.get(), pocketB.get(), pocketC.get(),
+                            pocketD.get(), pocketE.get()));
+                }
+            }
+        };
+    }
+
+    public static <A, B, C, D, E, F> EventStream<Tuple6<A, B, C, D, E, F>> combine(
+            EventStream<A> srcA,
+            EventStream<B> srcB,
+            EventStream<C> srcC,
+            EventStream<D> srcD,
+            EventStream<E> srcE,
+            EventStream<F> srcF) {
+        return new LazilyBoundStream<Tuple6<A, B, C, D, E, F>>() {
+            Pocket<A> pocketA = new Pocket<>();
+            Pocket<B> pocketB = new Pocket<>();
+            Pocket<C> pocketC = new Pocket<>();
+            Pocket<D> pocketD = new Pocket<>();
+            Pocket<E> pocketE = new Pocket<>();
+            Pocket<F> pocketF = new Pocket<>();
+
+            @Override
+            protected Subscription subscribeToInputs() {
+                pocketA.clear();
+                pocketB.clear();
+                pocketC.clear();
+                pocketD.clear();
+                pocketE.clear();
+                pocketF.clear();
+                return Subscription.multi(
+                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
+                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
+                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }),
+                        subscribeTo(srcD, d -> { pocketD.set(d); tryEmit(); }),
+                        subscribeTo(srcE, e -> { pocketE.set(e); tryEmit(); }),
+                        subscribeTo(srcF, f -> { pocketF.set(f); tryEmit(); }));
+            }
+
+            void tryEmit() {
+                if(pocketA.hasValue() && pocketB.hasValue()
+                        && pocketC.hasValue() && pocketD.hasValue()
+                        && pocketE.hasValue() && pocketF.hasValue()) {
+
+                    emit(t(pocketA.get(), pocketB.get(), pocketC.get(),
+                            pocketD.get(), pocketE.get(), pocketF.get()));
                 }
             }
         };

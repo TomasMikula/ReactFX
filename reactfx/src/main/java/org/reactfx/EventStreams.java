@@ -28,6 +28,7 @@ import javafx.scene.Scene;
 
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
+import org.reactfx.util.TransientListChange;
 import org.reactfx.util.Tuple4;
 import org.reactfx.util.Tuple5;
 import org.reactfx.util.Tuple6;
@@ -154,6 +155,21 @@ public class EventStreams {
             @Override
             protected Subscription subscribeToInputs() {
                 ListChangeListener<T> listener = c -> emit(c);
+                list.addListener(listener);
+                return () -> list.removeListener(listener);
+            }
+        };
+    }
+
+    public static <T> EventStream<TransientListChange<T>> simpleChangesOf(ObservableList<T> list) {
+        return new LazilyBoundStream<TransientListChange<T>>() {
+            @Override
+            protected Subscription subscribeToInputs() {
+                ListChangeListener<T> listener = c ->  {
+                    while(c.next()) {
+                        emit(TransientListChange.fromCurrentStateOf(c));
+                    }
+                };
                 list.addListener(listener);
                 return () -> list.removeListener(listener);
             }

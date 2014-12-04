@@ -1,14 +1,13 @@
 package org.reactfx;
 
-import org.reactfx.util.TriConsumer;
 import org.reactfx.util.Tuple3;
 
 public final class ConnectableTriEventSource<A, B, C>
-extends ConnectableEventSourceBase<TriConsumer<? super A, ? super B, ? super C>>
+extends ConnectableEventSourceBase<TriSubscriber<? super A, ? super B, ? super C>>
 implements TriEventStream<A, B, C>, TriConnectable<A, B, C> {
 
     public void push(A a, B b, C c) {
-        forEachSubscriber(s -> s.accept(a, b, c));
+        notifyObservers(s -> s.onEvent(a, b, c));
     }
 
     @Override

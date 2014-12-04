@@ -1,7 +1,6 @@
 package org.reactfx;
 
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
@@ -15,7 +14,7 @@ class OnRecurseAccumulateStream<T, A> extends LazilyBoundStream<T> {
     private final Function<? super A, ? extends T> head;
     private final Function<? super A, ? extends A> tail;
 
-    private MapHelper<Consumer<? super T>, A> pendingEvents = null;
+    private MapHelper<Subscriber<? super T>, A> pendingEvents = null;
 
     public OnRecurseAccumulateStream(
             EventStream<T> source,
@@ -38,10 +37,10 @@ class OnRecurseAccumulateStream<T, A> extends LazilyBoundStream<T> {
     }
 
     private void emitValue(T value) {
-        if(MapHelper.isEmpty(pendingEvents) && getSubscriberCount() == 1) {
+        if(MapHelper.isEmpty(pendingEvents) && getObserverCount() == 1) {
             emit(value);
         } else {
-            forEachSubscriber(s -> {
+            notifyObservers(s -> {
                 if(MapHelper.containsKey(pendingEvents, s)) {
                     A accum = MapHelper.get(pendingEvents, s);
                     accum = reduction.apply(accum, value);
@@ -58,7 +57,7 @@ class OnRecurseAccumulateStream<T, A> extends LazilyBoundStream<T> {
                 }
             });
             while(!MapHelper.isEmpty(pendingEvents)) {
-                Consumer<? super T> subscriber = MapHelper.chooseKey(pendingEvents);
+                Subscriber<? super T> subscriber = MapHelper.chooseKey(pendingEvents);
                 A accum = MapHelper.get(pendingEvents, subscriber);
                 int n = size.applyAsInt(accum);
                 assert n > 0;
@@ -71,7 +70,7 @@ class OnRecurseAccumulateStream<T, A> extends LazilyBoundStream<T> {
                         pendingEvents = MapHelper.put(pendingEvents, subscriber, accum);
                     }
                 }
-                tryRun(() -> subscriber.accept(first));
+                runUnsafeAction(() -> subscriber.onEvent(first));
             }
         }
     }

@@ -1,6 +1,5 @@
 package org.reactfx;
 
-import java.util.function.BiConsumer;
 
 /**
  * Bi-event stream that has one or more sources (most commonly event streams,
@@ -11,10 +10,10 @@ import java.util.function.BiConsumer;
  * @param <B> type of the second part of events emitted by this event stream.
  */
 public abstract class LazilyBoundBiStream<A, B>
-extends LazilyBoundStreamBase<BiConsumer<? super A, ? super B>>
+extends LazilyBoundStreamBase<BiSubscriber<? super A, ? super B>>
 implements BiEventStream<A, B> {
 
     protected void emit(A a, B b) {
-        forEachSubscriber(s -> s.accept(a, b));
+        notifyObservers(s -> s.onEvent(a, b));
     }
 }

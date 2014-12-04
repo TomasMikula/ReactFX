@@ -1,7 +1,5 @@
 package org.reactfx;
 
-import static org.reactfx.util.Tuples.*;
-
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -19,19 +17,24 @@ import org.reactfx.util.Tuple3;
 
 public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
 
-    Subscription subscribe(
-            TriConsumer<? super A, ? super B, ? super C> subscriber,
-            Consumer<? super Throwable> onError);
+    Subscription subscribe(TriSubscriber<? super A, ? super B, ? super C> subscriber);
 
-    default Subscription subscribe(TriConsumer<? super A, ? super B, ? super C> subscriber) {
-        return subscribe(subscriber, Throwable::printStackTrace);
+    default Subscription subscribe(
+            TriConsumer<? super A, ? super B, ? super C> onEvent,
+            Consumer<? super Throwable> onError) {
+        return subscribe(TriSubscriber.create(onEvent, onError));
     }
 
     @Override
     default Subscription subscribe(
-            Consumer<? super Tuple3<A, B, C>> subscriber,
-            Consumer<? super Throwable> onError) {
-        return subscribe((a, b, c) -> subscriber.accept(t(a, b, c)), onError);
+            Subscriber<? super Tuple3<A, B, C>> subscriber) {
+        return subscribe(TriSubscriber.fromSubscriber(subscriber));
+    }
+
+    // Override to avoid constructing a tuple that is ignored anyway
+    @Override
+    default Subscription monitor(Consumer<? super Throwable> onError) {
+        return subscribe(TriSubscriber.fromErrorHandler(onError));
     }
 
     @Deprecated

@@ -1,7 +1,5 @@
 package org.reactfx;
 
-import static org.reactfx.util.Tuples.*;
-
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.Executor;
@@ -19,19 +17,24 @@ import org.reactfx.util.Tuple3;
 
 public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
 
-    Subscription subscribe(
-            BiConsumer<? super A, ? super B> subscriber,
-            Consumer<? super Throwable> onError);
+    Subscription subscribe(BiSubscriber<? super A, ? super B> subscriber);
 
-    default Subscription subscribe(BiConsumer<? super A, ? super B> subscriber) {
-        return subscribe(subscriber, Throwable::printStackTrace);
+    default Subscription subscribe(
+            BiConsumer<? super A, ? super B> onEvent,
+            Consumer<? super Throwable> onError) {
+        return subscribe(BiSubscriber.create(onEvent, onError));
     }
 
     @Override
     default Subscription subscribe(
-            Consumer<? super Tuple2<A, B>> subscriber,
-            Consumer<? super Throwable> onError) {
-        return subscribe((a, b) -> subscriber.accept(t(a, b)), onError);
+            Subscriber<? super Tuple2<A, B>> subscriber) {
+        return subscribe(BiSubscriber.fromSubscriber(subscriber));
+    }
+
+    // Override to avoid constructing a tuple that is ignored anyway
+    @Override
+    default Subscription monitor(Consumer<? super Throwable> onError) {
+        return subscribe(BiSubscriber.fromErrorHandler(onError));
     }
 
     @Deprecated

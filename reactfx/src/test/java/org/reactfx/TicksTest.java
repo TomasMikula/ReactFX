@@ -37,7 +37,7 @@ public class TicksTest {
         CompletableFuture<Integer> nTicks = new CompletableFuture<>();
         Platform.runLater(() -> {
             EventCounter counter = new EventCounter();
-            Subscription sub = EventStreams.ticks(Duration.ofMillis(100)).subscribe(counter);
+            Subscription sub = EventStreams.ticks(Duration.ofMillis(100)).subscribe(counter::accept);
             FxTimer.runLater(Duration.ofMillis(350), sub::unsubscribe); // stop after 3 ticks
             // wait a little more to test that no more than 3 ticks arrive anyway
             FxTimer.runLater(Duration.ofMillis(550), () -> nTicks.complete(counter.get()));
@@ -52,7 +52,7 @@ public class TicksTest {
         CompletableFuture<Integer> nTicks = new CompletableFuture<>();
         executor.execute(() -> {
             EventCounter counter = new EventCounter();
-            Subscription sub = EventStreams.ticks(Duration.ofMillis(100), scheduler, executor).subscribe(counter);
+            Subscription sub = EventStreams.ticks(Duration.ofMillis(100), scheduler, executor).subscribe(counter::accept);
             ScheduledExecutorServiceTimer.create(Duration.ofMillis(350), sub::unsubscribe, scheduler, executor).restart(); // stop after 3 ticks
             // wait a little more to test that no more than 3 ticks arrive anyway
             ScheduledExecutorServiceTimer.create(Duration.ofMillis(550), () -> nTicks.complete(counter.get()), scheduler, executor).restart();

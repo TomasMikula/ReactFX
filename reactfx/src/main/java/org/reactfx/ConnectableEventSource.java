@@ -1,14 +1,13 @@
 package org.reactfx;
 
-import java.util.function.Consumer;
 
 public final class ConnectableEventSource<T>
-extends ConnectableEventSourceBase<Consumer<? super T>>
+extends ConnectableEventSourceBase<Subscriber<? super T>>
 implements ConnectableEventStream<T>, ConnectableEventSink<T> {
 
     @Override
     public void push(T value) {
-        forEachSubscriber(s -> s.accept(value));
+        notifyObservers(s -> s.onEvent(value));
     }
 
     @Override

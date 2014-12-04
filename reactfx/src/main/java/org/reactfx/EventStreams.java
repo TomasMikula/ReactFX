@@ -6,7 +6,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -38,14 +37,7 @@ public class EventStreams {
     private static final EventStream<?> NEVER = new EventStream<Object>() {
 
         @Override
-        public Subscription subscribe(
-                Consumer<? super Object> subscriber,
-                Consumer<? super Throwable> onError) {
-            return Subscription.EMPTY;
-        }
-
-        @Override
-        public Subscription monitor(Consumer<? super Throwable> onError) {
+        public Subscription subscribe(Subscriber<? super Object> subscriber) {
             return Subscription.EMPTY;
         }
     };
@@ -89,8 +81,8 @@ public class EventStreams {
             }
 
             @Override
-            protected void newSubscriber(Consumer<? super O> consumer) {
-                consumer.accept(observable);
+            protected void newObserver(Subscriber<? super O> subscriber) {
+                subscriber.onEvent(observable);
             }
         };
     }
@@ -110,8 +102,8 @@ public class EventStreams {
             }
 
             @Override
-            protected void newSubscriber(Consumer<? super T> consumer) {
-                consumer.accept(observable.getValue());
+            protected void newObserver(Subscriber<? super T> subscriber) {
+                subscriber.onEvent(observable.getValue());
             }
         };
     }
@@ -130,10 +122,10 @@ public class EventStreams {
             }
 
             @Override
-            protected void newSubscriber(Consumer<? super T> consumer) {
+            protected void newObserver(Subscriber<? super T> subscriber) {
                 T val = observable.getValue();
                 if(val != null) {
-                    consumer.accept(val);
+                    subscriber.onEvent(val);
                 }
             }
         };
@@ -232,8 +224,8 @@ public class EventStreams {
             }
 
             @Override
-            protected void newSubscriber(Consumer<? super T> subscriber) {
-                subscriber.accept(previousValue);
+            protected void newObserver(Subscriber<? super T> subscriber) {
+                subscriber.onEvent(previousValue);
             }
         };
     }

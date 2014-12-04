@@ -1,57 +1,21 @@
 package org.reactfx;
 
-import java.util.function.Consumer;
-
-import org.reactfx.util.ListHelper;
 
 /**
  *
  * @param <S> type of the subscriber
  */
-public abstract class EventStreamBase<S> {
+public abstract class EventStreamBase<S extends ErrorHandler> extends ObservableBase<S> {
 
-    private ListHelper<S> subscribers = null;
-    private ListHelper<Consumer<? super Throwable>> monitors = null;
     private boolean reporting = false;
-    private boolean unnotifiedSubscribers = false;
 
-    protected final int getSubscriberCount() {
-        return ListHelper.size(subscribers);
-    }
-
-    protected final void tryRun(Runnable action) {
+    @Override
+    protected final void runUnsafeAction(Runnable action) {
         try {
             action.run();
         } catch(Throwable t) {
             reportError(t);
         }
-    }
-
-    protected final void forEachSubscriber(Consumer<S> action) {
-        if(unnotifiedSubscribers) {
-            try {
-                throw new IllegalStateException("Cannot recursively emit"
-                        + " before all subscribers were notified of the"
-                        + " previous event");
-            } catch(IllegalStateException e) {
-                e.printStackTrace();
-                reportError(e);
-            }
-            return;
-        }
-
-        if(ListHelper.size(subscribers) > 1) {
-            // prevent recursion when there are 2 or more subscribers
-            unnotifiedSubscribers = true;
-        }
-        ListHelper.forEach(subscribers, s -> {
-            try {
-                action.accept(s);
-            } catch(Throwable t) {
-                reportError(t);
-            }
-        });
-        unnotifiedSubscribers = false;
     }
 
     /**
@@ -65,9 +29,9 @@ public abstract class EventStreamBase<S> {
             thrown.printStackTrace();
         } else {
             reporting = true;
-            ListHelper.forEach(monitors, m -> {
+            forEachObserver(o -> {
                 try {
-                    m.accept(thrown);
+                    o.onError(thrown);
                 } catch(Throwable another) { // error handler threw an exception
                     another.printStackTrace();
                 }
@@ -76,62 +40,7 @@ public abstract class EventStreamBase<S> {
         }
     }
 
-    /**
-     * Called when the number of subscribers goes from 0 to 1.
-     * Overriding this method is a convenient way for subclasses
-     * to handle this event.
-     *
-     * <p>This method is called <em>before</em> the
-     * {@link #newSubscriber(Object)} method.</p>
-     */
-    protected void firstSubscriber() {
-        // default implementation is empty
-    }
-
-    /**
-     * Called for each new subscriber.
-     * Overriding this method is a convenient way for subclasses
-     * to handle this event, for example to publish some initial events.
-     *
-     * <p>This method is called <em>after</em> the
-     * {@link #firstSubscriber()} method.</p>
-     */
-    protected void newSubscriber(S subscriber) {
-        // default implementation is empty
-    }
-
-    /**
-     * Called when the number of subscribers goes down to 0.
-     * Overriding this method is a convenient way for subclasses
-     * to handle this event.
-     */
-    protected void noSubscribers() {
-        // default implementation is empty
-    }
-
-    public final Subscription subscribe(
-            S subscriber,
-            Consumer<? super Throwable> onError) {
-        Subscription s1 = monitor(onError);
-
-        subscribers = ListHelper.add(subscribers, subscriber);
-        if(ListHelper.size(subscribers) == 1) {
-            firstSubscriber();
-        }
-        newSubscriber(subscriber);
-
-        return s1.and(() -> unsubscribe(subscriber));
-    }
-
-    public final Subscription monitor(Consumer<? super Throwable> monitor) {
-        monitors = ListHelper.add(monitors, monitor);
-        return () -> monitors = ListHelper.remove(monitors, monitor);
-    }
-
-    private void unsubscribe(S subscriber) {
-        subscribers = ListHelper.remove(subscribers, subscriber);
-        if(ListHelper.isEmpty(subscribers)) {
-            noSubscribers();
-        }
+    public final Subscription subscribe(S subscriber) {
+        return observe(subscriber);
     }
 }

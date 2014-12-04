@@ -1,6 +1,5 @@
 package org.reactfx;
 
-import java.util.function.Consumer;
 
 /**
  * EventSource is an EventSink that serves also as an EventStream - every value
@@ -8,7 +7,7 @@ import java.util.function.Consumer;
  * @param <T> type of values this EventSource accepts and emits.
  */
 public class EventSource<T>
-extends EventStreamBase<Consumer<? super T>>
+extends EventStreamBase<Subscriber<? super T>>
 implements EventStream<T>, EventSink<T> {
 
     /**
@@ -16,6 +15,6 @@ implements EventStream<T>, EventSink<T> {
      */
     @Override
     public final void push(T value) {
-        forEachSubscriber(s -> s.accept(value));
+        notifyObservers(s -> s.onEvent(value));
     }
 }

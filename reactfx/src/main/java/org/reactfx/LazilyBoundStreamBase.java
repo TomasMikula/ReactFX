@@ -12,13 +12,14 @@ import org.reactfx.util.TriConsumer;
  *
  * @param <S> type of the subscriber
  */
-public abstract class LazilyBoundStreamBase<S> extends EventStreamBase<S> {
+public abstract class LazilyBoundStreamBase<S extends ErrorHandler>
+extends EventStreamBase<S> {
     private Subscription subscription = null;
 
     protected abstract Subscription subscribeToInputs();
 
     @Override
-    protected final void firstSubscriber() {
+    protected final void firstObserver() {
         try {
             subscription = subscribeToInputs();
         } catch(Throwable t) {
@@ -27,7 +28,7 @@ public abstract class LazilyBoundStreamBase<S> extends EventStreamBase<S> {
     }
 
     @Override
-    protected final void noSubscribers() {
+    protected final void noObservers() {
         try {
             subscription.unsubscribe();
             subscription = null;

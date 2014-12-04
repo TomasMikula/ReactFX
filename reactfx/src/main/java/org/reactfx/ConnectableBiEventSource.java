@@ -1,16 +1,14 @@
 package org.reactfx;
 
-import java.util.function.BiConsumer;
-
 import org.reactfx.util.Tuple2;
 
 public final class ConnectableBiEventSource<A, B>
-extends ConnectableEventSourceBase<BiConsumer<? super A, ? super B>>
+extends ConnectableEventSourceBase<BiSubscriber<? super A, ? super B>>
 implements ConnectableBiEventStream<A, B>, ConnectableBiEventSink<A, B> {
 
     @Override
     public void push(A a, B b) {
-        forEachSubscriber(s -> s.accept(a, b));
+        notifyObservers(s -> s.onEvent(a, b));
     }
 
     @Override

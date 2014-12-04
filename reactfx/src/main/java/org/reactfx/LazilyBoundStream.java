@@ -1,6 +1,5 @@
 package org.reactfx;
 
-import java.util.function.Consumer;
 
 /**
  * Event stream that has one or more sources (most commonly event streams,
@@ -9,9 +8,11 @@ import java.util.function.Consumer;
  *
  * @param <T> type of events emitted by this event stream.
  */
-public abstract class LazilyBoundStream<T> extends LazilyBoundStreamBase<Consumer<? super T>> implements EventStream<T> {
+public abstract class LazilyBoundStream<T>
+extends LazilyBoundStreamBase<Subscriber<? super T>>
+implements EventStream<T> {
 
     protected void emit(T value) {
-        forEachSubscriber(s -> s.accept(value));
+        notifyObservers(s -> s.onEvent(value));
     }
 }

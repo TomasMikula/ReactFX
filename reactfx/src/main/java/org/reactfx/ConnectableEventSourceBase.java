@@ -4,7 +4,8 @@ import java.util.function.Function;
 
 import org.reactfx.util.MapHelper;
 
-class ConnectableEventSourceBase<S> extends LazilyBoundStreamBase<S> {
+class ConnectableEventSourceBase<S extends ErrorHandler>
+extends LazilyBoundStreamBase<S> {
 
     private static final class InputSubscriber<I> {
         private final I input;

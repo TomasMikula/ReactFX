@@ -46,23 +46,26 @@ public interface EventStream<T> {
      * an error. An error is encountered when a user provided function (e.g.
      * an event subscriber or an argument to a stream combinator, such as
      * {@link #map(Function)}), throws an exception.
-     * @param subscriber function to call on the emitted value.
+     * @param subscriber handles emitted events and encountered errors.
+     * @return subscription that can be used to stop observing this event
+     * stream.
+     */
+    Subscription subscribe(Subscriber<? super T> subscriber);
+
+    /**
+     * Get notified every time this event stream emits a value or encounters
+     * an error. An error is encountered when a user provided function (e.g.
+     * an event subscriber or an argument to a stream combinator, such as
+     * {@link #map(Function)}), throws an exception.
+     * @param onEvent function to call on the emitted value.
      * @param onError function to call for the encountered error.
      * @return subscription that can be used to stop observing
      * this event stream.
      */
-    Subscription subscribe(
-            Consumer<? super T> subscriber,
-            Consumer<? super Throwable> onError);
-
-    /**
-     * Get notified every time this event stream emits a value.
-     * @param subscriber function to call on the emitted value.
-     * @return subscription that can be used to stop observing
-     * this event stream.
-     */
-    default Subscription subscribe(Consumer<? super T> subscriber) {
-        return subscribe(subscriber, Throwable::printStackTrace);
+    default Subscription subscribe(
+            Consumer<? super T> onEvent,
+            Consumer<? super Throwable> onError) {
+        return subscribe(Subscriber.create(onEvent, onError));
     }
 
     /**
@@ -74,7 +77,9 @@ public interface EventStream<T> {
      * @return subscription that can be used to stop monitoring this event
      * stream.
      */
-    Subscription monitor(Consumer<? super Throwable> onError);
+    default Subscription monitor(Consumer<? super Throwable> onError) {
+        return subscribe(Subscriber.fromErrorHandler(onError));
+    }
 
     /**
      * @deprecated renamed to {@link #subscribe(Consumer, Consumer)}.

@@ -40,7 +40,7 @@ class OnRecurseAccumulateStream<T, A> extends LazilyBoundStream<T> {
         if(MapHelper.isEmpty(pendingEvents) && getObserverCount() == 1) {
             emit(value);
         } else {
-            notifyObservers(s -> {
+            forEachObserver(s -> {
                 if(MapHelper.containsKey(pendingEvents, s)) {
                     A accum = MapHelper.get(pendingEvents, s);
                     accum = reduction.apply(accum, value);

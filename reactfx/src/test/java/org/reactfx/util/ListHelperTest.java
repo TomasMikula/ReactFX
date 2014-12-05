@@ -11,7 +11,50 @@ import org.junit.Test;
 public class ListHelperTest {
 
     @Test
+    public void testRemoveWhileIterating() {
+        ListHelper<Integer> lh = null;
+
+        lh = ListHelper.add(lh, 0);
+        lh = ListHelper.add(lh, 1);
+        lh = ListHelper.add(lh, 2);
+
+        CloseableIterator<Integer> it = ListHelper.iterator(lh);
+        int i = 2;
+        while(it.hasNext()) {
+            lh = ListHelper.remove(lh, i--);
+            it.next();
+        }
+
+        assertEquals(-1, i);
+        assertEquals(0, ListHelper.size(lh));
+    }
+
+    @Test
     public void testAddWhileIterating() {
+        ListHelper<Integer> lh = null;
+
+        lh = ListHelper.add(lh, 0);
+        lh = ListHelper.add(lh, 1);
+        lh = ListHelper.add(lh, 2);
+
+        CloseableIterator<Integer> it = ListHelper.iterator(lh);
+        int i = 2;
+        while(it.hasNext()) {
+            lh = ListHelper.add(lh, i--);
+            it.next();
+        };
+
+        assertEquals(-1, i);
+        assertArrayEquals(new Integer[] { 0, 1, 2, 2, 1, 0 }, ListHelper.toArray(lh, n -> new Integer[n]));
+
+        it = ListHelper.iterator(lh);
+        assertFalse(lh == ListHelper.add(lh, 5)); // test that a copy is made
+        it.close();
+        assertTrue(lh == ListHelper.add(lh, 5)); // test that change is made in place
+    }
+
+    @Test
+    public void testRemoveInForEach() {
         ObjectProperty<ListHelper<Integer>> lh = new SimpleObjectProperty<>(null);
         IntegerProperty iterations = new SimpleIntegerProperty(0);
 
@@ -29,7 +72,7 @@ public class ListHelperTest {
     }
 
     @Test
-    public void testRemoveWhileIterating() {
+    public void testAddInForEach() {
         ObjectProperty<ListHelper<Integer>> lh = new SimpleObjectProperty<>(null);
         IntegerProperty iterations = new SimpleIntegerProperty(0);
 
@@ -44,5 +87,22 @@ public class ListHelperTest {
 
         assertEquals(3, iterations.get());
         assertArrayEquals(new Integer[] { 0, 1, 2, 2, 1, 0 }, ListHelper.toArray(lh.get(), n -> new Integer[n]));
+    }
+
+    @Test
+    public void testIdempotencyOfIteratorClose() {
+        ListHelper<Integer> lh = null;
+
+        lh = ListHelper.add(lh, 0);
+        lh = ListHelper.add(lh, 1);
+        lh = ListHelper.add(lh, 2);
+
+        CloseableIterator<Integer> it = ListHelper.iterator(lh);
+        while(it.hasNext()) it.next(); // deplete the iterator
+        it.close();
+        it.close();
+
+        it = ListHelper.iterator(lh);
+        assertFalse(lh == ListHelper.add(lh, 5));
     }
 }

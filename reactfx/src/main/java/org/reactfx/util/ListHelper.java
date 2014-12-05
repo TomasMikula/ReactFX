@@ -3,6 +3,7 @@ package org.reactfx.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -31,6 +32,30 @@ public abstract class ListHelper<T> {
     public static <T> void forEach(ListHelper<T> listHelper, Consumer<T> f) {
         if(listHelper != null) {
             listHelper.forEach(f);
+        }
+    }
+
+    public static <T> CloseableIterator<T> iterator(ListHelper<T> listHelper) {
+        if(listHelper != null) {
+            return listHelper.iterator();
+        } else {
+            return new CloseableIterator<T>() {
+
+                @Override
+                public boolean hasNext() {
+                    return false;
+                }
+
+                @Override
+                public T next() {
+                    throw new NoSuchElementException();
+                }
+
+                @Override
+                public void close() {
+                    // do nothing
+                }
+            };
         }
     }
 
@@ -80,6 +105,8 @@ public abstract class ListHelper<T> {
 
     protected abstract void forEach(Consumer<T> f);
 
+    protected abstract CloseableIterator<T> iterator();
+
     protected abstract Optional<T> reduce(BinaryOperator<T> f);
 
     protected abstract <U> U reduce(U unit, BiFunction<U, T, U> f);
@@ -113,6 +140,33 @@ public abstract class ListHelper<T> {
         @Override
         protected void forEach(Consumer<T> f) {
             f.accept(elem);
+        }
+
+        @Override
+        protected CloseableIterator<T> iterator() {
+            return new CloseableIterator<T>() {
+                boolean hasNext = true;
+
+                @Override
+                public boolean hasNext() {
+                    return hasNext;
+                }
+
+                @Override
+                public T next() {
+                    if(hasNext) {
+                        hasNext = false;
+                        return elem;
+                    } else {
+                        throw new NoSuchElementException();
+                    }
+                }
+
+                @Override
+                public void close() {
+                    // do nothing
+                }
+            };
         }
 
         @Override
@@ -199,6 +253,41 @@ public abstract class ListHelper<T> {
             } finally {
                 --iterating;
             }
+        }
+
+        @Override
+        protected CloseableIterator<T> iterator() {
+            ++iterating;
+            return new CloseableIterator<T>() {
+                int next = 0;
+
+                @Override
+                public boolean hasNext() {
+                    return next < elems.size();
+                }
+
+                @Override
+                public T next() {
+                    if(next < elems.size()) {
+                        T res = elems.get(next);
+                        ++next;
+                        if(next == elems.size()) {
+                            --iterating;
+                        }
+                        return res;
+                    } else {
+                        throw new NoSuchElementException();
+                    }
+                }
+
+                @Override
+                public void close() {
+                    if(next < elems.size()) {
+                        next = elems.size();
+                        --iterating;
+                    }
+                }
+            };
         }
 
         @Override

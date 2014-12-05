@@ -139,34 +139,65 @@ public abstract class ListHelper<T> {
     }
 
     private static class MultiElemHelper<T> extends ListHelper<T> {
-        private final List<T> elems = new ArrayList<>();
+        private final List<T> elems;
+
+        // when > 0, this ListHelper must be immutable,
+        // i.e. use copy-on-write for mutating operations
+        private int iterating = 0;
 
         @SafeVarargs
         public MultiElemHelper(T... elems) {
-            this.elems.addAll(Arrays.asList(elems));
+            this(Arrays.asList(elems));
+        }
+
+        private MultiElemHelper(List<T> elems) {
+            this.elems = new ArrayList<>(elems);
+        }
+
+        private MultiElemHelper<T> copy() {
+            return new MultiElemHelper<>(elems);
         }
 
         @Override
         protected ListHelper<T> add(T elem) {
-            elems.add(elem);
-            return this;
+            if(iterating > 0) {
+                return copy().add(elem);
+            } else {
+                elems.add(elem);
+                return this;
+            }
         }
 
         @Override
         protected ListHelper<T> remove(T elem) {
-            elems.remove(elem);
-            switch(elems.size()) {
-                case 0: return null;
-                case 1: return new SingleElemHelper<>(elems.get(0));
-                default: return this;
+            int idx = elems.indexOf(elem);
+            if(idx == -1) {
+                return this;
+            } else {
+                switch(elems.size()) {
+                case 0: // fall through
+                case 1: throw new AssertionError();
+                case 2: return new SingleElemHelper<>(elems.get(1-idx));
+                default:
+                    if(iterating > 0) {
+                        return copy().remove(elem);
+                    } else {
+                        elems.remove(elem);
+                        return this;
+                    }
+                }
             }
         }
 
-        @SuppressWarnings("unchecked")
         @Override
         protected void forEach(Consumer<T> f) {
-            for(Object elem: elems.toArray()) {
-                f.accept((T) elem);
+            ++iterating;
+            try {
+                for(T elem: elems) {
+                    f.accept(elem);
+                }
+            } finally {
+                --iterating;
             }
         }
 

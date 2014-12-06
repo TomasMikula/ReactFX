@@ -57,9 +57,9 @@ public class RecursionTest {
     }
 
     @Test
-    public void onRecurseRetainLatestTest() {
+    public void onRecurseReduceTest() {
         EventSource<Integer> source = new EventSource<>();
-        EventStream<Integer> stream = source.onRecurseRetainLatest();
+        EventStream<Integer> stream = source.onRecurseReduce((a, b) -> a + b);
         List<Integer> emitted1 = new ArrayList<>();
         List<Integer> emitted2 = new ArrayList<>();
 
@@ -70,7 +70,7 @@ public class RecursionTest {
         stream.subscribe(emitted2::add);
 
         source.push(5);
-        assertTrue(Arrays.asList(5, 4, 3, 2, 1, 0).equals(emitted1)
-                && (Arrays.asList(0).equals(emitted2) || Arrays.asList(5, 4, 3, 2, 1, 0).equals(emitted2)));
+        assertEquals(Arrays.asList(5, 4, 3, 2, 1, 0), emitted1);
+        assertEquals(15, emitted2.stream().reduce(0, (a, b) -> a + b).intValue());
     }
 }

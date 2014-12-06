@@ -227,32 +227,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * Like {@link #map(Function)}, but returns an {@link EitherEventStream}
-     * that provides additional convenient methods on a stream of
-     * {@link Either}.
-     *
-     * @deprecated See deprecation comment at {@link EitherEventStream}.
-     */
-    @Deprecated
-    default <L, R> EitherEventStream<L, R> split(
-            Function<? super T, Either<L, R>> f) {
-        return new MappedToEitherStream<>(this, f);
-    }
-
-    /**
-     * Returns a new event stream that, for event {@code e} emitted from this
-     * stream, emits {@code left(e)} if {@code e} passes the given test, and
-     * emits {@code right(e)} if {@code e} does not pass the test.
-     *
-     * @deprecated See deprecation comment at {@link EitherEventStream}.
-     * You can use {@link #splitBy(Predicate)} as an alternative.
-     */
-    @Deprecated
-    default EitherEventStream<T, T> test(Predicate<? super T> test) {
-        return split(t -> test.test(t) ? Either.left(t) : Either.right(t));
-    }
-
-    /**
      * Returns a new event stream that, for event {@code e} emitted from this
      * stream, emits {@code left(e)} if {@code e} passes the given test, and
      * emits {@code right(e)} if {@code e} does not pass the test.

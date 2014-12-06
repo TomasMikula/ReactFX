@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
-import org.reactfx.util.Either;
 import org.reactfx.util.Tuple2;
 import org.reactfx.util.Tuple3;
 
@@ -74,15 +73,6 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
 
     default <C, D, E> TriEventStream<C, D, E> mapToTri(BiFunction<? super A, ? super B, Tuple3<C, D, E>> f) {
         return new MappedBiToTriStream<>(this, f);
-    }
-
-    /**
-     * @deprecated See deprecation comment at {@link EitherEventStream}.
-     */
-    @Deprecated
-    default <L, R> EitherEventStream<L, R> split(
-            BiFunction<? super A, ? super B, Either<L, R>> f) {
-        return new MappedToEitherBiStream<>(this, f);
     }
 
     default <U> CompletionStageStream<U> mapToCompletionStage(

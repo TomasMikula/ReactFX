@@ -1,6 +1,5 @@
 package org.reactfx;
 
-import org.reactfx.util.Either;
 
 class GuardedStream<T> extends LazilyBoundStream<T> {
     private final EventStream<T> source;
@@ -56,17 +55,5 @@ class GuardedTriStream<A, B, C> extends LazilyBoundTriStream<A, B, C> {
                 emit(a, b, c);
             }
         });
-    }
-}
-
-@Deprecated
-class GuardedEitherStream<L, R>
-extends GuardedStream<Either<L, R>>
-implements EitherEventStream<L, R> {
-
-    public GuardedEitherStream(
-            EventStream<Either<L, R>> source,
-            Guardian[] guardians) {
-        super(source, guardians);
     }
 }

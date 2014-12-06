@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 
-import org.reactfx.util.Either;
 import org.reactfx.util.TriConsumer;
 import org.reactfx.util.TriFunction;
 import org.reactfx.util.TriPredicate;
@@ -74,15 +73,6 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
 
     default <D, E, F> TriEventStream<D, E, F> mapToTri(TriFunction<? super A, ? super B, ? super C, Tuple3<D, E, F>> f) {
         return new MappedTriToTriStream<>(this, f);
-    }
-
-    /**
-     * @deprecated See deprecation comment at {@link EitherEventStream}.
-     */
-    @Deprecated
-    default <L, R> EitherEventStream<L, R> split(
-            TriFunction<? super A, ? super B, ? super C, Either<L, R>> f) {
-        return new MappedToEitherTriStream<>(this, f);
     }
 
     default <U> CompletionStageStream<U> mapToCompletionStage(

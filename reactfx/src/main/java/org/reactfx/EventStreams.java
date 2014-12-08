@@ -28,6 +28,8 @@ import javafx.scene.Scene;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.reactfx.util.TransientListChange;
+import org.reactfx.util.Tuple2;
+import org.reactfx.util.Tuple3;
 import org.reactfx.util.Tuple4;
 import org.reactfx.util.Tuple5;
 import org.reactfx.util.Tuple6;
@@ -357,8 +359,8 @@ public class EventStreams {
         };
     }
 
-    public static <A, B> BiEventStream<A, B> zip(EventStream<A> srcA, EventStream<B> srcB) {
-        return new LazilyBoundBiStream<A, B>() {
+    public static <A, B> EventStream<Tuple2<A, B>> zip(EventStream<A> srcA, EventStream<B> srcB) {
+        return new LazilyBoundStream<Tuple2<A, B>>() {
             Pocket<A> pocketA = new ExclusivePocket<>();
             Pocket<B> pocketB = new ExclusivePocket<>();
 
@@ -373,14 +375,14 @@ public class EventStreams {
 
             protected void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue()) {
-                    emit(pocketA.getAndClear(), pocketB.getAndClear());
+                    emit(t(pocketA.getAndClear(), pocketB.getAndClear()));
                 }
             }
         };
     }
 
-    public static <A, B, C> TriEventStream<A, B, C> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC) {
-        return new LazilyBoundTriStream<A, B, C>() {
+    public static <A, B, C> EventStream<Tuple3<A, B, C>> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC) {
+        return new LazilyBoundStream<Tuple3<A, B, C>>() {
             Pocket<A> pocketA = new ExclusivePocket<>();
             Pocket<B> pocketB = new ExclusivePocket<>();
             Pocket<C> pocketC = new ExclusivePocket<>();
@@ -398,16 +400,16 @@ public class EventStreams {
 
             protected void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
-                    emit(pocketA.getAndClear(), pocketB.getAndClear(), pocketC.getAndClear());
+                    emit(t(pocketA.getAndClear(), pocketB.getAndClear(), pocketC.getAndClear()));
                 }
             }
         };
     }
 
-    public static <A, B> BiEventStream<A, B> combine(
+    public static <A, B> EventStream<Tuple2<A, B>> combine(
             EventStream<A> srcA,
             EventStream<B> srcB) {
-        return new LazilyBoundBiStream<A, B>() {
+        return new LazilyBoundStream<Tuple2<A, B>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
 
@@ -422,17 +424,17 @@ public class EventStreams {
 
             void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue()) {
-                    emit(pocketA.get(), pocketB.get());
+                    emit(t(pocketA.get(), pocketB.get()));
                 }
             }
         };
     }
 
-    public static <A, B, C> TriEventStream<A, B, C> combine(
+    public static <A, B, C> EventStream<Tuple3<A, B, C>> combine(
             EventStream<A> srcA,
             EventStream<B> srcB,
             EventStream<C> srcC) {
-        return new LazilyBoundTriStream<A, B, C>() {
+        return new LazilyBoundStream<Tuple3<A, B, C>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
             Pocket<C> pocketC = new Pocket<>();
@@ -450,7 +452,7 @@ public class EventStreams {
 
             void tryEmit() {
                 if(pocketA.hasValue() && pocketB.hasValue() && pocketC.hasValue()) {
-                    emit(pocketA.get(), pocketB.get(), pocketC.get());
+                    emit(t(pocketA.get(), pocketB.get(), pocketC.get()));
                 }
             }
         };

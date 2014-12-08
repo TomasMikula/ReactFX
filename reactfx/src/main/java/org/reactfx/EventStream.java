@@ -29,7 +29,6 @@ import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Try;
 import org.reactfx.util.Tuple2;
-import org.reactfx.util.Tuple3;
 
 /**
  * Stream of values (events).
@@ -198,14 +197,6 @@ public interface EventStream<T> {
         return new MappedStream<>(this, f);
     }
 
-    default <A, B> BiEventStream<A, B> mapToBi(Function<? super T, Tuple2<A, B>> f) {
-        return new MappedToBiStream<>(this, f);
-    }
-
-    default <A, B, C> TriEventStream<A, B, C> mapToTri(Function<? super T, Tuple3<A, B, C>> f) {
-        return new MappedToTriStream<>(this, f);
-    }
-
     /**
      * Returns a new event stream that emits events emitted by this stream
      * cast to the given type.
@@ -329,7 +320,7 @@ public interface EventStream<T> {
      * from this stream and <i>i</i>s come from the {@code impulse} stream, then
      * the returned stream emits [<i>(a, i2), (c, i3), (c, i4)</i>].
      */
-    default <I> BiEventStream<T, I> emitBothOnEach(EventStream<I> impulse) {
+    default <I> EventStream<Tuple2<T, I>> emitBothOnEach(EventStream<I> impulse) {
         return new EmitBothOnEachStream<>(this, impulse);
     }
 

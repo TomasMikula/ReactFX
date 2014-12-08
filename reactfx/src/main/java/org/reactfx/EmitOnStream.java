@@ -1,7 +1,5 @@
 package org.reactfx;
 
-import org.reactfx.util.Tuple2;
-import org.reactfx.util.Tuple3;
 
 class EmitOnStream<T> extends LazilyBoundStream<T> {
     private final EventStream<T> source;
@@ -32,27 +30,5 @@ class EmitOnStream<T> extends LazilyBoundStream<T> {
         });
 
         return s1.and(s2);
-    }
-}
-
-class EmitOnBiStream<A, B>
-extends EmitOnStream<Tuple2<A, B>>
-implements PoorMansBiStream<A, B> {
-
-    public EmitOnBiStream(
-            EventStream<Tuple2<A, B>> source,
-            EventStream<?> impulse) {
-        super(source, impulse);
-    }
-}
-
-class EmitOnTriStream<A, B, C>
-extends EmitOnStream<Tuple3<A, B, C>>
-implements PoorMansTriStream<A, B, C> {
-
-    public EmitOnTriStream(
-            EventStream<Tuple3<A, B, C>> source,
-            EventStream<?> impulse) {
-        super(source, impulse);
     }
 }

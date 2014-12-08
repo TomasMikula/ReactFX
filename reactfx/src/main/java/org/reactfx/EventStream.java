@@ -374,19 +374,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * @deprecated since 1.2.3. See deprecation comment at
-     * {@link InterceptableEventStream}.
-     */
-    @Deprecated
-    default InterceptableEventStream<T> interceptable() {
-        if(this instanceof InterceptableEventStream) {
-            return (InterceptableEventStream<T>) this;
-        } else {
-            return new InterceptableEventStreamImpl<>(this);
-        }
-    }
-
-    /**
      * Returns a suspendable event stream that, when suspended, suppresses
      * any events emitted by this event stream.
      */

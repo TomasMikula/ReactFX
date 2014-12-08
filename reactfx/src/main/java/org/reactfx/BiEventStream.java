@@ -126,16 +126,6 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return new RepeatOnBiStream<>(this, impulse);
     }
 
-    @Deprecated
-    @Override
-    default InterceptableBiEventStream<A, B> interceptable() {
-        if(this instanceof InterceptableBiEventStream) {
-            return (InterceptableBiEventStream<A, B>) this;
-        } else {
-            return new InterceptableBiEventStreamImpl<A, B>(this);
-        }
-    }
-
     @Override
     default BiEventStream<A, B> threadBridge(
             Executor sourceThreadExecutor,

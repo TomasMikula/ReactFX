@@ -122,16 +122,6 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
         return new RepeatOnTriStream<>(this, impulse);
     }
 
-    @Deprecated
-    @Override
-    default InterceptableTriEventStream<A, B, C> interceptable() {
-        if(this instanceof InterceptableTriEventStream) {
-            return (InterceptableTriEventStream<A, B, C>) this;
-        } else {
-            return new InterceptableTriEventStreamImpl<A, B, C>(this);
-        }
-    }
-
     @Override
     default TriEventStream<A, B, C> threadBridge(
             Executor sourceThreadExecutor,

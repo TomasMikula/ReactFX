@@ -82,16 +82,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * @deprecated renamed to {@link #subscribe(Consumer, Consumer)}.
-     */
-    @Deprecated
-    default Subscription watch(
-            Consumer<? super T> subscriber,
-            Consumer<? super Throwable> monitor) {
-        return subscribe(subscriber, monitor);
-    }
-
-    /**
      * Starts pushing all events emitted by this stream to the given event sink.
      * <p>{@code stream.feedTo(sink)} is equivalent to
      * {@code sink.feedFrom(stream)}

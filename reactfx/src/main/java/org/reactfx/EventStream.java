@@ -278,27 +278,6 @@ public interface EventStream<T> {
     }
 
     /**
-     * <pre>
-     * {@code
-     * stream.flatMapOpt(f)
-     * }
-     * </pre>
-     * is equivalent to
-     * <pre>
-     * {@code
-     * stream.map(f)
-     *     .filter(Optional::isPresent)
-     *     .map(Optional::get)
-     * }
-     * </pre>
-     * @deprecated Since 1.2.1. Renamed to {@link #filterMap(Function)}.
-     */
-    @Deprecated
-    default <U> EventStream<U> flatMapOpt(Function<? super T, Optional<U>> f) {
-        return filterMap(f);
-    }
-
-    /**
      * Returns an event stream that emits all the events emitted from either
      * this stream or the {@code right} stream. An event <i>t</i> emitted from
      * this stream is emitted as {@code Either.left(t)}. An event <i>u</i>

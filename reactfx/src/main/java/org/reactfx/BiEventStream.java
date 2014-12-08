@@ -92,14 +92,6 @@ public interface BiEventStream<A, B> extends EventStream<Tuple2<A, B>> {
         return flatMap(t -> f.apply(t._1, t._2));
     }
 
-    /**
-     * @deprecated Since 1.2.1. Renamed to {@link #filterMap(BiFunction)}.
-     */
-    @Deprecated
-    default <U> EventStream<U> flatMapOpt(BiFunction<? super A, ? super B, Optional<U>> f) {
-        return flatMapOpt(t -> f.apply(t._1, t._2));
-    }
-
     @Override
     default BiEventStream<A, B> emitOn(EventStream<?> impulse) {
         return new EmitOnBiStream<>(this, impulse);

@@ -92,14 +92,6 @@ public interface TriEventStream<A, B, C> extends EventStream<Tuple3<A, B, C>> {
         return flatMap(t -> f.apply(t._1, t._2, t._3));
     }
 
-    /**
-     * @deprecated Since 1.2.1. Renamed to {@link #filterMap(TriFunction)}.
-     */
-    @Deprecated
-    default <U> EventStream<U> flatMapOpt(TriFunction<? super A, ? super B, ? super C, Optional<U>> f) {
-        return flatMapOpt(t -> f.apply(t._1, t._2, t._3));
-    }
-
     @Override
     default TriEventStream<A, B, C> emitOn(EventStream<?> impulse) {
         return new EmitOnTriStream<>(this, impulse);

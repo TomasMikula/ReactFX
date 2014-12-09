@@ -11,7 +11,7 @@ implements ConnectableEventStream<T>, ConnectableEventSink<T> {
 
     @Override
     public void push(T value) {
-        notifyObservers(s -> s.onEvent(value));
+        notifyObservers(Subscriber::onEvent, value);
     }
 
     @Override

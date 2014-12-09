@@ -3,18 +3,30 @@ package org.reactfx;
 
 /**
  *
- * @param <S> type of the subscriber
+ * @param <T> type of events
  */
-public abstract class EventStreamBase<S extends ErrorHandler> extends ObservableBase<S> {
+public abstract class EventStreamBase<T>
+extends ObservableBase<Subscriber<? super T>, T>
+implements EventStream<T> {
 
     private boolean reporting = false;
 
+    public EventStreamBase() {
+        super();
+    }
+
+    EventStreamBase(EmptyPendingNotifications<Subscriber<? super T>, T> pn) {
+        super(pn);
+    }
+
     @Override
-    protected final void runUnsafeAction(Runnable action) {
+    protected final boolean runUnsafeAction(Runnable action) {
         try {
             action.run();
+            return true;
         } catch(Throwable t) {
             reportError(t);
+            return false;
         }
     }
 
@@ -40,7 +52,8 @@ public abstract class EventStreamBase<S extends ErrorHandler> extends Observable
         }
     }
 
-    public final Subscription subscribe(S subscriber) {
+    @Override
+    public final Subscription subscribe(Subscriber<? super T> subscriber) {
         return observe(subscriber);
     }
 }

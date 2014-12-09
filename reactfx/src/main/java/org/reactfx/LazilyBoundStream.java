@@ -2,7 +2,6 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-
 /**
  * Event stream that has one or more sources (most commonly event streams,
  * but not necessarily) to which it is subscribed only when it itself has
@@ -11,12 +10,19 @@ import java.util.function.Consumer;
  * @param <T> type of events emitted by this event stream.
  */
 public abstract class LazilyBoundStream<T>
-extends EventStreamBase<Subscriber<? super T>>
-implements EventStream<T> {
+extends EventStreamBase<T> {
     private Subscription subscription = null;
 
+    public LazilyBoundStream() {
+        super();
+    }
+
+    LazilyBoundStream(EmptyPendingNotifications<Subscriber<? super T>, T> pn) {
+        super(pn);
+    }
+
     protected void emit(T value) {
-        notifyObservers(s -> s.onEvent(value));
+        notifyObservers(Subscriber::onEvent, value);
     }
 
     protected abstract Subscription subscribeToInputs();

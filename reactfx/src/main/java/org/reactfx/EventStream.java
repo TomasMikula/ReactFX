@@ -16,7 +16,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.ToIntFunction;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Binding;
@@ -1182,17 +1181,19 @@ public interface EventStream<T> {
     default <A> EventStream<T> onRecurseAccumulate(
             Function<? super T, ? extends A> initialTransformation,
             BiFunction<? super A, ? super T, ? extends A> reduction,
-            ToIntFunction<? super A> size,
+            Function<? super A, AccumulatorSize> size,
             Function<? super A, ? extends T> head,
             Function<? super A, ? extends A> tail) {
-        return new OnRecurseAccumulateStream<>(
-                this, initialTransformation, reduction, size, head, tail);
+        return new RecursiveStream<T>(
+                this,
+                new EmptyGeneralAccumulatingPN<Subscriber<? super T>, T, A>(
+                        size, head, tail, initialTransformation, reduction));
     }
 
     default <A> EventStream<T> onRecurseAccumulate(
             Supplier<? extends A> unit,
             BiFunction<? super A, ? super T, ? extends A> reduction,
-            ToIntFunction<? super A> size,
+            Function<? super A, AccumulatorSize> size,
             Function<? super A, ? extends T> head,
             Function<? super A, ? extends A> tail) {
         Function<? super T, ? extends A> initialTransformation =
@@ -1202,25 +1203,23 @@ public interface EventStream<T> {
     }
 
     default EventStream<T> onRecurseReduce(BinaryOperator<T> reduction) {
-        return onRecurseAccumulate(
-                Function.identity(),
-                reduction,
-                t -> 1,
-                Function.identity(),
-                t -> { throw new UnsupportedOperationException(); });
+        return new RecursiveStream<T>(
+                this,
+                new EmptyGeneralReducingPN<Subscriber<? super T>, T>(
+                        reduction));
     }
 
     default EventStream<T> onRecurseQueue() {
         return onRecurseAccumulate(
                 () -> new LinkedList<T>(), // unit element is an empty queue
                 (q, t) -> { q.addLast(t); return q; }, // reduction is appending to the end of the queue
-                Deque::size,
+                q -> AccumulatorSize.fromInt(q.size()), // size is the size of the queue
                 Deque::getFirst,
                 q -> { q.removeFirst(); return q; });
     }
 
     default EventStream<T> onRecurseRetainLatest() {
-        return onRecurseReduce((a, b) -> b);
+        return new RecursiveStream<T>(this, EmptyRetainLatestPN.empty());
     }
 
     /**

@@ -1,5 +1,6 @@
 package org.reactfx;
 
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 import org.reactfx.util.ListHelper;
@@ -7,38 +8,49 @@ import org.reactfx.util.ListHelper;
 /**
  *
  * @param <O> type of the observer
+ * @param <T> type of observed values
  */
-abstract class ObservableBase<O> {
-
+abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
-    private boolean unnotifiedObservers = false;
+    private PendingNotifications<O, T> pendingNotifications;
+
+    public ObservableBase(EmptyPendingNotifications<O, T> pendingNotifications) {
+        this.pendingNotifications = pendingNotifications;
+    }
+
+    public ObservableBase() {
+        this(EmptyNonRecursivePN.empty());
+    }
 
     protected final int getObserverCount() {
         return ListHelper.size(observers);
     }
 
-    protected abstract void runUnsafeAction(Runnable action);
+    /**
+     * Runs the given action. If {@code action} does not throw an exception,
+     * returns {@code true}. If {@code action} throws an exception, then the
+     * implementation may either let that exception propagate, or handle the
+     * exception and return {@code false}.
+     * @param action action to execute. May throw an exception.
+     */
+    protected abstract boolean runUnsafeAction(Runnable action);
 
-    protected final void notifyObservers(Consumer<O> notification) {
-        if(unnotifiedObservers) {
-            runUnsafeAction(() -> {
-                throw new IllegalStateException("Cannot recursively notify"
-                        + " observers before all observers were notified of"
-                        + " the previous event");
-            });
-            return;
-        }
-
-        if(ListHelper.size(observers) > 1) {
-            // prevent recursion when there are 2 or more observers
-            unnotifiedObservers = true;
-        }
+    protected final void notifyObservers(BiConsumer<O, T> notifier, T event) {
         try {
-            ListHelper.forEach(observers, o -> {
-                runUnsafeAction(() -> notification.accept(o));
+            boolean added = runUnsafeAction(() -> {
+                // may throw if pendingNotifications not empty and recursion not allowed
+                pendingNotifications = pendingNotifications.addAll(ListHelper.iterator(observers), event);
             });
+            if(!added) return;
+
+            while(!pendingNotifications.isEmpty()) {
+                pendingNotifications.takeOne().exec((observer, evt, rest) -> {
+                    pendingNotifications = rest;
+                    runUnsafeAction(() -> notifier.accept(observer, evt)); // may throw
+                });
+            }
         } finally {
-            unnotifiedObservers = false;
+            pendingNotifications.close(); // clears all pending notifications
         }
     }
 

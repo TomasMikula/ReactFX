@@ -19,6 +19,10 @@ implements EventStream<T> {
         super(pn);
     }
 
+    protected final void emit(T value) {
+        notifyObservers(Subscriber::onEvent, value);
+    }
+
     @Override
     protected final boolean runUnsafeAction(Runnable action) {
         try {

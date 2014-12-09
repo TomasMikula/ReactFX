@@ -15,6 +15,6 @@ implements EventSink<T> {
      */
     @Override
     public final void push(T value) {
-        notifyObservers(Subscriber::onEvent, value);
+        emit(value);
     }
 }

@@ -10,8 +10,8 @@ implements ConnectableEventStream<T>, ConnectableEventSink<T> {
     private MapHelper<EventStream<? extends T>, Subscription> subscriptions = null;
 
     @Override
-    public void push(T value) {
-        notifyObservers(Subscriber::onEvent, value);
+    public final void push(T value) {
+        emit(value);
     }
 
     @Override

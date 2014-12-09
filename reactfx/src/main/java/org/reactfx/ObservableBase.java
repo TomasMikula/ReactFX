@@ -14,7 +14,7 @@ abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
     private PendingNotifications<O, T> pendingNotifications;
 
-    public ObservableBase(EmptyPendingNotifications<O, T> pendingNotifications) {
+    ObservableBase(EmptyPendingNotifications<O, T> pendingNotifications) {
         this.pendingNotifications = pendingNotifications;
     }
 

@@ -21,10 +21,6 @@ extends EventStreamBase<T> {
         super(pn);
     }
 
-    protected void emit(T value) {
-        notifyObservers(Subscriber::onEvent, value);
-    }
-
     protected abstract Subscription subscribeToInputs();
 
     @Override

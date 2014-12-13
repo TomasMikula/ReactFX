@@ -25,21 +25,15 @@ extends EventStreamBase<T> {
 
     @Override
     protected final void firstObserver() {
-        try {
-            subscription = subscribeToInputs();
-        } catch(Throwable t) {
-            reportError(t);
-        }
+        runUnsafeAction(() -> subscription = subscribeToInputs());
     }
 
     @Override
     protected final void noObservers() {
-        try {
+        runUnsafeAction(() -> {
             subscription.unsubscribe();
             subscription = null;
-        } catch(Throwable t) {
-            reportError(t);
-        }
+        });
     }
 
     protected final boolean isBound() {

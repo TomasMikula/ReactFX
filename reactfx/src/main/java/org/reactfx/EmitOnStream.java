@@ -14,7 +14,7 @@ class EmitOnStream<T> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription subscribeToInputs() {
+    protected Subscription bindToInputs() {
         Subscription s1 = subscribeTo(source, v -> {
             hasValue = true;
             value = v;

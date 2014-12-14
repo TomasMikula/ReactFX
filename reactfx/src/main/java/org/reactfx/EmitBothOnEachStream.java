@@ -17,7 +17,7 @@ class EmitBothOnEachStream<A, I> extends EventStreamBase<Tuple2<A, I>> {
     }
 
     @Override
-    protected Subscription subscribeToInputs() {
+    protected Subscription bindToInputs() {
         Subscription s1 = subscribeTo(source, a -> {
             hasValue = true;
             this.a = a;

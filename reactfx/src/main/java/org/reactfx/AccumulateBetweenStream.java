@@ -28,7 +28,7 @@ class AccumulateBetweenStream<T, A> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription subscribeToInputs() {
+    protected Subscription bindToInputs() {
         Subscription s1 = subscribeTo(source, this::handleEvent);
         Subscription s2 = subscribeTo(ticks, this::handleTick);
         return s1.and(s2).and(this::reset);

@@ -21,7 +21,7 @@ import org.reactfx.util.ListHelper;
  */
 abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
-    private Subscription subscription = null;
+    private Subscription inputSubscription = null;
     private PendingNotifications<O, T> pendingNotifications;
 
     ObservableBase(EmptyPendingNotifications<O, T> pendingNotifications) {
@@ -41,7 +41,7 @@ abstract class ObservableBase<O, T> {
      * is unsubscribed (i.e. input observation stops) when the number of
      * observers goes down to 0.
      */
-    protected abstract Subscription subscribeToInputs();
+    protected abstract Subscription bindToInputs();
 
     /**
      * Runs the given action. If {@code action} does not throw an exception,
@@ -53,7 +53,7 @@ abstract class ObservableBase<O, T> {
     protected abstract boolean runUnsafeAction(Runnable action);
 
     protected final boolean isBound() {
-        return subscription != null;
+        return inputSubscription != null;
     }
 
     protected final int getObserverCount() {
@@ -96,7 +96,7 @@ abstract class ObservableBase<O, T> {
      * to handle this event, for example to publish some initial events.
      *
      * <p>This method is called <em>after</em> the
-     * {@link #subscribeToInputs()} method.</p>
+     * {@link #bindToInputs()} method.</p>
      */
     protected void newObserver(O observer) {
         // default implementation is empty
@@ -105,7 +105,7 @@ abstract class ObservableBase<O, T> {
     protected final Subscription observe(O observer) {
         observers = ListHelper.add(observers, observer);
         if(ListHelper.size(observers) == 1) {
-            runUnsafeAction(() -> subscription = subscribeToInputs());
+            runUnsafeAction(() -> inputSubscription = bindToInputs());
         }
         newObserver(observer);
 
@@ -114,10 +114,10 @@ abstract class ObservableBase<O, T> {
 
     private void unobserve(O observer) {
         observers = ListHelper.remove(observers, observer);
-        if(ListHelper.isEmpty(observers) && subscription != null) {
+        if(ListHelper.isEmpty(observers) && inputSubscription != null) {
             runUnsafeAction(() -> {
-                subscription.unsubscribe();
-                subscription = null;
+                inputSubscription.unsubscribe();
+                inputSubscription = null;
             });
         }
     }

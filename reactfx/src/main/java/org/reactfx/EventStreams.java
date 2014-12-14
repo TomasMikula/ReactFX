@@ -59,7 +59,7 @@ public class EventStreams {
     public static EventStream<Void> invalidationsOf(Observable observable) {
         return new EventStreamBase<Void>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 InvalidationListener listener = obs -> emit(null);
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
@@ -76,7 +76,7 @@ public class EventStreams {
     EventStream<O> repeatOnInvalidation(O observable) {
         return new EventStreamBase<O>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 InvalidationListener listener = obs -> emit(observable);
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
@@ -97,7 +97,7 @@ public class EventStreams {
     public static <T> EventStream<T> valuesOf(ObservableValue<T> observable) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> emit(val);
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
@@ -113,7 +113,7 @@ public class EventStreams {
     public static <T> EventStream<T> nonNullValuesOf(ObservableValue<T> observable) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> {
                     if(val != null) {
                         emit(val);
@@ -136,7 +136,7 @@ public class EventStreams {
     public static <T> EventStream<Change<T>> changesOf(ObservableValue<T> observable) {
         return new EventStreamBase<Change<T>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> emit(new Change<>(old, val));
                 observable.addListener(listener);
                 return () -> observable.removeListener(listener);
@@ -147,7 +147,7 @@ public class EventStreams {
     public static <T> EventStream<ListChangeListener.Change<? extends T>> changesOf(ObservableList<T> list) {
         return new EventStreamBase<ListChangeListener.Change<? extends T>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 ListChangeListener<T> listener = c -> emit(c);
                 list.addListener(listener);
                 return () -> list.removeListener(listener);
@@ -158,7 +158,7 @@ public class EventStreams {
     public static <T> EventStream<TransientListChange<T>> simpleChangesOf(ObservableList<T> list) {
         return new EventStreamBase<TransientListChange<T>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 ListChangeListener<T> listener = c ->  {
                     while(c.next()) {
                         emit(TransientListChange.fromCurrentStateOf(c));
@@ -173,7 +173,7 @@ public class EventStreams {
     public static <T> EventStream<SetChangeListener.Change<? extends T>> changesOf(ObservableSet<T> set) {
         return new EventStreamBase<SetChangeListener.Change<? extends T>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 SetChangeListener<T> listener = c -> emit(c);
                 set.addListener(listener);
                 return () -> set.removeListener(listener);
@@ -184,7 +184,7 @@ public class EventStreams {
     public static <K, V> EventStream<MapChangeListener.Change<? extends K, ? extends V>> changesOf(ObservableMap<K, V> map) {
         return new EventStreamBase<MapChangeListener.Change<? extends K, ? extends V>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 MapChangeListener<K, V> listener = c -> emit(c);
                 map.addListener(listener);
                 return () -> map.removeListener(listener);
@@ -205,7 +205,7 @@ public class EventStreams {
             private T previousValue;
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 InvalidationListener listener = obs -> {
                     T value = computeValue.get();
                     if(value != previousValue) {
@@ -235,7 +235,7 @@ public class EventStreams {
     public static <T extends Event> EventStream<T> eventsOf(Node node, EventType<T> eventType) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 EventHandler<T> handler = event -> emit(event);
                 node.addEventHandler(eventType, handler);
                 return () -> node.removeEventHandler(eventType, handler);
@@ -246,7 +246,7 @@ public class EventStreams {
     public static <T extends Event> EventStream<T> eventsOf(Scene scene, EventType<T> eventType) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 EventHandler<T> handler = event -> emit(event);
                 scene.addEventHandler(eventType, handler);
                 return () -> scene.removeEventHandler(eventType, handler);
@@ -269,7 +269,7 @@ public class EventStreams {
                     interval, () -> emit(null));
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 timer.restart();
                 return timer::stop;
             }
@@ -298,7 +298,7 @@ public class EventStreams {
                     interval, () -> emit(null), scheduler, eventThreadExecutor);
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 timer.restart();
                 return timer::stop;
             }
@@ -316,7 +316,7 @@ public class EventStreams {
     public static <T> EventStream<T> merge(EventStream<? extends T>... inputs) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return Subscription.multi(i -> subscribeTo(i, this::emit), inputs);
             }
         };
@@ -333,7 +333,7 @@ public class EventStreams {
             ObservableSet<? extends EventStream<T>> set) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return Subscription.dynamic(set, s -> subscribeTo(s, this::emit));
             }
         };
@@ -351,7 +351,7 @@ public class EventStreams {
             Function<? super T, ? extends EventStream<U>> f) {
         return new EventStreamBase<U>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return Subscription.dynamic(
                         set,
                         t -> subscribeTo(f.apply(t), this::emit));
@@ -365,7 +365,7 @@ public class EventStreams {
             Pocket<B> pocketB = new ExclusivePocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 return Subscription.multi(
@@ -388,7 +388,7 @@ public class EventStreams {
             Pocket<C> pocketC = new ExclusivePocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 pocketC.clear();
@@ -414,7 +414,7 @@ public class EventStreams {
             Pocket<B> pocketB = new Pocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 return Subscription.multi(
@@ -440,7 +440,7 @@ public class EventStreams {
             Pocket<C> pocketC = new Pocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 pocketC.clear();
@@ -470,7 +470,7 @@ public class EventStreams {
             Pocket<D> pocketD = new Pocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 pocketC.clear();
@@ -507,7 +507,7 @@ public class EventStreams {
             Pocket<E> pocketE = new Pocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 pocketC.clear();
@@ -549,7 +549,7 @@ public class EventStreams {
             Pocket<F> pocketF = new Pocket<>();
 
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 pocketA.clear();
                 pocketB.clear();
                 pocketC.clear();

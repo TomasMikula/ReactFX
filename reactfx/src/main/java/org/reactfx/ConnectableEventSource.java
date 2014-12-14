@@ -34,7 +34,7 @@ implements ConnectableEventStream<T>, ConnectableEventSink<T> {
     }
 
     @Override
-    protected final Subscription subscribeToInputs() {
+    protected final Subscription bindToInputs() {
         MapHelper.replaceAll(subscriptions, (input, sub) -> subscribeToInput(input));
         return () -> MapHelper.replaceAll(subscriptions, (input, sub) -> {
             sub.unsubscribe();

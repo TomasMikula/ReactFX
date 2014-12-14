@@ -106,7 +106,7 @@ class Await<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R
     }
 
     @Override
-    protected final Subscription subscribeToInputs() {
+    protected final Subscription bindToInputs() {
         return subscribeTo(source, future -> {
             Guard g = pending.on();
             addCompletionHandler.accept(future, (result, error, cancelled) -> {
@@ -253,7 +253,7 @@ class AwaitLatest<T, F, R> extends EventStreamBase<R> implements AwaitingEventSt
     }
 
     @Override
-    protected Subscription subscribeToInputs() {
+    protected Subscription bindToInputs() {
         Subscription s1 = subscribeTo(source, future -> {
             long rev = replaceExpected(future);
             addCompletionHandler.accept(future, (result, error, cancelled) -> {

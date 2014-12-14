@@ -62,7 +62,7 @@ implements SuspendableEventStream<T> {
     }
 
     @Override
-    protected final Subscription subscribeToInputs() {
+    protected final Subscription bindToInputs() {
         Subscription sub = subscribeTo(source, this::handleEvent);
         return sub.and(this::reset);
     }

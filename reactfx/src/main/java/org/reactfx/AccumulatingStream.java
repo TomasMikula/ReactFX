@@ -22,7 +22,7 @@ class AccumulatingStream<T, U> extends EventStreamBase<U> {
     }
 
     @Override
-    protected final Subscription subscribeToInputs() {
+    protected final Subscription bindToInputs() {
         return subscribeTo(input, i -> {
             event = hasEvent
                     ? reduction.apply(event, i)

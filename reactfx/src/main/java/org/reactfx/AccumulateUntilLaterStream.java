@@ -29,7 +29,7 @@ class AccumulateUntilLaterStream<T, A> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription subscribeToInputs() {
+    protected Subscription bindToInputs() {
         return subscribeTo(source, this::handleEvent);
     }
 

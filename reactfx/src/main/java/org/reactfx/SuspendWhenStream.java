@@ -16,7 +16,7 @@ class SuspendWhenStream<T> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription subscribeToInputs() {
+    protected Subscription bindToInputs() {
         Subscription s1 = subscribeTo(
                 EventStreams.valuesOf(condition), this::suspendSource);
         Subscription s2 = subscribeTo(source, this::emit);

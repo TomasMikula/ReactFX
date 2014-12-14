@@ -49,7 +49,7 @@ class SuccessionReducingStream<I, O> extends EventStreamBase<O> implements Await
     }
 
     @Override
-    protected final Subscription subscribeToInputs() {
+    protected final Subscription bindToInputs() {
         return subscribeTo(input, this::handleEvent);
     }
 

@@ -280,7 +280,7 @@ public interface EventStream<T> {
         EventStream<T> left = this;
         return new EventStreamBase<Either<T, U>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return Subscription.multi(
                         subscribeTo(left, l -> emit(Either.<T, U>left(l))),
                         subscribeTo(right, r -> emit(Either.<T, U>right(r))));
@@ -1296,7 +1296,7 @@ public interface EventStream<T> {
     default EventStream<Try<T>> materializeErrors() {
         return new EventStreamBase<Try<T>>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return EventStream.this.subscribe(
                         t -> emit(Try.success(t)),
                         er -> emit(Try.failure(er)));
@@ -1315,7 +1315,7 @@ public interface EventStream<T> {
     default EventStream<T> handleErrors(Consumer<? super Throwable> handler) {
         return new EventStreamBase<T>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return EventStream.this.subscribe(this::emit, handler);
             }
         };
@@ -1327,7 +1327,7 @@ public interface EventStream<T> {
     default EventStream<Throwable> errors() {
         return new EventStreamBase<Throwable>() {
             @Override
-            protected Subscription subscribeToInputs() {
+            protected Subscription bindToInputs() {
                 return EventStream.this.monitor(this::emit);
             }
         };

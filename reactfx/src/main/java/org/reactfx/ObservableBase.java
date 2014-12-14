@@ -103,16 +103,19 @@ abstract class ObservableBase<O, T> {
     }
 
     protected final Subscription observe(O observer) {
+        addObserver(observer);
+        return () -> removeObserver(observer);
+    }
+
+    protected final void addObserver(O observer) {
         observers = ListHelper.add(observers, observer);
         if(ListHelper.size(observers) == 1) {
             runUnsafeAction(() -> inputSubscription = bindToInputs());
         }
         newObserver(observer);
-
-        return () -> unobserve(observer);
     }
 
-    private void unobserve(O observer) {
+    protected final void removeObserver(O observer) {
         observers = ListHelper.remove(observers, observer);
         if(ListHelper.isEmpty(observers) && inputSubscription != null) {
             runUnsafeAction(() -> {

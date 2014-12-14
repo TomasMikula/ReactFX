@@ -3,7 +3,7 @@ package org.reactfx;
 import java.util.Optional;
 import java.util.function.Function;
 
-class FlatMapStream<T, U> extends LazilyBoundStream<U> {
+class FlatMapStream<T, U> extends EventStreamBase<U> {
     private final EventStream<T> source;
     private final Function<? super T, ? extends EventStream<U>> mapper;
 
@@ -30,7 +30,7 @@ class FlatMapStream<T, U> extends LazilyBoundStream<U> {
     }
 }
 
-class FlatMapOptStream<T, U> extends LazilyBoundStream<U> {
+class FlatMapOptStream<T, U> extends EventStreamBase<U> {
     private final EventStream<T> source;
     private final Function<? super T, Optional<U>> mapper;
 

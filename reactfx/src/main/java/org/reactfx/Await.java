@@ -14,7 +14,7 @@ import javafx.concurrent.Task;
 import org.reactfx.util.TriConsumer;
 import org.reactfx.util.Try;
 
-class Await<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream<R> {
+class Await<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R> {
 
     public static <T> AwaitingEventStream<T> awaitCompletionStage(
             EventStream<CompletionStage<T>> source,
@@ -61,7 +61,7 @@ class Await<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream
         t.addEventHandler(WORKER_STATE_CANCELLED, e -> handler.accept(null, null, true));
     }
 
-    static <T> TriConsumer<LazilyBoundStream<T>, T, Throwable> reportingEmitter() {
+    static <T> TriConsumer<EventStreamBase<T>, T, Throwable> reportingEmitter() {
         return (stream, value, error) -> {
             if(error == null) {
                 stream.emit(value);
@@ -71,7 +71,7 @@ class Await<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream
         };
     }
 
-    static <T> TriConsumer<LazilyBoundStream<Try<T>>, T, Throwable> tryEmitter() {
+    static <T> TriConsumer<EventStreamBase<Try<T>>, T, Throwable> tryEmitter() {
         return (stream, value, error) -> {
             if(error == null) {
                 stream.emit(Try.success(value));
@@ -84,12 +84,12 @@ class Await<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream
     private final EventStream<F> source;
     private final Indicator pending = new Indicator();
     private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
-    private final TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter;
+    private final TriConsumer<EventStreamBase<R>, T, Throwable> emitter;
 
     private Await(
             EventStream<F> source,
             BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler,
-            TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter) {
+            TriConsumer<EventStreamBase<R>, T, Throwable> emitter) {
         this.source = source;
         this.addCompletionHandler = addCompletionHandler;
         this.emitter = emitter;
@@ -120,7 +120,7 @@ class Await<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream
 }
 
 
-class AwaitLatest<T, F, R> extends LazilyBoundStream<R> implements AwaitingEventStream<R> {
+class AwaitLatest<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R> {
 
     public static <T> AwaitingEventStream<T> awaitCompletionStage(
             EventStream<CompletionStage<T>> source,
@@ -214,7 +214,7 @@ class AwaitLatest<T, F, R> extends LazilyBoundStream<R> implements AwaitingEvent
     private final EventStream<?> cancelImpulse;
     private final Consumer<F> canceller;
     private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
-    private final TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter;
+    private final TriConsumer<EventStreamBase<R>, T, Throwable> emitter;
 
     private long revision = 0;
     private F expectedFuture = null;
@@ -226,7 +226,7 @@ class AwaitLatest<T, F, R> extends LazilyBoundStream<R> implements AwaitingEvent
             EventStream<?> cancelImpulse,
             Consumer<F> canceller,
             BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler,
-            TriConsumer<LazilyBoundStream<R>, T, Throwable> emitter) {
+            TriConsumer<EventStreamBase<R>, T, Throwable> emitter) {
         this.source = source;
         this.cancelImpulse = cancelImpulse;
         this.canceller = canceller;

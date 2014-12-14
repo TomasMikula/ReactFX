@@ -6,12 +6,22 @@ import java.util.function.Consumer;
 import org.reactfx.util.ListHelper;
 
 /**
+ * Base class for observable objects. This abstract class implements:
+ * <ol>
+ *   <li><b>Observer management:</b> adding and removing observers.</li>
+ *   <li><b>Lazy binding to inputs.</b> An observable has 0 or more inputs,
+ *   most commonly, but not necessarily, other observables. Lazy binding to
+ *   inputs means that the observable observes its inputs only when it is
+ *   itself being observed.</li>
+ *   <li><b>Observer notification.</b></li>
+ * </ol>
  *
  * @param <O> type of the observer
  * @param <T> type of observed values
  */
 abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
+    private Subscription subscription = null;
     private PendingNotifications<O, T> pendingNotifications;
 
     ObservableBase(EmptyPendingNotifications<O, T> pendingNotifications) {
@@ -22,9 +32,16 @@ abstract class ObservableBase<O, T> {
         this(EmptyNonRecursivePN.empty());
     }
 
-    protected final int getObserverCount() {
-        return ListHelper.size(observers);
-    }
+    /**
+     * Starts observing this observable's input(s), if any.
+     * This method is called when the number of observers goes from 0 to 1.
+     * This method is called <em>before</em> {@link #newObserver(Object)}
+     * is called for the first observer.
+     * @return subscription used to stop observing inputs. The subscription
+     * is unsubscribed (i.e. input observation stops) when the number of
+     * observers goes down to 0.
+     */
+    protected abstract Subscription subscribeToInputs();
 
     /**
      * Runs the given action. If {@code action} does not throw an exception,
@@ -34,6 +51,14 @@ abstract class ObservableBase<O, T> {
      * @param action action to execute. May throw an exception.
      */
     protected abstract boolean runUnsafeAction(Runnable action);
+
+    protected final boolean isBound() {
+        return subscription != null;
+    }
+
+    protected final int getObserverCount() {
+        return ListHelper.size(observers);
+    }
 
     protected final void notifyObservers(BiConsumer<O, T> notifier, T event) {
         try {
@@ -66,43 +91,21 @@ abstract class ObservableBase<O, T> {
     }
 
     /**
-     * Called when the number of observers goes from 0 to 1.
-     * Overriding this method is a convenient way for subclasses
-     * to handle this event.
-     *
-     * <p>This method is called <em>before</em> the
-     * {@link #newObserver(Object)} method.</p>
-     */
-    protected void firstObserver() {
-        // default implementation is empty
-    }
-
-    /**
      * Called for each new observer.
      * Overriding this method is a convenient way for subclasses
      * to handle this event, for example to publish some initial events.
      *
      * <p>This method is called <em>after</em> the
-     * {@link #firstObserver()} method.</p>
+     * {@link #subscribeToInputs()} method.</p>
      */
     protected void newObserver(O observer) {
         // default implementation is empty
     }
 
-    /**
-     * Called when the number of observers goes down to 0.
-     * Overriding this method is a convenient way for subclasses
-     * to handle this event.
-     */
-    protected void noObservers() {
-        // default implementation is empty
-    }
-
     protected final Subscription observe(O observer) {
-
         observers = ListHelper.add(observers, observer);
         if(ListHelper.size(observers) == 1) {
-            firstObserver();
+            runUnsafeAction(() -> subscription = subscribeToInputs());
         }
         newObserver(observer);
 
@@ -111,8 +114,11 @@ abstract class ObservableBase<O, T> {
 
     private void unobserve(O observer) {
         observers = ListHelper.remove(observers, observer);
-        if(ListHelper.isEmpty(observers)) {
-            noObservers();
+        if(ListHelper.isEmpty(observers) && subscription != null) {
+            runUnsafeAction(() -> {
+                subscription.unsubscribe();
+                subscription = null;
+            });
         }
     }
 }

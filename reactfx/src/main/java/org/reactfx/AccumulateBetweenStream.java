@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-class AccumulateBetweenStream<T, A> extends LazilyBoundStream<T> {
+class AccumulateBetweenStream<T, A> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final EventStream<?> ticks;
     private final Function<? super T, ? extends A> initialTransformation;

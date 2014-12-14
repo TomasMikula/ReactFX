@@ -2,7 +2,7 @@ package org.reactfx;
 
 import java.util.function.Predicate;
 
-class FilterStream<T> extends LazilyBoundStream<T> {
+class FilterStream<T> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final Predicate<? super T> predicate;
 

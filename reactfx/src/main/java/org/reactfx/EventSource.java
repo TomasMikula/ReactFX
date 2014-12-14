@@ -17,4 +17,9 @@ implements EventSink<T> {
     public final void push(T value) {
         emit(value);
     }
+
+    @Override
+    protected final Subscription subscribeToInputs() {
+        return Subscription.EMPTY;
+    }
 }

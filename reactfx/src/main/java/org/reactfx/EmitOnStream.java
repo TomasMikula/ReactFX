@@ -1,7 +1,7 @@
 package org.reactfx;
 
 
-class EmitOnStream<T> extends LazilyBoundStream<T> {
+class EmitOnStream<T> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final EventStream<?> impulse;
 

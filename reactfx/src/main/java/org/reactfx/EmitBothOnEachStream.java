@@ -4,7 +4,7 @@ import static org.reactfx.util.Tuples.*;
 
 import org.reactfx.util.Tuple2;
 
-class EmitBothOnEachStream<A, I> extends LazilyBoundStream<Tuple2<A, I>> {
+class EmitBothOnEachStream<A, I> extends EventStreamBase<Tuple2<A, I>> {
     private final EventStream<A> source;
     private final EventStream<I> impulse;
 

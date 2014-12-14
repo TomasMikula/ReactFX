@@ -10,7 +10,7 @@ import javafx.beans.value.ObservableBooleanValue;
 
 import org.reactfx.util.Timer;
 
-class ThenAccumulateForStream<T, A> extends LazilyBoundStream<T> implements AwaitingEventStream<T> {
+class ThenAccumulateForStream<T, A> extends EventStreamBase<T> implements AwaitingEventStream<T> {
     private static enum State {
         READY, ACC_NO_EVENT, ACC_HAS_EVENT
     }

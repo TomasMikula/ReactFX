@@ -8,7 +8,7 @@ import javafx.beans.value.ObservableBooleanValue;
 
 import org.reactfx.util.Timer;
 
-class SuccessionReducingStream<I, O> extends LazilyBoundStream<O> implements AwaitingEventStream<O> {
+class SuccessionReducingStream<I, O> extends EventStreamBase<O> implements AwaitingEventStream<O> {
     private final EventStream<I> input;
     private final Function<? super I, ? extends O> initial;
     private final BiFunction<? super O, ? super I, ? extends O> reduction;

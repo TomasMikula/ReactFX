@@ -3,7 +3,7 @@ package org.reactfx;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
-class FilterMapStream<T, U> extends LazilyBoundStream<U> {
+class FilterMapStream<T, U> extends EventStreamBase<U> {
     private final EventStream<T> source;
     private final Predicate<? super T> predicate;
     private final Function<? super T, ? extends U> f;

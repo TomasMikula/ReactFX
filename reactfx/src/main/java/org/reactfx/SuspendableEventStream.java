@@ -32,7 +32,7 @@ public interface SuspendableEventStream<T> extends EventStream<T> {
 }
 
 abstract class SuspendableEventStreamBase<T>
-extends LazilyBoundStream<T>
+extends EventStreamBase<T>
 implements SuspendableEventStream<T> {
 
     private final EventStream<T> source;

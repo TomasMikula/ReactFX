@@ -1,9 +1,13 @@
 package org.reactfx;
 
+import java.util.function.Consumer;
+
 
 /**
+ * Base class for event streams.
+ * Adds support for error propagation on top of {@link ObservableBase}.
  *
- * @param <T> type of events
+ * @param <T> type of events emitted by this event stream.
  */
 public abstract class EventStreamBase<T>
 extends ObservableBase<Subscriber<? super T>, T>
@@ -54,6 +58,19 @@ implements EventStream<T> {
             });
             reporting = false;
         }
+    }
+
+    /**
+     * Subscribes to the given event stream by the given subscriber and also
+     * forwards errors reported by the given stream to this stream. This is
+     * equivalent to {@code stream.subscribe(subscriber, this::reportError)}.
+     * @return subscription used to unsubscribe {@code subscriber} from
+     * {@code stream} and stop forwarding the errors.
+     */
+    protected final <U> Subscription subscribeTo(
+            EventStream<U> stream,
+            Consumer<? super U> subscriber) {
+        return stream.subscribe(subscriber, this::reportError);
     }
 
     @Override

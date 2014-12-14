@@ -1,7 +1,7 @@
 package org.reactfx;
 
 
-class RecursiveStream<T> extends LazilyBoundStream<T> {
+class RecursiveStream<T> extends EventStreamBase<T> {
     private final EventStream<T> input;
 
     public RecursiveStream(

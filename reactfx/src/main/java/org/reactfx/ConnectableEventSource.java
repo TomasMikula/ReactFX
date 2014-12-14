@@ -4,7 +4,7 @@ import org.reactfx.util.MapHelper;
 
 
 public final class ConnectableEventSource<T>
-extends LazilyBoundStream<T>
+extends EventStreamBase<T>
 implements ConnectableEventStream<T>, ConnectableEventSink<T> {
 
     private MapHelper<EventStream<? extends T>, Subscription> subscriptions = null;

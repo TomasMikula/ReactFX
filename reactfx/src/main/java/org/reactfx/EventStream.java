@@ -278,7 +278,7 @@ public interface EventStream<T> {
      */
     default <U> EventStream<Either<T, U>> or(EventStream<? extends U> right) {
         EventStream<T> left = this;
-        return new LazilyBoundStream<Either<T, U>>() {
+        return new EventStreamBase<Either<T, U>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return Subscription.multi(
@@ -1294,7 +1294,7 @@ public interface EventStream<T> {
      * thrown by its subscribers.
      */
     default EventStream<Try<T>> materializeErrors() {
-        return new LazilyBoundStream<Try<T>>() {
+        return new EventStreamBase<Try<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return EventStream.this.subscribe(
@@ -1313,7 +1313,7 @@ public interface EventStream<T> {
      * by its subscribers.
      */
     default EventStream<T> handleErrors(Consumer<? super Throwable> handler) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return EventStream.this.subscribe(this::emit, handler);
@@ -1325,7 +1325,7 @@ public interface EventStream<T> {
      * Returns a stream of errors reported by this event stream.
      */
     default EventStream<Throwable> errors() {
-        return new LazilyBoundStream<Throwable>() {
+        return new EventStreamBase<Throwable>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return EventStream.this.monitor(this::emit);

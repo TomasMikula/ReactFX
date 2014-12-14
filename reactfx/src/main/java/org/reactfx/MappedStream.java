@@ -5,7 +5,7 @@ import java.util.function.Function;
 
 import javafx.concurrent.Task;
 
-class MappedStream<T, U> extends LazilyBoundStream<U> {
+class MappedStream<T, U> extends EventStreamBase<U> {
     private final EventStream<T> input;
     private final Function<? super T, ? extends U> f;
 

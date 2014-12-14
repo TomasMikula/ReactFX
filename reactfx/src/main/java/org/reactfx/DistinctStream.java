@@ -3,7 +3,7 @@ package org.reactfx;
 import java.util.Objects;
 
 
-class DistinctStream<T> extends LazilyBoundStream<T> {
+class DistinctStream<T> extends EventStreamBase<T> {
     static final Object NONE = new Object();
     private final EventStream<T> input;
     private Object previous = NONE;

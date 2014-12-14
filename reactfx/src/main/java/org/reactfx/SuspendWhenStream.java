@@ -2,7 +2,7 @@ package org.reactfx;
 
 import javafx.beans.value.ObservableValue;
 
-class SuspendWhenStream<T> extends LazilyBoundStream<T> {
+class SuspendWhenStream<T> extends EventStreamBase<T> {
     private final SuspendableEventStream<T> source;
     private final ObservableValue<Boolean> condition;
 

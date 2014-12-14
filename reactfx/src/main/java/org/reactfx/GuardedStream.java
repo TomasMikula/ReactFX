@@ -1,7 +1,7 @@
 package org.reactfx;
 
 
-class GuardedStream<T> extends LazilyBoundStream<T> {
+class GuardedStream<T> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final Guardian guardian;
 

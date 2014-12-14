@@ -2,7 +2,7 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-class SideEffectStream<T> extends LazilyBoundStream<T> {
+class SideEffectStream<T> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final Consumer<? super T> sideEffect;
     private boolean sideEffectInProgress = false;

@@ -5,7 +5,7 @@ import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-class AccumulateUntilLaterStream<T, A> extends LazilyBoundStream<T> {
+class AccumulateUntilLaterStream<T, A> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final Function<? super T, ? extends A> initialTransformation;
     private final BiFunction<? super A, ? super T, ? extends A> accumulation;

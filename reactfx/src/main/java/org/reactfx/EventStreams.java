@@ -57,7 +57,7 @@ public class EventStreams {
      * of the given observable.
      */
     public static EventStream<Void> invalidationsOf(Observable observable) {
-        return new LazilyBoundStream<Void>() {
+        return new EventStreamBase<Void>() {
             @Override
             protected Subscription subscribeToInputs() {
                 InvalidationListener listener = obs -> emit(null);
@@ -74,7 +74,7 @@ public class EventStreams {
      */
     public static <O extends Observable>
     EventStream<O> repeatOnInvalidation(O observable) {
-        return new LazilyBoundStream<O>() {
+        return new EventStreamBase<O>() {
             @Override
             protected Subscription subscribeToInputs() {
                 InvalidationListener listener = obs -> emit(observable);
@@ -95,7 +95,7 @@ public class EventStreams {
      * every change.
      */
     public static <T> EventStream<T> valuesOf(ObservableValue<T> observable) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> emit(val);
@@ -111,7 +111,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<T> nonNullValuesOf(ObservableValue<T> observable) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> {
@@ -134,7 +134,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<Change<T>> changesOf(ObservableValue<T> observable) {
-        return new LazilyBoundStream<Change<T>>() {
+        return new EventStreamBase<Change<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ChangeListener<T> listener = (obs, old, val) -> emit(new Change<>(old, val));
@@ -145,7 +145,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<ListChangeListener.Change<? extends T>> changesOf(ObservableList<T> list) {
-        return new LazilyBoundStream<ListChangeListener.Change<? extends T>>() {
+        return new EventStreamBase<ListChangeListener.Change<? extends T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ListChangeListener<T> listener = c -> emit(c);
@@ -156,7 +156,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<TransientListChange<T>> simpleChangesOf(ObservableList<T> list) {
-        return new LazilyBoundStream<TransientListChange<T>>() {
+        return new EventStreamBase<TransientListChange<T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 ListChangeListener<T> listener = c ->  {
@@ -171,7 +171,7 @@ public class EventStreams {
     }
 
     public static <T> EventStream<SetChangeListener.Change<? extends T>> changesOf(ObservableSet<T> set) {
-        return new LazilyBoundStream<SetChangeListener.Change<? extends T>>() {
+        return new EventStreamBase<SetChangeListener.Change<? extends T>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 SetChangeListener<T> listener = c -> emit(c);
@@ -182,7 +182,7 @@ public class EventStreams {
     }
 
     public static <K, V> EventStream<MapChangeListener.Change<? extends K, ? extends V>> changesOf(ObservableMap<K, V> map) {
-        return new LazilyBoundStream<MapChangeListener.Change<? extends K, ? extends V>>() {
+        return new EventStreamBase<MapChangeListener.Change<? extends K, ? extends V>>() {
             @Override
             protected Subscription subscribeToInputs() {
                 MapChangeListener<K, V> listener = c -> emit(c);
@@ -201,7 +201,7 @@ public class EventStreams {
     }
 
     private static <T> EventStream<T> create(Supplier<? extends T> computeValue, Observable... dependencies) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             private T previousValue;
 
             @Override
@@ -233,7 +233,7 @@ public class EventStreams {
     }
 
     public static <T extends Event> EventStream<T> eventsOf(Node node, EventType<T> eventType) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 EventHandler<T> handler = event -> emit(event);
@@ -244,7 +244,7 @@ public class EventStreams {
     }
 
     public static <T extends Event> EventStream<T> eventsOf(Scene scene, EventType<T> eventType) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 EventHandler<T> handler = event -> emit(event);
@@ -264,7 +264,7 @@ public class EventStreams {
      * returned stream.
      */
     public static EventStream<?> ticks(Duration interval) {
-        return new LazilyBoundStream<Void>() {
+        return new EventStreamBase<Void>() {
             private final Timer timer = FxTimer.createPeriodic(
                     interval, () -> emit(null));
 
@@ -293,7 +293,7 @@ public class EventStreams {
             Duration interval,
             ScheduledExecutorService scheduler,
             Executor eventThreadExecutor) {
-        return new LazilyBoundStream<Void>() {
+        return new EventStreamBase<Void>() {
             private final Timer timer = ScheduledExecutorServiceTimer.createPeriodic(
                     interval, () -> emit(null), scheduler, eventThreadExecutor);
 
@@ -314,7 +314,7 @@ public class EventStreams {
      */
     @SafeVarargs
     public static <T> EventStream<T> merge(EventStream<? extends T>... inputs) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return Subscription.multi(i -> subscribeTo(i, this::emit), inputs);
@@ -331,7 +331,7 @@ public class EventStreams {
      */
     public static <T> EventStream<T> merge(
             ObservableSet<? extends EventStream<T>> set) {
-        return new LazilyBoundStream<T>() {
+        return new EventStreamBase<T>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return Subscription.dynamic(set, s -> subscribeTo(s, this::emit));
@@ -349,7 +349,7 @@ public class EventStreams {
     public static <T, U> EventStream<U> merge(
             ObservableSet<? extends T> set,
             Function<? super T, ? extends EventStream<U>> f) {
-        return new LazilyBoundStream<U>() {
+        return new EventStreamBase<U>() {
             @Override
             protected Subscription subscribeToInputs() {
                 return Subscription.dynamic(
@@ -360,7 +360,7 @@ public class EventStreams {
     }
 
     public static <A, B> EventStream<Tuple2<A, B>> zip(EventStream<A> srcA, EventStream<B> srcB) {
-        return new LazilyBoundStream<Tuple2<A, B>>() {
+        return new EventStreamBase<Tuple2<A, B>>() {
             Pocket<A> pocketA = new ExclusivePocket<>();
             Pocket<B> pocketB = new ExclusivePocket<>();
 
@@ -382,7 +382,7 @@ public class EventStreams {
     }
 
     public static <A, B, C> EventStream<Tuple3<A, B, C>> zip(EventStream<A> srcA, EventStream<B> srcB, EventStream<C> srcC) {
-        return new LazilyBoundStream<Tuple3<A, B, C>>() {
+        return new EventStreamBase<Tuple3<A, B, C>>() {
             Pocket<A> pocketA = new ExclusivePocket<>();
             Pocket<B> pocketB = new ExclusivePocket<>();
             Pocket<C> pocketC = new ExclusivePocket<>();
@@ -409,7 +409,7 @@ public class EventStreams {
     public static <A, B> EventStream<Tuple2<A, B>> combine(
             EventStream<A> srcA,
             EventStream<B> srcB) {
-        return new LazilyBoundStream<Tuple2<A, B>>() {
+        return new EventStreamBase<Tuple2<A, B>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
 
@@ -434,7 +434,7 @@ public class EventStreams {
             EventStream<A> srcA,
             EventStream<B> srcB,
             EventStream<C> srcC) {
-        return new LazilyBoundStream<Tuple3<A, B, C>>() {
+        return new EventStreamBase<Tuple3<A, B, C>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
             Pocket<C> pocketC = new Pocket<>();
@@ -463,7 +463,7 @@ public class EventStreams {
             EventStream<B> srcB,
             EventStream<C> srcC,
             EventStream<D> srcD) {
-        return new LazilyBoundStream<Tuple4<A, B, C, D>>() {
+        return new EventStreamBase<Tuple4<A, B, C, D>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
             Pocket<C> pocketC = new Pocket<>();
@@ -499,7 +499,7 @@ public class EventStreams {
             EventStream<C> srcC,
             EventStream<D> srcD,
             EventStream<E> srcE) {
-        return new LazilyBoundStream<Tuple5<A, B, C, D, E>>() {
+        return new EventStreamBase<Tuple5<A, B, C, D, E>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
             Pocket<C> pocketC = new Pocket<>();
@@ -540,7 +540,7 @@ public class EventStreams {
             EventStream<D> srcD,
             EventStream<E> srcE,
             EventStream<F> srcF) {
-        return new LazilyBoundStream<Tuple6<A, B, C, D, E, F>>() {
+        return new EventStreamBase<Tuple6<A, B, C, D, E, F>>() {
             Pocket<A> pocketA = new Pocket<>();
             Pocket<B> pocketB = new Pocket<>();
             Pocket<C> pocketC = new Pocket<>();

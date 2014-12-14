@@ -120,7 +120,7 @@ class ObservableStateBuilderImpl<S> implements ObservableStateBuilder<S> {
     }
 }
 
-class StateStream<S> extends LazilyBoundStream<S> {
+class StateStream<S> extends EventStreamBase<S> {
     private final InputHandler[] inputHandlers;
 
     private S state;
@@ -173,7 +173,7 @@ class StatefulStreamBuilderImpl<S, O> implements StatefulStreamBuilder<S, O> {
     }
 }
 
-class StatefulStream<S, O> extends LazilyBoundStream<O> {
+class StatefulStream<S, O> extends EventStreamBase<O> {
     private final List<InputHandler> inputHandlers;
 
     private S state;

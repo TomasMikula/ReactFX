@@ -2,6 +2,8 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
+import org.reactfx.util.AccuMap;
+
 
 /**
  * Base class for event streams.
@@ -19,7 +21,7 @@ implements EventStream<T> {
         super();
     }
 
-    EventStreamBase(EmptyPendingNotifications<Subscriber<? super T>, T> pn) {
+    EventStreamBase(AccuMap.Empty<Subscriber<? super T>, T> pn) {
         super(pn);
     }
 

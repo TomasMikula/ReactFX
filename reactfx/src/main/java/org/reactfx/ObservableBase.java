@@ -3,6 +3,7 @@ package org.reactfx;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+import org.reactfx.util.AccuMap;
 import org.reactfx.util.ListHelper;
 
 /**
@@ -22,14 +23,14 @@ import org.reactfx.util.ListHelper;
 abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
     private Subscription inputSubscription = null;
-    private PendingNotifications<O, T> pendingNotifications;
+    private AccuMap<O, T> pendingNotifications;
 
-    ObservableBase(EmptyPendingNotifications<O, T> pendingNotifications) {
+    ObservableBase(AccuMap.Empty<O, T> pendingNotifications) {
         this.pendingNotifications = pendingNotifications;
     }
 
     public ObservableBase() {
-        this(EmptyNonRecursivePN.empty());
+        this(AccuMap.emptyNonAdditiveMap());
     }
 
     /**
@@ -75,7 +76,7 @@ abstract class ObservableBase<O, T> {
                 });
             }
         } finally {
-            pendingNotifications.close(); // clears all pending notifications
+            pendingNotifications = pendingNotifications.empty();
         }
     }
 

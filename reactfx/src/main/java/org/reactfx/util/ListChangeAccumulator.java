@@ -3,6 +3,10 @@ package org.reactfx.util;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
+
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
 
 public final class ListChangeAccumulator<E> {
     private List<TransientListChange<? extends E>> changes = new ArrayList<>();
@@ -11,10 +15,18 @@ public final class ListChangeAccumulator<E> {
         return changes.isEmpty();
     }
 
-    public List<TransientListChange<? extends E>> fetch() {
+    public List<TransientListChange<? extends E>> fetchList() {
         List<TransientListChange<? extends E>> res = changes;
         changes = new ArrayList<>();
         return res;
+    }
+
+    public Optional<ListChangeListener.Change<? extends E>> fetch() {
+        List<TransientListChange<? extends E>> changes = fetchList();
+
+        return changes.isEmpty()
+                ? Optional.empty()
+                : Optional.of(squash(changes));
     }
 
     public void add(TransientListChange<? extends E> change) {
@@ -54,6 +66,12 @@ public final class ListChangeAccumulator<E> {
         }
     }
 
+    public void add(ListChangeListener.Change<? extends E> change) {
+        while(change.next()) {
+            add(TransientListChange.fromCurrentStateOf(change));
+        }
+    }
+
     private void offsetPendingChanges(int from, int offset) {
         changes.subList(from, changes.size())
                 .replaceAll(change -> new TransientListChangeImpl<>(
@@ -61,6 +79,59 @@ public final class ListChangeAccumulator<E> {
                         change.getFrom() + offset,
                         change.getTo() + offset,
                         change.getRemoved()));
+    }
+
+    private static <E> ListChangeListener.Change<E> squash(
+            List<TransientListChange<? extends E>> changes) {
+
+        /* Can change to ObservableList<? extends E> and remove unsafe cast
+         * when https://javafx-jira.kenai.com/browse/RT-39683 is resolved. */
+        @SuppressWarnings("unchecked")
+        ObservableList<E> list = (ObservableList<E>) changes.get(0).getList();
+
+        return new ListChangeListener.Change<E>(list) {
+
+            private int current = -1;
+
+            @Override
+            public int getFrom() {
+                return changes.get(current).getFrom();
+            }
+
+            @Override
+            protected int[] getPermutation() {
+                return new int[0]; // not a permutation
+            }
+
+            /* Can change to List<? extends E> and remove unsafe cast when
+             * https://javafx-jira.kenai.com/browse/RT-39683 is resolved. */
+            @Override
+            @SuppressWarnings("unchecked")
+            public List<E> getRemoved() {
+                // cast is safe, because the list is unmodifiable
+                return (List<E>) changes.get(current).getRemoved();
+            }
+
+            @Override
+            public int getTo() {
+                return changes.get(current).getTo();
+            }
+
+            @Override
+            public boolean next() {
+                if(current + 1 < changes.size()) {
+                    ++current;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            @Override
+            public void reset() {
+                current = -1;
+            }
+        };
     }
 
     private static <E> TransientListChange<? extends E> join(

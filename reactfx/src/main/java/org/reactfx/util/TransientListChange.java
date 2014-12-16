@@ -5,9 +5,10 @@ import java.util.Collections;
 import java.util.List;
 
 import javafx.collections.ListChangeListener.Change;
+import javafx.collections.ObservableList;
 
 public interface TransientListChange<E> extends ListChange<E> {
-    List<? extends E> getList();
+    ObservableList<? extends E> getList();
 
     default List<? extends E> getAddedSublist() {
         return getList().subList(getFrom(), getTo());
@@ -41,10 +42,10 @@ public interface TransientListChange<E> extends ListChange<E> {
 }
 
 final class TransientListChangeImpl<E> extends ListChangeBase<E> implements TransientListChange<E> {
-    private final List<? extends E> list;
+    private final ObservableList<? extends E> list;
     private final int to;
 
-    TransientListChangeImpl(List<? extends E> list, int from, int to, List<? extends E> removed) {
+    TransientListChangeImpl(ObservableList<? extends E> list, int from, int to, List<? extends E> removed) {
         super(from, removed);
         this.list = list;
         this.to = to;
@@ -61,7 +62,7 @@ final class TransientListChangeImpl<E> extends ListChangeBase<E> implements Tran
     }
 
     @Override
-    public List<? extends E> getList() {
+    public ObservableList<? extends E> getList() {
         return list;
     }
 }

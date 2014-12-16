@@ -12,7 +12,6 @@ import javafx.collections.ListChangeListener.Change;
 import org.reactfx.Guard;
 import org.reactfx.util.ListChangeAccumulator;
 import org.reactfx.util.ListHelper;
-import org.reactfx.util.TransientListChange;
 
 class ObservableListWrapper<E> implements ObservableList<E> {
     private final javafx.collections.ObservableList<E> delegate;
@@ -27,7 +26,7 @@ class ObservableListWrapper<E> implements ObservableList<E> {
         this.delegate = delegate;
         delegate.addListener((Change<? extends E> change) -> {
             if(blocked) {
-                incorporateChange(change);
+                pendingChanges.add(change);
             } else {
                 notifyListeners(change);
             }
@@ -46,63 +45,7 @@ class ObservableListWrapper<E> implements ObservableList<E> {
 
     private void release() {
         blocked = false;
-        if(!pendingChanges.isEmpty()) {
-            Change<E> change = squash(pendingChanges.fetch());
-            notifyListeners(change);
-        }
-    }
-
-    private Change<E> squash(List<TransientListChange<? extends E>> changeList) {
-        return new Change<E>(this) {
-            @SuppressWarnings("unchecked")
-            private final TransientListChange<? extends E>[] changes =
-                (TransientListChange<? extends E>[]) changeList.toArray(new TransientListChange<?>[changeList.size()]);
-
-            private int current = -1;
-
-            @Override
-            public int getFrom() {
-                return changes[current].getFrom();
-            }
-
-            @Override
-            protected int[] getPermutation() {
-                return new int[0]; // not a permutation
-            }
-
-            @Override
-            @SuppressWarnings("unchecked")
-            public List<E> getRemoved() {
-                // cast is safe, because the list is unmodifiable
-                return (List<E>) changes[current].getRemoved();
-            }
-
-            @Override
-            public int getTo() {
-                return changes[current].getTo();
-            }
-
-            @Override
-            public boolean next() {
-                if(current + 1 < changes.length) {
-                    ++current;
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-            @Override
-            public void reset() {
-                current = -1;
-            }
-        };
-    }
-
-    private void incorporateChange(Change<? extends E> change) {
-        while(change.next()) {
-            pendingChanges.add(TransientListChange.fromCurrentStateOf(change));
-        }
+        pendingChanges.fetch().ifPresent(this::notifyListeners);
     }
 
     private void notifyListeners(Change<? extends E> change) {

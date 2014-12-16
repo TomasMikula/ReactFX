@@ -9,6 +9,8 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
+import javafx.collections.ListChangeListener.Change;
+
 /**
  * Accumulation map.
  *
@@ -64,6 +66,10 @@ public interface AccuMap<K, V> {
 
     static <K, V> Empty<K, V> emptyNonAdditiveMap() {
         return EmptyNonAdditiveMap.instance();
+    }
+
+    static <K, E> Empty<K, Change<? extends E>> emptyListChangeAccumulationMap() {
+        return EmptyListChangeAccuMap.instance();
     }
 
 
@@ -561,4 +567,90 @@ extends ReductionMap<K, V> {
     public AccuMap.Empty<K, V> empty() {
         return EmptyRetainLatestMap.instance();
     }
+}
+
+
+/* ************************ *
+ * List change accumulation *
+ * ************************ */
+
+final class EmptyListChangeAccuMap<K, E>
+extends AccuMap.Empty<K, Change<? extends E>> {
+
+    private static final AccuMap.Empty<?, ?> INSTANCE = new EmptyListChangeAccuMap<>();
+
+    @SuppressWarnings("unchecked")
+    static <K, E> AccuMap.Empty<K, Change<? extends E>> instance() {
+        return (AccuMap.Empty<K, Change<? extends E>>) INSTANCE;
+    }
+
+    // private constructor to prevent instantiation
+    private EmptyListChangeAccuMap() {}
+
+    @Override
+    public AccuMap<K, Change<? extends E>> addAll(
+            Iterator<K> keys,
+            Change<? extends E> value) {
+        return new SingleIterationListChangeAccuMap<>(keys, value);
+    }
+}
+
+final class SingleIterationListChangeAccuMap<K, E>
+extends SingleIterationAccumulationMap<K, Change<? extends E>, ListChangeAccumulator<E>> {
+
+    SingleIterationListChangeAccuMap(Iterator<K> keys, Change<? extends E> value) {
+        super(keys, value);
+    }
+
+    @Override
+    public AccuMap<K, Change<? extends E>> empty() {
+        return EmptyListChangeAccuMap.instance();
+    }
+
+    @Override
+    protected AccuMap<K, Change<? extends E>> emptyComplex() {
+        return new ListChangeAccuMap<>();
+    }
+}
+
+@SuppressWarnings("serial")
+final class ListChangeAccuMap<K, E>
+extends AccumulationMap<K, Change<? extends E>, ListChangeAccumulator<E>> {
+
+    @Override
+    public AccuMap<K, Change<? extends E>> empty() {
+        return EmptyListChangeAccuMap.instance();
+    }
+
+    @Override
+    protected AccumulatorSize size(ListChangeAccumulator<E> accum) {
+        return accum.isEmpty() ? AccumulatorSize.ZERO : AccumulatorSize.ONE;
+    }
+
+    @Override
+    protected Change<? extends E> head(ListChangeAccumulator<E> accum) {
+        return accum.fetch().get();
+    }
+
+    @Override
+    protected ListChangeAccumulator<E> tail(ListChangeAccumulator<E> accum) {
+        throw new NoSuchElementException();
+    }
+
+    @Override
+    protected ListChangeAccumulator<E> initialAccumulator(
+            Change<? extends E> value) {
+        ListChangeAccumulator<E> res = new ListChangeAccumulator<>();
+        res.add(value);
+        return res;
+    }
+
+    @Override
+    protected ListChangeAccumulator<E> reduce(
+            ListChangeAccumulator<E> accum,
+            Change<? extends E> value) {
+        accum.add(value);
+        return accum;
+    }
+
 }

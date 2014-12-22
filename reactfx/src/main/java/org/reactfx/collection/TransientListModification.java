@@ -1,4 +1,4 @@
-package org.reactfx.util;
+package org.reactfx.collection;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -7,21 +7,27 @@ import java.util.List;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 
-public interface TransientListChange<E> extends ListChange<E> {
+public interface TransientListModification<E> extends ListModification<E> {
+
+    @SuppressWarnings("unchecked")
+    static <E> TransientListModification<E> safeCast(
+            TransientListModification<? extends E> mod) {
+        return (TransientListModification<E>) mod;
+    }
+
     ObservableList<? extends E> getList();
 
-    default List<? extends E> getAddedSublist() {
+    default List<? extends E> getAddedSubList() {
         return getList().subList(getFrom(), getTo());
     }
 
-    default MaterializedListChange<E> materialize() {
-        List<E> added = new ArrayList<>(getAddedSize());
-        Collections.copy(added, getAddedSublist());
+    default MaterializedListModification<E> materialize() {
+        List<E> added = new ArrayList<>(getAddedSubList());
         added = Collections.unmodifiableList(added);
-        return new MaterializedListChangeImpl<>(getFrom(), getRemoved(), added);
+        return new MaterializedListModificationImpl<>(getFrom(), getRemoved(), added);
     }
 
-    static <E, F extends E> TransientListChange<E> fromCurrentStateOf(Change<F> ch) {
+    static <E, F extends E> TransientListModification<E> fromCurrentStateOf(Change<F> ch) {
         List<F> list = ch.getList();
         int from = ch.getFrom();
         int to = ch.getTo();
@@ -37,15 +43,20 @@ public interface TransientListChange<E> extends ListChange<E> {
         } else {
             removed = ch.getRemoved();
         }
-        return new TransientListChangeImpl<>(ch.getList(), from, to, removed);
+        return new TransientListModificationImpl<>(ch.getList(), from, to, removed);
     }
 }
 
-final class TransientListChangeImpl<E> extends ListChangeBase<E> implements TransientListChange<E> {
+final class TransientListModificationImpl<E>
+extends ListModificationBase<E>
+implements TransientListModification<E> {
     private final ObservableList<? extends E> list;
     private final int to;
 
-    TransientListChangeImpl(ObservableList<? extends E> list, int from, int to, List<? extends E> removed) {
+    TransientListModificationImpl(
+            ObservableList<? extends E> list,
+            int from, int to,
+            List<? extends E> removed) {
         super(from, removed);
         this.list = list;
         this.to = to;

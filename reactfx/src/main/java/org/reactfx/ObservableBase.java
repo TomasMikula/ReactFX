@@ -20,16 +20,16 @@ import org.reactfx.util.ListHelper;
  * @param <O> type of the observer
  * @param <T> type of observed values
  */
-abstract class ObservableBase<O, T> {
+public abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
     private Subscription inputSubscription = null;
     private AccuMap<O, T> pendingNotifications;
 
-    ObservableBase(AccuMap.Empty<O, T> pendingNotifications) {
-        this.pendingNotifications = pendingNotifications;
+    protected ObservableBase(AccuMap.Empty<O, T> pendingNotificationsImpl) {
+        this.pendingNotifications = pendingNotificationsImpl;
     }
 
-    public ObservableBase() {
+    ObservableBase() {
         this(AccuMap.emptyNonAdditiveMap());
     }
 

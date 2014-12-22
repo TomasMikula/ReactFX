@@ -1,22 +1,23 @@
-package org.reactfx.util;
+package org.reactfx.collection;
 
 import java.util.List;
 
 /**
- * Represents a change made to a list. Each change is represented by the
- * position in the list where the change occurred ({@link #getFrom()}),
- * a list of elements removed by this change ({@link #getRemoved()}, and
- * a list of elements added by this change. Depending on whether this is
- * {@link TransientListChange} or {@link MaterializedListChange}, the list
- * of added elements links to the original list, or is completely independent
- * of the original list, respectively.
+ * Represents a single modification made to a list. Each modification is
+ * represented by the position in the list where the change occurred
+ * ({@link #getFrom()}), a list of elements removed by the modification
+ * ({@link #getRemoved()}, and a list of elements added by the modification.
+ * Depending on whether this is {@link TransientListModification} or
+ * {@link MaterializedListModification}, the list of added elements links to the
+ * original list, or is completely independent of the original list,
+ * respectively.
  *
  * <p>This is a simpler model of a list change than
  * {@link javafx.collections.ListChangeListener.Change}.
  *
  * @param <E> type of list elements.
  */
-interface ListChange<E> {
+interface ListModification<E> {
     /**
      * Returns the position in the list where this change occurred.
      */
@@ -49,11 +50,11 @@ interface ListChange<E> {
     List<? extends E> getRemoved();
 }
 
-abstract class ListChangeBase<E> implements ListChange<E> {
+abstract class ListModificationBase<E> implements ListModification<E> {
     private final int from;
     private final List<? extends E> removed;
 
-    ListChangeBase(int from, List<? extends E> removed) {
+    ListModificationBase(int from, List<? extends E> removed) {
         this.from = from;
         this.removed = removed;
     }

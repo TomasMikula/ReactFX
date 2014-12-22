@@ -10,7 +10,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 
 import org.reactfx.Guard;
-import org.reactfx.util.ListChangeAccumulator;
+import org.reactfx.collection.ListChangeAccumulator;
 import org.reactfx.util.ListHelper;
 
 class ObservableListWrapper<E> implements ObservableList<E> {
@@ -45,7 +45,7 @@ class ObservableListWrapper<E> implements ObservableList<E> {
 
     private void release() {
         blocked = false;
-        pendingChanges.fetch().ifPresent(this::notifyListeners);
+        pendingChanges.fetch().toJavaFx().ifPresent(this::notifyListeners);
     }
 
     private void notifyListeners(Change<? extends E> change) {

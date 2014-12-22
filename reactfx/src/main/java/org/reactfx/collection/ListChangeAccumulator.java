@@ -1,35 +1,25 @@
-package org.reactfx.util;
+package org.reactfx.collection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
 
 public final class ListChangeAccumulator<E> {
-    private List<TransientListChange<? extends E>> changes = new ArrayList<>();
+    private ListChangeImpl<E> changes = new ListChangeImpl<>();
 
     public boolean isEmpty() {
         return changes.isEmpty();
     }
 
-    public List<TransientListChange<? extends E>> fetchList() {
-        List<TransientListChange<? extends E>> res = changes;
-        changes = new ArrayList<>();
+    public ListChange<E> fetch() {
+        ListChange<E> res = changes;
+        changes = new ListChangeImpl<>();
         return res;
     }
 
-    public Optional<ListChangeListener.Change<? extends E>> fetch() {
-        List<TransientListChange<? extends E>> changes = fetchList();
-
-        return changes.isEmpty()
-                ? Optional.empty()
-                : Optional.of(squash(changes));
-    }
-
-    public void add(TransientListChange<? extends E> change) {
+    public void add(TransientListModification<E> change) {
         if(changes.isEmpty()) {
             changes.add(change);
         } else {
@@ -57,85 +47,38 @@ public final class ListChangeAccumulator<E> {
             if(lastOverlapping < firstOverlapping) { // no overlap
                 changes.add(firstOverlapping, change);
             } else { // overlaps one or more former changes
-                List<TransientListChange<? extends E>> overlapping = changes.subList(firstOverlapping, lastOverlapping + 1);
-                TransientListChange<? extends E> joined = join(overlapping, change.getRemoved(), change.getFrom());
-                TransientListChange<E> newChange = combine(joined, change);
+                List<TransientListModification<E>> overlapping = changes.subList(firstOverlapping, lastOverlapping + 1);
+                TransientListModification<? extends E> joined = join(overlapping, change.getRemoved(), change.getFrom());
+                TransientListModification<E> newChange = combine(joined, change);
                 overlapping.clear();
                 changes.add(firstOverlapping, newChange);
             }
         }
     }
 
+    public void add(ListChange<? extends E> change) {
+        for(TransientListModification<? extends E> mod: change.getModifications()) {
+            add(TransientListModification.safeCast(mod));
+        }
+    }
+
     public void add(ListChangeListener.Change<? extends E> change) {
         while(change.next()) {
-            add(TransientListChange.fromCurrentStateOf(change));
+            add(TransientListModification.fromCurrentStateOf(change));
         }
     }
 
     private void offsetPendingChanges(int from, int offset) {
         changes.subList(from, changes.size())
-                .replaceAll(change -> new TransientListChangeImpl<>(
+                .replaceAll(change -> new TransientListModificationImpl<>(
                         change.getList(),
                         change.getFrom() + offset,
                         change.getTo() + offset,
                         change.getRemoved()));
     }
 
-    private static <E> ListChangeListener.Change<E> squash(
-            List<TransientListChange<? extends E>> changes) {
-
-        /* Can change to ObservableList<? extends E> and remove unsafe cast
-         * when https://javafx-jira.kenai.com/browse/RT-39683 is resolved. */
-        @SuppressWarnings("unchecked")
-        ObservableList<E> list = (ObservableList<E>) changes.get(0).getList();
-
-        return new ListChangeListener.Change<E>(list) {
-
-            private int current = -1;
-
-            @Override
-            public int getFrom() {
-                return changes.get(current).getFrom();
-            }
-
-            @Override
-            protected int[] getPermutation() {
-                return new int[0]; // not a permutation
-            }
-
-            /* Can change to List<? extends E> and remove unsafe cast when
-             * https://javafx-jira.kenai.com/browse/RT-39683 is resolved. */
-            @Override
-            @SuppressWarnings("unchecked")
-            public List<E> getRemoved() {
-                // cast is safe, because the list is unmodifiable
-                return (List<E>) changes.get(current).getRemoved();
-            }
-
-            @Override
-            public int getTo() {
-                return changes.get(current).getTo();
-            }
-
-            @Override
-            public boolean next() {
-                if(current + 1 < changes.size()) {
-                    ++current;
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-            @Override
-            public void reset() {
-                current = -1;
-            }
-        };
-    }
-
-    private static <E> TransientListChange<? extends E> join(
-            List<TransientListChange<? extends E>> changes,
+    private static <E> TransientListModification<? extends E> join(
+            List<TransientListModification<E>> changes,
             List<? extends E> gone,
             int goneOffset) {
 
@@ -144,47 +87,47 @@ public final class ListChangeAccumulator<E> {
         }
 
         List<E> removed = new ArrayList<>();
-        TransientListChange<? extends E> prev = changes.get(0);
+        TransientListModification<? extends E> prev = changes.get(0);
         int from = prev.getFrom();
         removed.addAll(prev.getRemoved());
         for(int i = 1; i < changes.size(); ++i) {
-            TransientListChange<? extends E> ch = changes.get(i);
+            TransientListModification<? extends E> ch = changes.get(i);
             removed.addAll(gone.subList(prev.getTo() - goneOffset, ch.getFrom() - goneOffset));
             removed.addAll(ch.getRemoved());
             prev = ch;
         }
-        return new TransientListChangeImpl<>(prev.getList(), from, prev.getTo(), removed);
+        return new TransientListModificationImpl<>(prev.getList(), from, prev.getTo(), removed);
     }
 
-    private static <E> TransientListChange<E> combine(
-            TransientListChange<? extends E> former,
-            TransientListChange<? extends E> latter) {
+    private static <E> TransientListModification<E> combine(
+            TransientListModification<? extends E> former,
+            TransientListModification<? extends E> latter) {
 
         if(latter.getFrom() >= former.getFrom() && latter.getFrom() + latter.getRemovedSize() <= former.getTo()) {
             // latter is within former
             List<? extends E> removed = former.getRemoved();
             int to = former.getTo() - latter.getRemovedSize() + latter.getAddedSize();
-            return new TransientListChangeImpl<>(former.getList(), former.getFrom(), to, removed);
+            return new TransientListModificationImpl<>(former.getList(), former.getFrom(), to, removed);
         } else if(latter.getFrom() <= former.getFrom() && latter.getFrom() + latter.getRemovedSize() >= former.getTo()) {
             // former is within latter
             List<E> removed = concat(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
-            return new TransientListChangeImpl<>(latter.getList(), latter.getFrom(), latter.getTo(), removed);
+            return new TransientListModificationImpl<>(latter.getList(), latter.getFrom(), latter.getTo(), removed);
         } else if(latter.getFrom() >= former.getFrom()) {
             // latter overlaps to the right
             List<E> removed = concat(
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
-            return new TransientListChangeImpl<>(former.getList(), former.getFrom(), latter.getTo(), removed);
+            return new TransientListModificationImpl<>(former.getList(), former.getFrom(), latter.getTo(), removed);
         } else {
             // latter overlaps to the left
             List<E> removed = concat(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved());
             int to = former.getTo() - latter.getRemovedSize() + latter.getAddedSize();
-            return new TransientListChangeImpl<>(latter.getList(), latter.getFrom(), to, removed);
+            return new TransientListModificationImpl<>(latter.getList(), latter.getFrom(), to, removed);
         }
     }
 

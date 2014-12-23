@@ -9,16 +9,14 @@ import javafx.collections.ObservableList;
 
 public interface TransientListModification<E> extends ListModification<E> {
 
-    @SuppressWarnings("unchecked")
-    static <E> TransientListModification<E> safeCast(
-            TransientListModification<? extends E> mod) {
-        return (TransientListModification<E>) mod;
-    }
-
     ObservableList<? extends E> getList();
 
     default List<? extends E> getAddedSubList() {
         return getList().subList(getFrom(), getTo());
+    }
+
+    default ListChange<E> asListChange() {
+        return () -> Collections.singletonList(TransientListModification.this);
     }
 
     default MaterializedListModification<E> materialize() {
@@ -44,6 +42,13 @@ public interface TransientListModification<E> extends ListModification<E> {
             removed = ch.getRemoved();
         }
         return new TransientListModificationImpl<>(ch.getList(), from, to, removed);
+    }
+
+    @SuppressWarnings("unchecked")
+    static <E> TransientListModification<E> safeCast(
+            TransientListModification<? extends E> mod) {
+        // the cast is safe, because instances are immutable
+        return (TransientListModification<E>) mod;
     }
 }
 

@@ -9,7 +9,6 @@ import java.util.function.IntFunction;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
@@ -22,7 +21,7 @@ public class ListRecursionTest {
      */
     @Test
     public void test() {
-        ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
+        ObservableList<String> strings = new ObsArrayList<>("1", "22", "333");
         ObsList<Integer> lengths = ObsList.map(strings, String::length);
 
         IntegerProperty firstListener = new SimpleIntegerProperty(0);
@@ -58,8 +57,8 @@ public class ListRecursionTest {
 
         assertEquals(Arrays.asList(2), first1Removed);
         assertEquals(Arrays.asList(4), first1Added);
-//        assertEquals(Arrays.asList(), first2Removed);
-//        assertEquals(Arrays.asList(5), first2Added);
+        assertEquals(Arrays.asList(), first2Removed);
+        assertEquals(Arrays.asList(5), first2Added);
         assertEquals(Arrays.asList(2), secondRemoved);
         assertEquals(Arrays.asList(4, 5), secondAdded);
     }

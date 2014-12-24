@@ -3,8 +3,12 @@ package org.reactfx;
 import java.util.function.Consumer;
 
 @FunctionalInterface
-public interface Subscriber<T> extends ErrorHandler {
+public interface Subscriber<T> {
     void onEvent(T event);
+
+    default void onError(Throwable error) {
+        error.printStackTrace();
+    }
 
     static <T> Subscriber<T> create(
             Consumer<? super T> onEvent,

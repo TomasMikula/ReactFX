@@ -7,7 +7,7 @@ public interface Subscriber<T> {
     void onEvent(T event);
 
     default void onError(Throwable error) {
-        error.printStackTrace();
+        ErrorHandlerService.getInstance().handleError(error);
     }
 
     static <T> Subscriber<T> create(

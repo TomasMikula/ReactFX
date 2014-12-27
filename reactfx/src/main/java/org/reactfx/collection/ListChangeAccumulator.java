@@ -41,6 +41,11 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return res;
     }
 
+    public ListChangeAccumulator<E> drop(int n) {
+        modifications.subList(0, n).clear();
+        return this;
+    }
+
     public ListChangeAccumulator<E> add(TransientListModification<? extends E> change) {
         if(modifications.isEmpty()) {
             modifications.add(TransientListModification.safeCast(change));

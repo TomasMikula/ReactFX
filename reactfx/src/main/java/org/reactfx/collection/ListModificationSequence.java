@@ -31,4 +31,8 @@ extends Iterable<TransientListModification<E>> {
     default Iterator<TransientListModification<E>> iterator() {
         return getModifications().iterator();
     }
+
+    default int getModificationCount() {
+        return getModifications().size();
+    }
 }

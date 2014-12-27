@@ -20,7 +20,7 @@ public class ListRecursionTest {
      * Tests that list changes are accumulated on recursion.
      */
     @Test
-    public void test() {
+    public void testChangeAccumulation() {
         ObservableList<String> strings = new ObsArrayList<>("1", "22", "333");
         ObsList<Integer> lengths = ObsList.map(strings, String::length);
 
@@ -63,4 +63,32 @@ public class ListRecursionTest {
         assertEquals(Arrays.asList(4, 5), secondAdded);
     }
 
+    @Test
+    public void testModificationAccumulation() {
+        ObsList<Integer> list = new ObsArrayList<>(1,2,3,4,5);
+        List<MaterializedListModification<? extends Integer>> mods = new ArrayList<>();
+        list.observeModifications(mod -> {
+            mods.add(mod.materialize());
+            if(mod.getList().size() == 3) {
+                list.add(0, 0);
+            } else if(mod.getList().size() == 4) {
+                list.add(6);
+            }
+        });
+        list.removeAll(3, 5);
+
+        assertEquals(3, mods.size());
+
+        assertEquals(2, mods.get(0).getFrom());
+        assertEquals(Arrays.asList(3), mods.get(0).getRemoved());
+        assertEquals(0, mods.get(0).getAddedSize());
+
+        assertEquals(0, mods.get(1).getFrom());
+        assertEquals(0, mods.get(1).getRemovedSize());
+        assertEquals(Arrays.asList(0), mods.get(1).getAdded());
+
+        assertEquals(4, mods.get(2).getFrom());
+        assertEquals(Arrays.asList(5), mods.get(2).getRemoved());
+        assertEquals(Arrays.asList(6), mods.get(2).getAdded());
+    }
 }

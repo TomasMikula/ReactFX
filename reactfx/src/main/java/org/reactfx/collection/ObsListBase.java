@@ -16,13 +16,23 @@ implements ObsList<E>, AccessorListMethods<E> {
     }
 
     @Override
-    public void addChangeObserver(ChangeObserver<? super E> listener) {
-        addObserver(listener);
+    public void addChangeObserver(ChangeObserver<? super E> observer) {
+        addObserver(observer);
     }
 
     @Override
-    public void removeChangeObserver(ChangeObserver<? super E> listener) {
-        removeObserver(listener);
+    public void removeChangeObserver(ChangeObserver<? super E> observer) {
+        removeObserver(observer);
+    }
+
+    @Override
+    public void addModificationObserver(ModificationObserver<? super E> observer) {
+        addObserver(observer);
+    }
+
+    @Override
+    public void removeModificationObserver(ModificationObserver<? super E> observer) {
+        removeObserver(observer);
     }
 
     @Override

@@ -36,18 +36,44 @@ public interface ObsList<E> extends ObservableList<E> {
     extends Observer<E, ListChange<? extends E>> {
 
         @Override
-        default AccumulatorSize sizeOf(ListModificationSequence<? extends E> mods) {
+        default AccumulatorSize sizeOf(
+                ListModificationSequence<? extends E> mods) {
             return AccumulatorSize.ONE;
         }
 
         @Override
-        default ListChange<? extends E> headOf(ListModificationSequence<? extends E> mods) {
+        default ListChange<? extends E> headOf(
+                ListModificationSequence<? extends E> mods) {
             return mods.asListChange();
         }
 
         @Override
-        default <F extends E> ListModificationSequence<F> tailOf(ListModificationSequence<F> mods) {
+        default <F extends E> ListModificationSequence<F> tailOf(
+                ListModificationSequence<F> mods) {
             throw new NoSuchElementException();
+        }
+    }
+
+    @FunctionalInterface
+    public interface ModificationObserver<E>
+    extends Observer<E, TransientListModification<? extends E>> {
+
+        @Override
+        default AccumulatorSize sizeOf(
+                ListModificationSequence<? extends E> mods) {
+            return AccumulatorSize.fromInt(mods.getModificationCount());
+        }
+
+        @Override
+        default TransientListModification<? extends E> headOf(
+                ListModificationSequence<? extends E> mods) {
+            return mods.getModifications().get(0);
+        }
+
+        @Override
+        default <F extends E> ListModificationSequence<F> tailOf(
+                ListModificationSequence<F> mods) {
+            return mods.asListChangeAccumulator().drop(1);
         }
     }
 
@@ -57,6 +83,8 @@ public interface ObsList<E> extends ObservableList<E> {
 
     void addChangeObserver(ChangeObserver<? super E> observer);
     void removeChangeObserver(ChangeObserver<? super E> observer);
+    void addModificationObserver(ModificationObserver<? super E> observer);
+    void removeModificationObserver(ModificationObserver<? super E> observer);
 
 
     /* *************** *
@@ -66,6 +94,11 @@ public interface ObsList<E> extends ObservableList<E> {
     default Subscription observeChanges(ChangeObserver<? super E> observer) {
         addChangeObserver(observer);
         return () -> removeChangeObserver(observer);
+    }
+
+    default Subscription observeModifications(ModificationObserver<? super E> observer) {
+        addModificationObserver(observer);
+        return () -> removeModificationObserver(observer);
     }
 
     @Override

@@ -33,7 +33,7 @@ class MappedList<E, F> extends ObsListBase<E> implements ReadOnlyObsListImpl<E> 
     }
 
     private void sourceChanged(ListChange<? extends F> change) {
-        fireChange(new ListChange<E>() {
+        notifyObservers(new ListChange<E>() {
 
             @Override
             public List<TransientListModification<E>> getModifications() {

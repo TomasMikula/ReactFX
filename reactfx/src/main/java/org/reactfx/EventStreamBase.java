@@ -2,7 +2,7 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-import org.reactfx.util.AccuMap;
+import org.reactfx.util.NotificationAccumulator;
 
 
 /**
@@ -18,15 +18,15 @@ implements EventStream<T> {
     private boolean reporting = false;
 
     public EventStreamBase() {
-        super();
+        this(NotificationAccumulator.nonRecursiveStreamNotifications());
     }
 
-    EventStreamBase(AccuMap.Empty<Subscriber<? super T>, T> pn) {
+    EventStreamBase(NotificationAccumulator<Subscriber<? super T>, T> pn) {
         super(pn);
     }
 
     protected final void emit(T value) {
-        notifyObservers(Subscriber::onEvent, value);
+        notifyObservers(value);
     }
 
     @Override

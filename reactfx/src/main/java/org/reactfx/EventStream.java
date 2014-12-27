@@ -23,10 +23,10 @@ import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import javafx.concurrent.Task;
 
-import org.reactfx.util.AccuMap;
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.Either;
 import org.reactfx.util.FxTimer;
+import org.reactfx.util.NotificationAccumulator;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Try;
 import org.reactfx.util.Tuple2;
@@ -1188,7 +1188,7 @@ public interface EventStream<T> {
             Function<? super A, ? extends A> tail) {
         return new RecursiveStream<T>(
                 this,
-                AccuMap.emptyAccumulationMap(
+                NotificationAccumulator.accumulativeStreamNotifications(
                         size, head, tail, initialTransformation, reduction));
     }
 
@@ -1206,7 +1206,7 @@ public interface EventStream<T> {
 
     default EventStream<T> onRecurseReduce(BinaryOperator<T> reduction) {
         return new RecursiveStream<T>(
-                this, AccuMap.emptyReductionMap(reduction));
+                this, NotificationAccumulator.reducingStreamNotifications(reduction));
     }
 
     default EventStream<T> onRecurseQueue() {
@@ -1219,7 +1219,7 @@ public interface EventStream<T> {
     }
 
     default EventStream<T> onRecurseRetainLatest() {
-        return new RecursiveStream<T>(this, AccuMap.emptyRetainLatestMap());
+        return new RecursiveStream<T>(this, NotificationAccumulator.retainLatestStreamNotifications());
     }
 
     /**

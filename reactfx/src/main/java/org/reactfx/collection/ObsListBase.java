@@ -4,16 +4,15 @@ import java.util.Collections;
 import java.util.List;
 
 import org.reactfx.ObservableBase;
-import org.reactfx.collection.ObsList.ChangeObserver;
-import org.reactfx.util.AccuMap;
 import org.reactfx.util.Lists;
+import org.reactfx.util.NotificationAccumulator;
 
 abstract class ObsListBase<E>
-extends ObservableBase<ChangeObserver<? super E>, ListChange<? extends E>>
+extends ObservableBase<ObsList.Observer<? super E, ?>, ListChange<? extends E>>
 implements ObsList<E>, AccessorListMethods<E> {
 
     public ObsListBase() {
-        super(AccuMap.emptyListChangeAccumulationMap());
+        super(NotificationAccumulator.listNotifications());
     }
 
     @Override
@@ -47,12 +46,8 @@ implements ObsList<E>, AccessorListMethods<E> {
         return true;
     }
 
-    protected final void fireChange(ListChange<? extends E> change) {
-        notifyObservers(ChangeObserver::onChange, change);
-    }
-
     protected final void fireModification(TransientListModification<? extends E> mod) {
-        fireChange(mod.asListChange());
+        notifyObservers(mod.asListChange());
     }
 
     protected final TransientListModification<E> elemReplacement(int index, E replaced) {

@@ -1,5 +1,6 @@
 package org.reactfx.collection;
 
+import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -9,6 +10,7 @@ import javafx.collections.ObservableList;
 
 import org.reactfx.Subscription;
 import org.reactfx.collection.ObsList.ChangeObserver;
+import org.reactfx.util.AccumulatorSize;
 
 /**
  * Adds additional methods to {@link ObservableList}.
@@ -21,9 +23,32 @@ public interface ObsList<E> extends ObservableList<E> {
      * Nested Types *
      * ************ */
 
+    public interface Observer<E, O> {
+        AccumulatorSize sizeOf(ListModificationSequence<? extends E> mods);
+        O headOf(ListModificationSequence<? extends E> mods);
+        <F extends E> ListModificationSequence<F> tailOf(ListModificationSequence<F> mods);
+
+        void onChange(O change);
+    }
+
     @FunctionalInterface
-    public interface ChangeObserver<E> {
-        void onChange(ListChange<? extends E> change);
+    public interface ChangeObserver<E>
+    extends Observer<E, ListChange<? extends E>> {
+
+        @Override
+        default AccumulatorSize sizeOf(ListModificationSequence<? extends E> mods) {
+            return AccumulatorSize.ONE;
+        }
+
+        @Override
+        default ListChange<? extends E> headOf(ListModificationSequence<? extends E> mods) {
+            return mods.asListChange();
+        }
+
+        @Override
+        default <F extends E> ListModificationSequence<F> tailOf(ListModificationSequence<F> mods) {
+            throw new NoSuchElementException();
+        }
     }
 
     /* **************** *

@@ -1,6 +1,6 @@
 package org.reactfx;
 
-import org.reactfx.util.AccuMap;
+import org.reactfx.util.NotificationAccumulator;
 
 
 class RecursiveStream<T> extends EventStreamBase<T> {
@@ -8,7 +8,7 @@ class RecursiveStream<T> extends EventStreamBase<T> {
 
     public RecursiveStream(
             EventStream<T> input,
-            AccuMap.Empty<Subscriber<? super T>, T> pn) {
+            NotificationAccumulator<Subscriber<? super T>, T> pn) {
         super(pn);
         this.input = input;
     }

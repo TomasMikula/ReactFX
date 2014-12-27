@@ -124,7 +124,7 @@ public final class ObsArrayList<E> extends ObsListBase<E> {
         if(acc.isEmpty()) {
             return false;
         } else {
-            fireChange(acc.fetch());
+            notifyObservers(acc.fetch());
             return true;
         }
     }
@@ -148,7 +148,7 @@ public final class ObsArrayList<E> extends ObsListBase<E> {
         if(acc.isEmpty()) {
             return false;
         } else {
-            fireChange(acc.fetch());
+            notifyObservers(acc.fetch());
             return true;
         }
     }

@@ -9,9 +9,26 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 
-public interface ListChange<E> {
+public interface ListChange<E> extends ListModificationSequence<E> {
 
+    // the cast is safe, because ListChange is immutable
+    @SuppressWarnings("unchecked")
+    static <E> ListChange<E> safeCast(ListChange<? extends E> change) {
+        return (ListChange<E>) change;
+    }
+
+    @Override
     List<TransientListModification<E>> getModifications();
+
+    @Override
+    default ListChange<E> asListChange() {
+        return this;
+    }
+
+    @Override
+    default ListChangeAccumulator<E> asListChangeAccumulator() {
+        return new ListChangeAccumulator<>(this);
+    }
 
     default Optional<ListChangeListener.Change<E>> toJavaFx() {
         List<TransientListModification<E>> modifications = getModifications();
@@ -91,6 +108,10 @@ implements ListChange<E> {
 
     public ListChangeImpl(int initialCapacity) {
         super(initialCapacity);
+    }
+
+    public ListChangeImpl(ListChange<E> change) {
+        super(change.getModifications());
     }
 
     @Override

@@ -1,10 +1,9 @@
 package org.reactfx;
 
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import org.reactfx.util.AccuMap;
 import org.reactfx.util.ListHelper;
+import org.reactfx.util.NotificationAccumulator;
 
 /**
  * Base class for observable objects. This abstract class implements:
@@ -18,19 +17,15 @@ import org.reactfx.util.ListHelper;
  * </ol>
  *
  * @param <O> type of the observer
- * @param <T> type of observed values
+ * @param <T> type of produced values
  */
 public abstract class ObservableBase<O, T> {
     private ListHelper<O> observers = null;
     private Subscription inputSubscription = null;
-    private AccuMap<O, T> pendingNotifications;
+    private final NotificationAccumulator<O, T> pendingNotifications;
 
-    protected ObservableBase(AccuMap.Empty<O, T> pendingNotificationsImpl) {
+    protected ObservableBase(NotificationAccumulator<O, T> pendingNotificationsImpl) {
         this.pendingNotifications = pendingNotificationsImpl;
-    }
-
-    ObservableBase() {
-        this(AccuMap.emptyNonAdditiveMap());
     }
 
     /**
@@ -61,22 +56,20 @@ public abstract class ObservableBase<O, T> {
         return ListHelper.size(observers);
     }
 
-    protected final void notifyObservers(BiConsumer<O, T> notifier, T event) {
+    protected final void notifyObservers(T event) {
         try {
             boolean added = runUnsafeAction(() -> {
                 // may throw if pendingNotifications not empty and recursion not allowed
-                pendingNotifications = pendingNotifications.addAll(ListHelper.iterator(observers), event);
+                pendingNotifications.addAll(ListHelper.iterator(observers), event);
             });
             if(!added) return;
 
             while(!pendingNotifications.isEmpty()) {
-                pendingNotifications.takeOne().exec((observer, evt, rest) -> {
-                    pendingNotifications = rest;
-                    runUnsafeAction(() -> notifier.accept(observer, evt)); // may throw
-                });
+                Runnable notification = pendingNotifications.takeOne();
+                runUnsafeAction(notification); // may throw
             }
         } finally {
-            pendingNotifications = pendingNotifications.empty();
+            pendingNotifications.clear();
         }
     }
 

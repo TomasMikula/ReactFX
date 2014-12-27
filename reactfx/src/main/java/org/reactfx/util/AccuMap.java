@@ -9,23 +9,26 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 
-import org.reactfx.collection.ListChangeAccumulator;
 import org.reactfx.collection.ListChange;
+import org.reactfx.collection.ListChangeAccumulator;
+import org.reactfx.collection.ListModificationSequence;
+import org.reactfx.collection.ObsList;
 
 /**
  * Accumulation map.
  *
  * @param <K> key type
  * @param <V> type of individual (non-accumulated) values
+ * @param <A> type of accumulated values
  */
-public interface AccuMap<K, V> {
+public interface AccuMap<K, V, A> {
 
     /**
      * Immutable empty accumulation map.
      * {@link #addAll(Iterator, Object)} must return a new map, because this
      * instance is immutable.
      */
-    static abstract class Empty<K, V> implements AccuMap<K, V> {
+    static abstract class Empty<K, V, A> implements AccuMap<K, V, A> {
 
         @Override
         public boolean isEmpty() {
@@ -33,43 +36,50 @@ public interface AccuMap<K, V> {
         }
 
         @Override
-        public Tuple3<K, V, AccuMap<K, V>> takeOne() {
+        public Tuple2<K, A> peek() {
             throw new NoSuchElementException();
         }
 
         @Override
-        public AccuMap<K, V> empty() {
+        public AccuMap<K, V, A> dropPeeked() {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public AccuMap<K, V, A> updatePeeked(A newAccumulatedValue) {
+            throw new NoSuchElementException();
+        }
+
+        @Override
+        public AccuMap.Empty<K, V, A> empty() {
             return this;
         }
     }
 
-    static <K, V, A> Empty<K, V> emptyAccumulationMap(
-            Function<? super A, AccumulatorSize> size,
-            Function<? super A, ? extends V> head,
-            Function<? super A, ? extends A> tail,
+    static <K, V, A> Empty<K, V, A> emptyAccumulationMap(
             Function<? super V, ? extends A> initialTransformation,
             BiFunction<? super A, ? super V, ? extends A> reduction) {
-        return new EmptyGeneralAccumulationMap<>(
-                size, head, tail, initialTransformation, reduction);
+        return new EmptyGeneralAccuMap<>(
+                initialTransformation, reduction);
     }
 
-    static <K, V> Empty<K, V> emptyReductionMap(BinaryOperator<V> reduction) {
+    static <K, V> Empty<K, V, V> emptyReductionMap(BinaryOperator<V> reduction) {
         return new EmptyGeneralReductionMap<>(reduction);
     }
 
-    static <K, V> Empty<K, V> emptyRetainLatestMap() {
+    static <K, V> Empty<K, V, V> emptyRetainLatestMap() {
         return EmptyRetainLatestMap.instance();
     }
 
-    static <K, V> Empty<K, V> emptyRetainOldestMap() {
+    static <K, V> Empty<K, V, V> emptyRetainOldestMap() {
         return EmptyRetainOldestMap.instance();
     }
 
-    static <K, V> Empty<K, V> emptyNonAdditiveMap() {
+    static <K, V> Empty<K, V, V> emptyNonAdditiveMap() {
         return EmptyNonAdditiveMap.instance();
     }
 
-    static <K, E> Empty<K, ListChange<? extends E>> emptyListChangeAccumulationMap() {
+    static <E> Empty<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> emptyListChangeAccumulationMap() {
         return EmptyListChangeAccuMap.instance();
     }
 
@@ -77,41 +87,61 @@ public interface AccuMap<K, V> {
     /* Interface methods */
 
     boolean isEmpty();
-    Tuple3<K, V, AccuMap<K, V>> takeOne();
-    AccuMap<K, V> addAll(Iterator<K> keys, V value);
-    AccuMap<K, V> empty();
+    Tuple2<K, A> peek();
+    AccuMap<K, V, A> dropPeeked();
+    AccuMap<K, V, A> updatePeeked(A newAccumulatedValue);
+    AccuMap<K, V, A> addAll(Iterator<K> keys, V value);
+    AccuMap.Empty<K, V, A> empty();
 }
 
 
-abstract class SingleIterationAccuMap<K, V>
-implements AccuMap<K, V> {
+abstract class IteratorBasedAccuMap<K, V, A>
+implements AccuMap<K, V, A> {
+    private K currentKey = null;
+    private A currentAccumulatedValue = null;
 
     private Iterator<K> it;
     private V value;
 
-    SingleIterationAccuMap(Iterator<K> keys, V value) {
+    IteratorBasedAccuMap(Iterator<K> keys, V value) {
         this.it = keys;
         this.value = value;
     }
 
-    protected Iterator<K> getKeys() { return it; }
-    protected V getValue() { return value; }
-
-    protected abstract AccuMap<K, V> merge(Iterator<K> keys, V value);
+    protected abstract A initialAccumulator(V value);
+    protected abstract HashAccuMap<K, V, A> emptyHashMap();
 
     @Override
     public boolean isEmpty() {
-        return !it.hasNext();
+        return currentKey == null && !it.hasNext();
     }
 
     @Override
-    public Tuple3<K, V, AccuMap<K, V>> takeOne() {
-        K observer = it.next();
-        return t(observer, value, it.hasNext() ? this : empty());
+    public Tuple2<K, A> peek() {
+        if(currentKey == null) {
+            currentKey = it.next();
+            currentAccumulatedValue = initialAccumulator(value);
+        }
+        return t(currentKey, currentAccumulatedValue);
     }
 
     @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
+    public AccuMap<K, V, A> dropPeeked() {
+        checkPeeked();
+        currentKey = null;
+        currentAccumulatedValue = null;
+        return this;
+    }
+
+    @Override
+    public AccuMap<K, V, A> updatePeeked(A newAccumulatedValue) {
+        checkPeeked();
+        currentAccumulatedValue = newAccumulatedValue;
+        return this;
+    }
+
+    @Override
+    public AccuMap<K, V, A> addAll(Iterator<K> keys, V value) {
         if(isEmpty()) {
             this.it = keys;
             this.value = value;
@@ -119,121 +149,61 @@ implements AccuMap<K, V> {
         } else if(!keys.hasNext()) {
             return this;
         } else {
-            return merge(keys, value);
+            HashAccuMap<K, V, A> res = emptyHashMap();
+            if(currentKey != null) {
+                res.put(currentKey, currentAccumulatedValue);
+            }
+            return res
+                    .addAll(it, this.value)
+                    .addAll(keys, value);
         }
     }
-}
 
-
-/* ************ *
- * Non-additive *
- * ************ */
-
-class EmptyNonAdditiveMap<K, V> extends AccuMap.Empty<K, V> {
-
-    private static AccuMap.Empty<?, ?> INSTANCE = new EmptyNonAdditiveMap<>();
-
-    @SuppressWarnings("unchecked")
-    static <K, V> AccuMap.Empty<K, V> instance() {
-        return (AccuMap.Empty<K, V>) INSTANCE;
-    }
-
-    // private constructor to prevent instantiation
-    private EmptyNonAdditiveMap() {}
-
-    @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
-        return new SingleIterationNonAdditiveMap<K, V>(keys, value);
-    }
-}
-
-class SingleIterationNonAdditiveMap<K, V> extends SingleIterationAccuMap<K, V> {
-
-    SingleIterationNonAdditiveMap(Iterator<K> keys, V value) {
-        super(keys, value);
-    }
-
-    @Override
-    public AccuMap.Empty<K, V> empty() {
-        return EmptyNonAdditiveMap.instance();
-    }
-
-    @Override
-    protected AccuMap<K, V> merge(Iterator<K> keys, V value) {
-        throw new IllegalStateException("Cannot accept additional"
-                + " entries before removing all previous entries.");
-    }
-}
-
-
-/* ************ *
- * Accumulative *
- * ************ */
-
-abstract class SingleIterationAccumulationMap<K, V, A>
-extends SingleIterationAccuMap<K, V> {
-
-    SingleIterationAccumulationMap(Iterator<K> keys, V value) {
-        super(keys, value);
-    }
-
-    protected abstract AccuMap<K, V> emptyComplex();
-
-    @Override
-    protected AccuMap<K, V> merge(Iterator<K> keys, V val) {
-        AccuMap<K, V> res = emptyComplex();
-        res.addAll(getKeys(), getValue());
-        res.addAll(keys, val);
-        return res;
+    private final void checkPeeked() {
+        if(currentKey == null) {
+            throw new NoSuchElementException("No peeked value present. Use peek() first.");
+        }
     }
 }
 
 @SuppressWarnings("serial")
-abstract class AccumulationMap<K, V, A> extends HashMap<K, A> implements AccuMap<K, V> {
+abstract class HashAccuMap<K, V, A> extends HashMap<K, A> implements AccuMap<K, V, A> {
 
-    protected abstract AccumulatorSize size(A accum);
-    protected abstract V head(A accum);
-    protected abstract A tail(A accum);
     protected abstract A initialAccumulator(V value);
     protected abstract A reduce(A accum, V value);
 
     @Override
-    public Tuple3<K, V, AccuMap<K, V>> takeOne() {
-        K observer = pickKey();
-        A accum = this.get(observer);
-        AccumulatorSize n = size(accum);
-        V first = head(accum);
-        switch(n) {
-            case ZERO: throw new AssertionError("Unreachable code");
-            case ONE: this.remove(observer); break;
-            case MANY:
-                accum = tail(accum);
-                if(size(accum) == AccumulatorSize.ZERO) {
-                    throw new RuntimeException("tail() and size() don't obey the contract: tail of MANY cannot be ZERO");
-                }
-                this.put(observer, accum);
-                break;
-        }
-        return t(observer, first, isEmpty() ? empty() : this);
+    public Tuple2<K, A> peek() {
+        K key = pickKey();
+        A acc = this.get(key);
+        return t(key, acc);
     }
 
     @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
+    public AccuMap<K, V, A> dropPeeked() {
+        K key = pickKey();
+        this.remove(key);
+        return this;
+    }
+
+    @Override
+    public AccuMap<K, V, A> updatePeeked(A newAccumulatedValue) {
+        K key = pickKey();
+        this.put(key, newAccumulatedValue);
+        return this;
+    }
+
+    @Override
+    public AccuMap<K, V, A> addAll(Iterator<K> keys, V value) {
         while(keys.hasNext()) {
-            K observer = keys.next();
-            if(this.containsKey(observer)) {
-                A accum = this.get(observer);
+            K key = keys.next();
+            if(this.containsKey(key)) {
+                A accum = this.get(key);
                 accum = reduce(accum, value);
-                if(size(accum) != AccumulatorSize.ZERO) {
-                    this.put(observer, accum);
-                } else {
-                    this.remove(observer);
-                }
+                this.put(key, accum);
             } else {
                 A accum = initialAccumulator(value);
-                if(size(accum) != AccumulatorSize.ZERO) {
-                    this.put(observer, accum);
-                }
+                this.put(key, accum);
             }
         }
         return this;
@@ -245,110 +215,115 @@ abstract class AccumulationMap<K, V, A> extends HashMap<K, A> implements AccuMap
 }
 
 
+/* ************ *
+ * Non-additive *
+ * ************ */
+
+class EmptyNonAdditiveMap<K, V> extends AccuMap.Empty<K, V, V> {
+
+    private static AccuMap.Empty<?, ?, ?> INSTANCE = new EmptyNonAdditiveMap<>();
+
+    @SuppressWarnings("unchecked")
+    static <K, V> AccuMap.Empty<K, V, V> instance() {
+        return (AccuMap.Empty<K, V, V>) INSTANCE;
+    }
+
+    // private constructor to prevent instantiation
+    private EmptyNonAdditiveMap() {}
+
+    @Override
+    public AccuMap<K, V, V> addAll(Iterator<K> keys, V value) {
+        return new IteratorBasedNonAdditiveMap<>(keys, value);
+    }
+}
+
+class IteratorBasedNonAdditiveMap<K, V> extends IteratorBasedAccuMap<K, V, V> {
+
+    IteratorBasedNonAdditiveMap(Iterator<K> keys, V value) {
+        super(keys, value);
+    }
+
+    @Override
+    public AccuMap.Empty<K, V, V> empty() {
+        return EmptyNonAdditiveMap.instance();
+    }
+
+    @Override
+    protected HashAccuMap<K, V, V> emptyHashMap() {
+        throw new IllegalStateException("Cannot accept additional"
+                + " entries before removing all previous entries.");
+    }
+
+    @Override
+    protected V initialAccumulator(V value) {
+        return value;
+    }
+}
+
+
 /* ******************** *
  * General Accumulation *
  * ******************** */
 
-final class EmptyGeneralAccumulationMap<K, V, A> extends AccuMap.Empty<K, V> {
-    private final Function<? super A, AccumulatorSize> size;
-    private final Function<? super A, ? extends V> head;
-    private final Function<? super A, ? extends A> tail;
+final class EmptyGeneralAccuMap<K, V, A> extends AccuMap.Empty<K, V, A> {
     private final Function<? super V, ? extends A> initialTransformation;
     private final BiFunction<? super A, ? super V, ? extends A> reduction;
 
-    EmptyGeneralAccumulationMap(
-            Function<? super A, AccumulatorSize> size,
-            Function<? super A, ? extends V> head,
-            Function<? super A, ? extends A> tail,
+    EmptyGeneralAccuMap(
             Function<? super V, ? extends A> initialTransformation,
             BiFunction<? super A, ? super V, ? extends A> reduction) {
-        this.size = size;
-        this.head = head;
-        this.tail = tail;
         this.initialTransformation = initialTransformation;
         this.reduction = reduction;
     }
 
     @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
-        return new SingleIterationGeneralAccumulationMap<>(
-                size, head, tail, initialTransformation, reduction,
-                keys, value);
+    public AccuMap<K, V, A> addAll(Iterator<K> keys, V value) {
+        return new IteratorBasedGeneralAccuMap<>(
+                initialTransformation, reduction, keys, value);
     }
 }
 
-final class SingleIterationGeneralAccumulationMap<K, V, A>
-extends SingleIterationAccumulationMap<K, V, A> {
-    private final Function<? super A, AccumulatorSize> size;
-    private final Function<? super A, ? extends V> head;
-    private final Function<? super A, ? extends A> tail;
+final class IteratorBasedGeneralAccuMap<K, V, A>
+extends IteratorBasedAccuMap<K, V, A> {
     private final Function<? super V, ? extends A> initialTransformation;
     private final BiFunction<? super A, ? super V, ? extends A> reduction;
 
-    SingleIterationGeneralAccumulationMap(
-            Function<? super A, AccumulatorSize> size,
-            Function<? super A, ? extends V> head,
-            Function<? super A, ? extends A> tail,
+    IteratorBasedGeneralAccuMap(
             Function<? super V, ? extends A> initialTransformation,
             BiFunction<? super A, ? super V, ? extends A> reduction,
             Iterator<K> keys,
             V value) {
         super(keys, value);
-        this.size = size;
-        this.head = head;
-        this.tail = tail;
         this.initialTransformation = initialTransformation;
         this.reduction = reduction;
     }
 
     @Override
-    protected AccuMap<K, V> emptyComplex() {
-        return new GeneralAccumulationMap<>(
-                size, head, tail, initialTransformation, reduction);
+    protected HashAccuMap<K, V, A> emptyHashMap() {
+        return new HashGeneralAccuMap<>(initialTransformation, reduction);
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
-        return new EmptyGeneralAccumulationMap<>(
-                size, head, tail, initialTransformation, reduction);
+    public AccuMap.Empty<K, V, A> empty() {
+        return new EmptyGeneralAccuMap<>(initialTransformation, reduction);
+    }
+
+    @Override
+    protected A initialAccumulator(V value) {
+        return initialTransformation.apply(value);
     }
 }
 
 @SuppressWarnings("serial")
-final class GeneralAccumulationMap<K, V, A>
-extends AccumulationMap<K, V, A> {
-    private final Function<? super A, AccumulatorSize> size;
-    private final Function<? super A, ? extends V> head;
-    private final Function<? super A, ? extends A> tail;
+final class HashGeneralAccuMap<K, V, A> extends HashAccuMap<K, V, A> {
     private final Function<? super V, ? extends A> initialTransformation;
     private final BiFunction<? super A, ? super V, ? extends A> reduction;
 
-    GeneralAccumulationMap(
-            Function<? super A, AccumulatorSize> size,
-            Function<? super A, ? extends V> head,
-            Function<? super A, ? extends A> tail,
+    HashGeneralAccuMap(
             Function<? super V, ? extends A> initialTransformation,
             BiFunction<? super A, ? super V, ? extends A> reduction) {
-        this.size = size;
-        this.head = head;
-        this.tail = tail;
         this.initialTransformation = initialTransformation;
         this.reduction = reduction;
-    }
-
-    @Override
-    protected AccumulatorSize size(A accum) {
-        return size.apply(accum);
-    }
-
-    @Override
-    protected V head(A accum) {
-        return head.apply(accum);
-    }
-
-    @Override
-    protected A tail(A accum) {
-        return tail.apply(accum);
     }
 
     @Override
@@ -362,38 +337,34 @@ extends AccumulationMap<K, V, A> {
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
-        return new EmptyGeneralAccumulationMap<>(
-                size, head, tail, initialTransformation, reduction);
+    public AccuMap.Empty<K, V, A> empty() {
+        return new EmptyGeneralAccuMap<>(initialTransformation, reduction);
     }
 }
 
 
-/* ******** *
- * Reducing *
- * ******** */
+/* ********* *
+ * Reduction *
+ * ********* */
+
+abstract class IteratorBasedReductionMap<K, V>
+extends IteratorBasedAccuMap<K, V, V> {
+
+    IteratorBasedReductionMap(Iterator<K> keys, V value) {
+        super(keys, value);
+    }
+
+    @Override
+    protected final V initialAccumulator(V value) {
+        return value;
+    }
+}
 
 @SuppressWarnings("serial")
-abstract class ReductionMap<K, V>
-extends AccumulationMap<K, V, V> {
+abstract class HashReductionMap<K, V> extends HashAccuMap<K, V, V> {
 
     @Override
-    protected AccumulatorSize size(V accum) {
-        return AccumulatorSize.ONE;
-    }
-
-    @Override
-    protected V head(V accum) {
-        return accum;
-    }
-
-    @Override
-    protected V tail(V accum) {
-        throw new NoSuchElementException();
-    }
-
-    @Override
-    protected V initialAccumulator(V value) {
+    protected final V initialAccumulator(V value) {
         return value;
     }
 }
@@ -403,7 +374,7 @@ extends AccumulationMap<K, V, V> {
  * General Reduction *
  * ***************** */
 
-final class EmptyGeneralReductionMap<K, V> extends AccuMap.Empty<K, V> {
+final class EmptyGeneralReductionMap<K, V> extends AccuMap.Empty<K, V, V> {
     private final BinaryOperator<V> reduction;
 
     EmptyGeneralReductionMap(BinaryOperator<V> reduction) {
@@ -411,16 +382,16 @@ final class EmptyGeneralReductionMap<K, V> extends AccuMap.Empty<K, V> {
     }
 
     @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
-        return new SingleIterationGeneralReductionMap<>(reduction, keys, value);
+    public AccuMap<K, V, V> addAll(Iterator<K> keys, V value) {
+        return new IteratorBasedGeneralReductionMap<>(reduction, keys, value);
     }
 }
 
-final class SingleIterationGeneralReductionMap<K, V>
-extends SingleIterationAccumulationMap<K, V, V> {
+final class IteratorBasedGeneralReductionMap<K, V>
+extends IteratorBasedReductionMap<K, V> {
     private final BinaryOperator<V> reduction;
 
-    SingleIterationGeneralReductionMap(
+    IteratorBasedGeneralReductionMap(
             BinaryOperator<V> reduction,
             Iterator<K> keys, V value) {
         super(keys, value);
@@ -428,21 +399,21 @@ extends SingleIterationAccumulationMap<K, V, V> {
     }
 
     @Override
-    protected AccuMap<K, V> emptyComplex() {
-        return new GeneralReductionMap<K, V>(reduction);
+    protected HashAccuMap<K, V, V> emptyHashMap() {
+        return new HashGeneralReductionMap<K, V>(reduction);
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
+    public AccuMap.Empty<K, V, V> empty() {
         return new EmptyGeneralReductionMap<>(reduction);
     }
 }
 
 @SuppressWarnings("serial")
-final class GeneralReductionMap<K, V> extends ReductionMap<K, V> {
+final class HashGeneralReductionMap<K, V> extends HashReductionMap<K, V> {
     private final BinaryOperator<V> reduction;
 
-    public GeneralReductionMap(BinaryOperator<V> reduction) {
+    public HashGeneralReductionMap(BinaryOperator<V> reduction) {
         this.reduction = reduction;
     }
 
@@ -452,7 +423,7 @@ final class GeneralReductionMap<K, V> extends ReductionMap<K, V> {
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
+    public AccuMap.Empty<K, V, V> empty() {
         return new EmptyGeneralReductionMap<>(reduction);
     }
 
@@ -463,45 +434,45 @@ final class GeneralReductionMap<K, V> extends ReductionMap<K, V> {
  * Retain Oldest *
  * ************* */
 
-final class EmptyRetainOldestMap<K, V> extends AccuMap.Empty<K, V> {
+final class EmptyRetainOldestMap<K, V> extends AccuMap.Empty<K, V, V> {
 
-    private static final AccuMap.Empty<?, ?> INSTANCE = new EmptyRetainOldestMap<>();
+    private static final AccuMap.Empty<?, ?, ?> INSTANCE = new EmptyRetainOldestMap<>();
 
     @SuppressWarnings("unchecked")
-    static <K, V> Empty<K, V> instance() {
-        return (Empty<K, V>) INSTANCE;
+    static <K, V> Empty<K, V, V> instance() {
+        return (Empty<K, V, V>) INSTANCE;
     }
 
     // private constructor to prevent instantiation
     private EmptyRetainOldestMap() {}
 
     @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
-        return new SingleIterationRetainOldestMap<>(keys, value);
+    public AccuMap<K, V, V> addAll(Iterator<K> keys, V value) {
+        return new IteratorBasedRetainOldestMap<>(keys, value);
     }
 }
 
-final class SingleIterationRetainOldestMap<K, V>
-extends SingleIterationAccumulationMap<K, V, V> {
+final class IteratorBasedRetainOldestMap<K, V>
+extends IteratorBasedReductionMap<K, V> {
 
-    SingleIterationRetainOldestMap(Iterator<K> keys, V value) {
+    IteratorBasedRetainOldestMap(Iterator<K> keys, V value) {
         super(keys, value);
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
+    public AccuMap.Empty<K, V, V> empty() {
         return EmptyRetainOldestMap.instance();
     }
 
     @Override
-    protected AccuMap<K, V> emptyComplex() {
-        return new RetainOldestMap<>();
+    protected HashAccuMap<K, V, V> emptyHashMap() {
+        return new HashRetainOldestMap<>();
     }
 }
 
 @SuppressWarnings("serial")
-final class RetainOldestMap<K, V>
-extends ReductionMap<K, V> {
+final class HashRetainOldestMap<K, V>
+extends HashReductionMap<K, V> {
 
     @Override
     protected V reduce(V accum, V value) {
@@ -509,7 +480,7 @@ extends ReductionMap<K, V> {
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
+    public AccuMap.Empty<K, V, V> empty() {
         return EmptyRetainOldestMap.instance();
     }
 }
@@ -519,45 +490,45 @@ extends ReductionMap<K, V> {
  * Retain Latest *
  * ************* */
 
-final class EmptyRetainLatestMap<K, V> extends AccuMap.Empty<K, V> {
+final class EmptyRetainLatestMap<K, V> extends AccuMap.Empty<K, V, V> {
 
-    private static final AccuMap.Empty<?, ?> INSTANCE = new EmptyRetainLatestMap<>();
+    private static final AccuMap.Empty<?, ?, ?> INSTANCE = new EmptyRetainLatestMap<>();
 
     @SuppressWarnings("unchecked")
-    static <K, V> AccuMap.Empty<K, V> instance() {
-        return (AccuMap.Empty<K, V>) INSTANCE;
+    static <K, V> AccuMap.Empty<K, V, V> instance() {
+        return (AccuMap.Empty<K, V, V>) INSTANCE;
     }
 
     // private constructor to prevent instantiation
     private EmptyRetainLatestMap() {}
 
     @Override
-    public AccuMap<K, V> addAll(Iterator<K> keys, V value) {
-        return new SingleIterationRetainLatestMap<>(keys, value);
+    public AccuMap<K, V, V> addAll(Iterator<K> keys, V value) {
+        return new IteratorBasedRetainLatestMap<>(keys, value);
     }
 }
 
-final class SingleIterationRetainLatestMap<K, V>
-extends SingleIterationAccumulationMap<K, V, V> {
+final class IteratorBasedRetainLatestMap<K, V>
+extends IteratorBasedReductionMap<K, V> {
 
-    SingleIterationRetainLatestMap(Iterator<K> keys, V value) {
+    IteratorBasedRetainLatestMap(Iterator<K> keys, V value) {
         super(keys, value);
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
+    public AccuMap.Empty<K, V, V> empty() {
         return EmptyRetainLatestMap.instance();
     }
 
     @Override
-    protected AccuMap<K, V> emptyComplex() {
-        return new RetainLatestMap<>();
+    protected HashAccuMap<K, V, V> emptyHashMap() {
+        return new HashRetainLatestMap<>();
     }
 }
 
 @SuppressWarnings("serial")
-final class RetainLatestMap<K, V>
-extends ReductionMap<K, V> {
+final class HashRetainLatestMap<K, V>
+extends HashReductionMap<K, V> {
 
     @Override
     protected V reduce(V accum, V value) {
@@ -565,7 +536,7 @@ extends ReductionMap<K, V> {
     }
 
     @Override
-    public AccuMap.Empty<K, V> empty() {
+    public AccuMap.Empty<K, V, V> empty() {
         return EmptyRetainLatestMap.instance();
     }
 }
@@ -575,85 +546,73 @@ extends ReductionMap<K, V> {
  * List change accumulation *
  * ************************ */
 
-final class EmptyListChangeAccuMap<K, E>
-extends AccuMap.Empty<K, ListChange<? extends E>> {
+final class EmptyListChangeAccuMap<E>
+extends AccuMap.Empty<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> {
 
-    private static final AccuMap.Empty<?, ?> INSTANCE = new EmptyListChangeAccuMap<>();
+    private static final AccuMap.Empty<?, ?, ?> INSTANCE = new EmptyListChangeAccuMap<>();
 
     @SuppressWarnings("unchecked")
-    static <K, E> AccuMap.Empty<K, ListChange<? extends E>> instance() {
-        return (AccuMap.Empty<K, ListChange<? extends E>>) INSTANCE;
+    static <E> AccuMap.Empty<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> instance() {
+        return (AccuMap.Empty<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>>) INSTANCE;
     }
 
     // private constructor to prevent instantiation
     private EmptyListChangeAccuMap() {}
 
     @Override
-    public AccuMap<K, ListChange<? extends E>> addAll(
-            Iterator<K> keys,
+    public AccuMap<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> addAll(
+            Iterator<ObsList.Observer<? super E, ?>> keys,
             ListChange<? extends E> value) {
-        return new SingleIterationListChangeAccuMap<>(keys, value);
+        return new IteratorBasedListChangeAccuMap<>(keys, value);
     }
 }
 
-final class SingleIterationListChangeAccuMap<K, E>
-extends SingleIterationAccumulationMap<K, ListChange<? extends E>, ListChangeAccumulator<E>> {
+final class IteratorBasedListChangeAccuMap<E>
+extends IteratorBasedAccuMap<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> {
 
-    SingleIterationListChangeAccuMap(
-            Iterator<K> keys,
+    IteratorBasedListChangeAccuMap(
+            Iterator<ObsList.Observer<? super E, ?>> keys,
             ListChange<? extends E> value) {
         super(keys, value);
     }
 
     @Override
-    public AccuMap<K, ListChange<? extends E>> empty() {
+    public AccuMap.Empty<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> empty() {
         return EmptyListChangeAccuMap.instance();
     }
 
     @Override
-    protected AccuMap<K, ListChange<? extends E>> emptyComplex() {
-        return new ListChangeAccuMap<>();
+    protected HashAccuMap<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> emptyHashMap() {
+        return new HashListChangeAccuMap<>();
+    }
+
+    @Override
+    protected ListModificationSequence<E> initialAccumulator(
+            ListChange<? extends E> value) {
+        return ListChange.safeCast(value);
     }
 }
 
 @SuppressWarnings("serial")
-final class ListChangeAccuMap<K, E>
-extends AccumulationMap<K, ListChange<? extends E>, ListChangeAccumulator<E>> {
+final class HashListChangeAccuMap<E>
+extends HashAccuMap<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> {
 
     @Override
-    public AccuMap<K, ListChange<? extends E>> empty() {
+    public AccuMap.Empty<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> empty() {
         return EmptyListChangeAccuMap.instance();
     }
 
     @Override
-    protected AccumulatorSize size(ListChangeAccumulator<E> accum) {
-        return accum.isEmpty() ? AccumulatorSize.ZERO : AccumulatorSize.ONE;
-    }
-
-    @Override
-    protected ListChange<? extends E> head(ListChangeAccumulator<E> accum) {
-        return accum.fetch();
-    }
-
-    @Override
-    protected ListChangeAccumulator<E> tail(ListChangeAccumulator<E> accum) {
-        throw new NoSuchElementException();
-    }
-
-    @Override
-    protected ListChangeAccumulator<E> initialAccumulator(
+    protected ListModificationSequence<E> initialAccumulator(
             ListChange<? extends E> value) {
-        ListChangeAccumulator<E> res = new ListChangeAccumulator<>();
-        res.add(value);
-        return res;
+        return ListChange.safeCast(value);
     }
 
     @Override
     protected ListChangeAccumulator<E> reduce(
-            ListChangeAccumulator<E> accum,
+            ListModificationSequence<E> accum,
             ListChange<? extends E> value) {
-        accum.add(value);
-        return accum;
+        return accum.asListChangeAccumulator().add(value);
     }
 
 }

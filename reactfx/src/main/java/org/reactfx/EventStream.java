@@ -407,32 +407,56 @@ public interface EventStream<T> {
      * a sequence of events that are emitted from the returned stream.
      *
      * <p>Note that {@link #suppressible()} is equivalent to
-     * {@code accumulative(t -> (Void) null, (a, t) -> a, a -> Collections.emptyList())}.
+     * <pre>
+     * {@code
+     * accumulative(
+     *     t -> (Void) null,                        // use null as accumulator
+     *     (a, t) -> a,                             // keep null as accumulator
+     *     a -> AccumulatorSize.ZERO,               // no events to be emitted from accumulator
+     *     a -> throw new NoSuchElementException(), // head is never called on empty accumulator
+     *     a -> throw new NoSuchElementException()) // tail is never called on empty accumulator
+     * }
+     * </pre>
      *
      * <p>Note that {@code reducible(reduction)} is equivalent to
-     * {@code accumulative(t -> t, reduction, t -> Collections.singletonList(t))}.
+     * <pre>
+     * {@code
+     * accumulative(
+     *     t -> t,                                // the event itself is the accumulator
+     *     reduction,
+     *     t -> AccumulatorSize.ONE,              // one event to be emitted
+     *     t -> t,                                // head of a single value is the value itself
+     *     t -> throw new NoSuchElementException) // tail is never called on accumulator of size one
+     * }
+     * </pre>
      *
      * @param initialTransformation Used to convert the first event after
      * suspension to the cumulative value.
      * @param accumulation Used to accumulate further incoming events to the
      * cumulative value.
-     * @param deconstruction Used to deconstruct a cumulative value into a
-     * sequence of events.
+     * @param size determines how many events can be emitted from the current
+     * cumulative value.
+     * @param head produces the first event off the cumulative value.
+     * @param tail returns a cumulative value that produces the same events
+     * as the given cumulative value, except the event returned by {@code head}.
+     * May be destructive for the given cumulative value.
      * @param <A> type of the cumulative value
      */
     default <A> SuspendableEventStream<T> accumulative(
             Function<? super T, ? extends A> initialTransformation,
             BiFunction<? super A, ? super T, ? extends A> accumulation,
-            Function<? super A, List<T>> deconstruction) {
+            Function<? super A, AccumulatorSize> size,
+            Function<? super A, ? extends T> head,
+            Function<? super A, ? extends A> tail) {
         return new AccumulativeEventStream<>(
-                this, initialTransformation, accumulation, deconstruction);
+                this, initialTransformation, accumulation, size, head, tail);
     }
 
     /**
      * Shortcut for
      * <pre>
      * {@code
-     * accumulative(initialTransformation, accumulation, deconstruction)
+     * accumulative(initialTransformation, accumulation, size, head, tail)
      *     .suspendWhen(condition)}
      * </pre>
      */
@@ -440,48 +464,63 @@ public interface EventStream<T> {
             ObservableValue<Boolean> condition,
             Function<? super T, ? extends A> initialTransformation,
             BiFunction<? super A, ? super T, ? extends A> accumulation,
-            Function<? super A, List<T>> deconstruction) {
-        return accumulative(initialTransformation, accumulation, deconstruction)
+            Function<? super A, AccumulatorSize> size,
+            Function<? super A, ? extends T> head,
+            Function<? super A, ? extends A> tail) {
+        return accumulative(initialTransformation, accumulation, size, head, tail)
                 .suspendWhen(condition);
     }
 
     /**
-     * A variation on {@link #accumulative(Function, BiFunction, Function)} to
-     * use when it is more convenient to provide a unit element of the
+     * A variation on
+     * {@link #accumulative(Function, BiFunction, Function, Function, Function)}
+     * to use when it is more convenient to provide a unit element of the
      * accumulation than to transform the initial event to a cumulative
      * value. It is equivalent to
-     * {@code accumulative(t -> accumulation.apply(unit.get(), t), accumulation, deconstruction)},
+     * {@code accumulative(t -> accumulation.apply(unit.get(), t), accumulation, size, head, tail)},
      * i.e. the initial transformation is achieved by accumulating the initial
      * event to the unit element.
      *
      * <p>Note that {@link #pausable()} is equivalent to
-     * {@code accumulative(ArrayList<T>::new, (l, t) -> { l.add(t); return l; }, l -> l)},
-     * i.e. the unit element is an empty list, accumulation is addition to the
-     * list and deconstruction of the accumulated value is a no-op, since the
-     * accumulated value is already a list of events.
+     * <pre>
+     * {@code
+     * accumulative(
+     *     LinkedList<T>::new,                     // the unit element is an empty queue
+     *     (q, t) -> { q.addLast(t); return q; },  // accumulation is addition to the queue
+     *     q -> AccumulatorSize.fromInt(q.size()), // size is the size of the queue
+     *     Deque::getFirst,                        // head is the first element of the queue
+     *     q -> { q.removeFirst(); return q; })    // tail removes the first element from the queue
+     * }
+     * </pre>
      *
      * @param unit Function that supplies unit element of the accumulation.
      * @param accumulation Used to accumulate further incoming events to the
      * cumulative value.
-     * @param deconstruction Used to deconstruct a cumulative value into a
-     * sequence of events.
+     * @param size determines how many events can be emitted from the current
+     * cumulative value.
+     * @param head produces the first event off the cumulative value.
+     * @param tail returns a cumulative value that produces the same events
+     * as the given cumulative value, except the event returned by {@code head}.
+     * May be destructive for the given cumulative value.
      * @param <A> type of the cumulative value
      */
     default <A> SuspendableEventStream<T> accumulative(
             Supplier<? extends A> unit,
             BiFunction<? super A, ? super T, ? extends A> accumulation,
-            Function<? super A, List<T>> deconstruction) {
+            Function<? super A, AccumulatorSize> size,
+            Function<? super A, ? extends T> head,
+            Function<? super A, ? extends A> tail) {
         Function<? super T, ? extends A> initialTransformation =
                 t -> accumulation.apply(unit.get(), t);
         return accumulative(
-                initialTransformation, accumulation, deconstruction);
+                initialTransformation, accumulation, size, head, tail);
     }
 
     /**
      * Shortcut for
      * <pre>
      * {@code
-     * accumulative(unit, accumulation, deconstruction)
+     * accumulative(unit, accumulation, size, head, tail)
      *     .suspendWhen(condition)}
      * </pre>
      */
@@ -489,8 +528,10 @@ public interface EventStream<T> {
             ObservableValue<Boolean> condition,
             Supplier<? extends A> unit,
             BiFunction<? super A, ? super T, ? extends A> accumulation,
-            Function<? super A, List<T>> deconstruction) {
-        return accumulative(unit, accumulation, deconstruction)
+            Function<? super A, AccumulatorSize> size,
+            Function<? super A, ? extends T> head,
+            Function<? super A, ? extends A> tail) {
+        return accumulative(unit, accumulation, size, head, tail)
                 .suspendWhen(condition);
     }
 

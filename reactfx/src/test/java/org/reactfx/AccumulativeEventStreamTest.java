@@ -4,9 +4,11 @@ import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.junit.Test;
+import org.reactfx.util.AccumulatorSize;
 
 public class AccumulativeEventStreamTest {
 
@@ -14,9 +16,11 @@ public class AccumulativeEventStreamTest {
     public void test() {
         EventSource<Integer> source = new EventSource<>();
         SuspendableEventStream<Integer> suspendable = source.accumulative(
-                () -> new ArrayList<Integer>(),
-                (l, i) -> { l.add(i*i); return l; },
-                l -> l);
+                () -> new LinkedList<Integer>(),
+                (l, i) -> { l.addLast(i); return l; },
+                l -> AccumulatorSize.fromInt(l.size()),
+                l -> l.getFirst(),
+                l -> { l.removeFirst(); return l; });
         List<Integer> emitted = new ArrayList<>();
         suspendable.subscribe(emitted::add);
 
@@ -27,7 +31,7 @@ public class AccumulativeEventStreamTest {
         });
         source.push(4);
 
-        assertEquals(Arrays.asList(1, 4, 9, 4), emitted);
+        assertEquals(Arrays.asList(1, 2, 3, 4), emitted);
     }
 
 }

@@ -27,4 +27,22 @@ public class PausableEventStreamTest {
         assertEquals(Arrays.asList(1, 2, 3, 4), emitted);
     }
 
+    @Test
+    public void testRecursion() {
+        EventSource<Integer> source = new EventSource<>();
+        SuspendableEventStream<Integer> suspendable = source.pausable();
+        List<Integer> emitted = new ArrayList<>();
+        suspendable.subscribe(emitted::add);
+        suspendable.subscribe(i -> {
+            if(i == 1) {
+                source.push(3);
+            }
+        });
+        suspendable.suspendWhile(() -> {
+            source.push(1);
+            source.push(2);
+        });
+
+        assertEquals(Arrays.asList(1, 2, 3), emitted);
+    }
 }

@@ -8,6 +8,8 @@ import javafx.beans.InvalidationListener;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
+import org.reactfx.EventStream;
+import org.reactfx.EventStreamBase;
 import org.reactfx.Subscription;
 import org.reactfx.collection.ObsList.ChangeObserver;
 import org.reactfx.util.AccumulatorSize;
@@ -125,6 +127,24 @@ public interface ObsList<E> extends ObservableList<E> {
         return map(this, f);
     }
 
+    default EventStream<ListChange<? extends E>> changes() {
+        return new EventStreamBase<ListChange<? extends E>>() {
+            @Override
+            protected Subscription bindToInputs() {
+                return observeChanges(this::emit);
+            }
+        };
+    }
+
+    default EventStream<TransientListModification<? extends E>> modifications() {
+        return new EventStreamBase<TransientListModification<? extends E>>() {
+            @Override
+            protected Subscription bindToInputs() {
+                return observeModifications(this::emit);
+            }
+        };
+    }
+
 
     /* ************** *
      * Static Methods *
@@ -144,6 +164,20 @@ public interface ObsList<E> extends ObservableList<E> {
             };
             list.addListener(listener);
             return () -> list.removeListener(listener);
+        }
+    }
+
+    static <E> EventStream<ListChange<? extends E>> changesOf(ObservableList<E> list) {
+        if(list instanceof ObsList) {
+            ObsList<E> lst = (ObsList<E>) list;
+            return lst.changes();
+        } else {
+            return new EventStreamBase<ListChange<? extends E>>() {
+                @Override
+                protected Subscription bindToInputs() {
+                    return ObsList.<E>observeChanges(list, this::emit);
+                }
+            };
         }
     }
 

@@ -1,5 +1,6 @@
 package org.reactfx.util;
 
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
@@ -27,6 +28,10 @@ public interface NotificationAccumulator<O, V> {
             BiFunction<? super A, ? super T, ? extends A> reduction) {
         return new AccumulativeStreamNotifications<>(
                 size, head, tail, initialTransformation, reduction);
+    }
+
+    static <T> NotificationAccumulator<Subscriber<? super T>, T> queuingStreamNotifications() {
+        return new QueuingStreamNotifications<>();
     }
 
     static <T> NotificationAccumulator<Subscriber<? super T>, T> reducingStreamNotifications(BinaryOperator<T> reduction) {
@@ -170,6 +175,43 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, A> {
     protected A tail(Subscriber<? super T> observer, A accumulatedValue) {
         return tail.apply( accumulatedValue);
     }
+}
+
+
+/* ************** *
+ * Queuing stream *
+ * ************** */
+
+final class QueuingStreamNotifications<T>
+extends NotificationAccumulatorBase<Subscriber<? super T>, T, Deque<T>> {
+
+    QueuingStreamNotifications() {
+        super(AccuMap.emptyQueueMap());
+    }
+
+    @Override
+    protected AccumulatorSize size(
+            Subscriber<? super T> observer,
+            Deque<T> accumulatedValue) {
+        return AccumulatorSize.fromInt(accumulatedValue.size());
+    }
+
+    @Override
+    protected Runnable head(
+            Subscriber<? super T> observer,
+            Deque<T> accumulatedValue) {
+        T t = accumulatedValue.getFirst();
+        return () -> observer.onEvent(t);
+    }
+
+    @Override
+    protected Deque<T> tail(
+            Subscriber<? super T> observer,
+            Deque<T> accumulatedValue) {
+        accumulatedValue.removeFirst();
+        return accumulatedValue;
+    }
+
 }
 
 

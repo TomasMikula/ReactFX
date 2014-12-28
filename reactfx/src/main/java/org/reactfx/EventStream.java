@@ -3,8 +3,6 @@ package org.reactfx;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletionStage;
@@ -1210,12 +1208,8 @@ public interface EventStream<T> {
     }
 
     default EventStream<T> onRecurseQueue() {
-        return onRecurseAccumulate(
-                () -> new LinkedList<T>(), // unit element is an empty queue
-                (q, t) -> { q.addLast(t); return q; }, // reduction is appending to the end of the queue
-                q -> AccumulatorSize.fromInt(q.size()), // size is the size of the queue
-                Deque::getFirst,
-                q -> { q.removeFirst(); return q; });
+        return new RecursiveStream<T>(
+                this, NotificationAccumulator.queuingStreamNotifications());
     }
 
     default EventStream<T> onRecurseRetainLatest() {

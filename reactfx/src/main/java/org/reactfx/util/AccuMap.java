@@ -2,8 +2,10 @@ package org.reactfx.util;
 
 import static org.reactfx.util.Tuples.*;
 
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -61,6 +63,10 @@ public interface AccuMap<K, V, A> {
             BiFunction<? super A, ? super V, ? extends A> reduction) {
         return new EmptyGeneralAccuMap<>(
                 initialTransformation, reduction);
+    }
+
+    static <K, V> Empty<K, V, Deque<V>> emptyQueueMap() {
+        return EmptyQueueMap.instance();
     }
 
     static <K, V> Empty<K, V, V> emptyReductionMap(BinaryOperator<V> reduction) {
@@ -339,6 +345,77 @@ final class HashGeneralAccuMap<K, V, A> extends HashAccuMap<K, V, A> {
     @Override
     public AccuMap.Empty<K, V, A> empty() {
         return new EmptyGeneralAccuMap<>(initialTransformation, reduction);
+    }
+}
+
+
+/* ***** *
+ * Queue *
+ * ***** */
+
+final class EmptyQueueMap<K, V> extends AccuMap.Empty<K, V, Deque<V>> {
+
+    private static AccuMap.Empty<?, ?, ?> INSTANCE = new EmptyQueueMap<>();
+
+    @SuppressWarnings("unchecked")
+    static <K, V> AccuMap.Empty<K, V, Deque<V>> instance() {
+        return (AccuMap.Empty<K, V, Deque<V>>) INSTANCE;
+    }
+
+    // private constructor to prevent instantiation
+    private EmptyQueueMap() {}
+
+    @Override
+    public AccuMap<K, V, Deque<V>> addAll(Iterator<K> keys, V value) {
+        return new IteratorBasedQueueMap<>(keys, value);
+    }
+}
+
+final class IteratorBasedQueueMap<K, V>
+extends IteratorBasedAccuMap<K, V, Deque<V>> {
+
+    IteratorBasedQueueMap(Iterator<K> keys, V value) {
+        super(keys, value);
+    }
+
+    @Override
+    public AccuMap.Empty<K, V, Deque<V>> empty() {
+        return EmptyQueueMap.instance();
+    }
+
+    @Override
+    protected HashAccuMap<K, V, Deque<V>> emptyHashMap() {
+        return new HashQueueMap<>();
+    }
+
+    @Override
+    protected Deque<V> initialAccumulator(V value) {
+        Deque<V> res = new LinkedList<>();
+        res.add(value);
+        return res;
+    }
+}
+
+@SuppressWarnings("serial")
+final class HashQueueMap<K, V>
+extends HashAccuMap<K, V, Deque<V>> {
+
+    @Override
+    public AccuMap.Empty<K, V, Deque<V>> empty() {
+        return EmptyQueueMap.instance();
+    }
+
+    @Override
+    protected Deque<V> initialAccumulator(V value) {
+        Deque<V> res = new LinkedList<>();
+        res.add(value);
+        return res;
+    }
+
+    @Override
+    protected Deque<V> reduce(Deque<V> accum, V value) {
+        accum.addLast(value);
+        return accum;
     }
 }
 

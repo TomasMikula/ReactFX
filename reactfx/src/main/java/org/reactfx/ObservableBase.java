@@ -58,13 +58,19 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
 
     @Override
     public final void notifyObservers(T event) {
-        try {
-            boolean added = runUnsafeAction(() -> {
-                // may throw if pendingNotifications not empty and recursion not allowed
-                pendingNotifications.addAll(ListHelper.iterator(observers), event);
-            });
-            if(!added) return;
+        enqueueNotifications(event);
+        notifyObservers();
+    }
 
+    protected final void enqueueNotifications(T event) {
+        runUnsafeAction(() -> {
+            // may throw if pendingNotifications not empty and recursion not allowed
+            pendingNotifications.addAll(ListHelper.iterator(observers), event);
+        });
+    }
+
+    protected final void notifyObservers() {
+        try {
             while(!pendingNotifications.isEmpty()) {
                 Runnable notification = pendingNotifications.takeOne();
                 runUnsafeAction(notification); // may throw

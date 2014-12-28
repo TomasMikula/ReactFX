@@ -19,7 +19,7 @@ import org.reactfx.util.NotificationAccumulator;
  * @param <O> type of the observer
  * @param <T> type of produced values
  */
-public abstract class ObservableBase<O, T> {
+public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
     private ListHelper<O> observers = null;
     private Subscription inputSubscription = null;
     private final NotificationAccumulator<O, T> pendingNotifications;
@@ -56,7 +56,8 @@ public abstract class ObservableBase<O, T> {
         return ListHelper.size(observers);
     }
 
-    protected final void notifyObservers(T event) {
+    @Override
+    public final void notifyObservers(T event) {
         try {
             boolean added = runUnsafeAction(() -> {
                 // may throw if pendingNotifications not empty and recursion not allowed
@@ -96,12 +97,14 @@ public abstract class ObservableBase<O, T> {
         // default implementation is empty
     }
 
-    protected final Subscription observe(O observer) {
+    @Override
+    public final Subscription observe(O observer) {
         addObserver(observer);
         return () -> removeObserver(observer);
     }
 
-    protected final void addObserver(O observer) {
+    @Override
+    public final void addObserver(O observer) {
         observers = ListHelper.add(observers, observer);
         if(ListHelper.size(observers) == 1) {
             runUnsafeAction(() -> inputSubscription = bindToInputs());
@@ -109,7 +112,8 @@ public abstract class ObservableBase<O, T> {
         newObserver(observer);
     }
 
-    protected final void removeObserver(O observer) {
+    @Override
+    public final void removeObserver(O observer) {
         observers = ListHelper.remove(observers, observer);
         if(ListHelper.isEmpty(observers) && inputSubscription != null) {
             runUnsafeAction(() -> {
@@ -117,5 +121,20 @@ public abstract class ObservableBase<O, T> {
                 inputSubscription = null;
             });
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return defaultHashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        return defaultEquals(o);
+    }
+
+    @Override
+    public String toString() {
+        return defaultToString();
     }
 }

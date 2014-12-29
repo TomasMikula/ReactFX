@@ -1,5 +1,6 @@
 package org.reactfx;
 
+import org.reactfx.util.AccumulationFacility;
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.NotificationAccumulator;
 
@@ -7,6 +8,7 @@ public abstract class SuspendableBase<O, T, A>
 extends ObservableBase<O, T>
 implements Suspendable {
     private final EventStream<T> input;
+    private final AccumulationFacility<T, A> af;
 
     private int suspended = 0;
     private boolean hasValue = false;
@@ -14,16 +16,23 @@ implements Suspendable {
 
     protected SuspendableBase(
             EventStream<T> input,
-            NotificationAccumulator<O, T, ?> pn) {
+            NotificationAccumulator<O, T, A> pn) {
         super(pn);
         this.input = input;
+        this.af = pn.getAccumulationFacility();
     }
 
     protected abstract AccumulatorSize sizeOf(A accum);
     protected abstract T headOf(A accum);
     protected abstract A tailOf(A accum);
-    protected abstract A initialAccumulator(T event);
-    protected abstract A reduce(A accum, T event);
+
+    protected A initialAccumulator(T value) {
+        return af.initialAccumulator(value);
+    }
+
+    protected A reduce(A accum, T value) {
+        return af.reduce(accum, value);
+    }
 
     protected final boolean isSuspended() {
         return suspended > 0;

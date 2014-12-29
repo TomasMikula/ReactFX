@@ -1,7 +1,6 @@
 package org.reactfx;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Deque;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
@@ -36,15 +35,13 @@ implements EventStreamHelpers<T>, SuspendableEventStream<T> {
 
     protected SuspendableEventStreamBase(
             EventStream<T> source,
-            NotificationAccumulator<Consumer<? super T>, T, ?> pn) {
+            NotificationAccumulator<Consumer<? super T>, T, A> pn) {
         super(source, pn);
     }
 }
 
 
 final class AccumulativeEventStream<T, A> extends SuspendableEventStreamBase<T, A> {
-    private final Function<? super T, ? extends A> initialTransformation;
-    private final BiFunction<? super A, ? super T, ? extends A> accumulation;
     private final Function<? super A, AccumulatorSize> size;
     private final Function<? super A, ? extends T> head;
     private final Function<? super A, ? extends A> tail;
@@ -57,8 +54,6 @@ final class AccumulativeEventStream<T, A> extends SuspendableEventStreamBase<T, 
             Function<? super A, ? extends T> head,
             Function<? super A, ? extends A> tail) {
         super(source, NotificationAccumulator.accumulativeStreamNotifications(size, head, tail, initialTransformation, accumulation));
-        this.initialTransformation = initialTransformation;
-        this.accumulation = accumulation;
         this.size = size;
         this.head = head;
         this.tail = tail;
@@ -78,51 +73,28 @@ final class AccumulativeEventStream<T, A> extends SuspendableEventStreamBase<T, 
     protected A tailOf(A accum) {
         return tail.apply(accum);
     }
-
-    @Override
-    protected A initialAccumulator(T event) {
-        return initialTransformation.apply(event);
-    }
-
-    @Override
-    protected A reduce(A accum, T event) {
-        return accumulation.apply(accum, event);
-    }
 }
 
 
-final class PausableEventStream<T> extends SuspendableEventStreamBase<T, List<T>> {
+final class PausableEventStream<T> extends SuspendableEventStreamBase<T, Deque<T>> {
 
     PausableEventStream(EventStream<T> source) {
         super(source, NotificationAccumulator.queuingStreamNotifications());
     }
 
     @Override
-    protected AccumulatorSize sizeOf(List<T> accum) {
+    protected AccumulatorSize sizeOf(Deque<T> accum) {
         return AccumulatorSize.fromInt(accum.size());
     }
 
     @Override
-    protected T headOf(List<T> accum) {
-        return accum.get(0);
+    protected T headOf(Deque<T> accum) {
+        return accum.getFirst();
     }
 
     @Override
-    protected List<T> tailOf(List<T> accum) {
-        accum.remove(0);
-        return accum;
-    }
-
-    @Override
-    protected List<T> initialAccumulator(T event) {
-        ArrayList<T> res = new ArrayList<>();
-        res.add(event);
-        return res;
-    }
-
-    @Override
-    protected List<T> reduce(List<T> accum, T event) {
-        accum.add(event);
+    protected Deque<T> tailOf(Deque<T> accum) {
+        accum.removeFirst();
         return accum;
     }
 }
@@ -132,7 +104,7 @@ abstract class AbstractReducibleEventStream<T> extends SuspendableEventStreamBas
 
     protected AbstractReducibleEventStream(
             EventStream<T> source,
-            NotificationAccumulator<Consumer<? super T>, T, ?> pn) {
+            NotificationAccumulator<Consumer<? super T>, T, T> pn) {
         super(source, pn);
     }
 
@@ -150,27 +122,15 @@ abstract class AbstractReducibleEventStream<T> extends SuspendableEventStreamBas
     protected final T tailOf(T accum) {
         throw new NoSuchElementException();
     }
-
-    @Override
-    protected final T initialAccumulator(T event) {
-        return event;
-    }
 }
 
 
 final class ReducibleEventStream<T> extends AbstractReducibleEventStream<T> {
-    private final BinaryOperator<T> reduction;
 
     public ReducibleEventStream(
             EventStream<T> source,
             BinaryOperator<T> reduction) {
         super(source, NotificationAccumulator.reducingStreamNotifications(reduction));
-        this.reduction = reduction;
-    }
-
-    @Override
-    protected T reduce(T accum, T event) {
-        return reduction.apply(accum, event);
     }
 }
 
@@ -180,42 +140,37 @@ final class ForgetfulEventStream<T> extends AbstractReducibleEventStream<T> {
     ForgetfulEventStream(EventStream<T> source) {
         super(source, NotificationAccumulator.retainLatestStreamNotifications());
     }
-
-    @Override
-    protected T reduce(T accum, T event) {
-        return event;
-    }
 }
 
 
-final class SuppressibleEventStream<T> extends SuspendableEventStreamBase<T, Void> {
+final class SuppressibleEventStream<T> extends SuspendableEventStreamBase<T, T> {
 
     SuppressibleEventStream(EventStream<T> source) {
         super(source, NotificationAccumulator.nonRecursiveStreamNotifications());
     }
 
     @Override
-    protected AccumulatorSize sizeOf(Void accum) {
+    protected AccumulatorSize sizeOf(T accum) {
         return AccumulatorSize.ZERO;
     }
 
     @Override
-    protected T headOf(Void accum) {
+    protected T headOf(T accum) {
         throw new NoSuchElementException();
     }
 
     @Override
-    protected Void tailOf(Void accum) {
+    protected T tailOf(T accum) {
         throw new NoSuchElementException();
     }
 
     @Override
-    protected Void initialAccumulator(T event) {
+    protected T initialAccumulator(T value) {
         return null;
     }
 
     @Override
-    protected Void reduce(Void accum, T event) {
+    protected T reduce(T accum, T value) {
         return null;
     }
 }

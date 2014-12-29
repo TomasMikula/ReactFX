@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import java.util.function.Consumer;
+
 import org.reactfx.util.NotificationAccumulator;
 
 
@@ -9,14 +11,14 @@ import org.reactfx.util.NotificationAccumulator;
  * @param <T> type of events emitted by this event stream.
  */
 public abstract class EventStreamBase<T>
-extends ObservableBase<Subscriber<? super T>, T>
+extends ObservableBase<Consumer<? super T>, T>
 implements EventStream<T> {
 
     public EventStreamBase() {
         this(NotificationAccumulator.nonRecursiveStreamNotifications());
     }
 
-    EventStreamBase(NotificationAccumulator<Subscriber<? super T>, T> pn) {
+    EventStreamBase(NotificationAccumulator<Consumer<? super T>, T> pn) {
         super(pn);
     }
 
@@ -25,7 +27,7 @@ implements EventStream<T> {
     }
 
     @Override
-    public final Subscription subscribe(Subscriber<? super T> subscriber) {
+    public final Subscription subscribe(Consumer<? super T> subscriber) {
         return observe(subscriber);
     }
 }

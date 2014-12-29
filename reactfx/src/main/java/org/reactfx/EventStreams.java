@@ -6,6 +6,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -40,7 +41,7 @@ public class EventStreams {
     private static final EventStream<?> NEVER = new EventStream<Object>() {
 
         @Override
-        public Subscription subscribe(Subscriber<? super Object> subscriber) {
+        public Subscription subscribe(Consumer<? super Object> subscriber) {
             return Subscription.EMPTY;
         }
     };
@@ -84,8 +85,8 @@ public class EventStreams {
             }
 
             @Override
-            protected void newObserver(Subscriber<? super O> subscriber) {
-                subscriber.onEvent(observable);
+            protected void newObserver(Consumer<? super O> subscriber) {
+                subscriber.accept(observable);
             }
         };
     }
@@ -105,8 +106,8 @@ public class EventStreams {
             }
 
             @Override
-            protected void newObserver(Subscriber<? super T> subscriber) {
-                subscriber.onEvent(observable.getValue());
+            protected void newObserver(Consumer<? super T> subscriber) {
+                subscriber.accept(observable.getValue());
             }
         };
     }
@@ -125,10 +126,10 @@ public class EventStreams {
             }
 
             @Override
-            protected void newObserver(Subscriber<? super T> subscriber) {
+            protected void newObserver(Consumer<? super T> subscriber) {
                 T val = observable.getValue();
                 if(val != null) {
-                    subscriber.onEvent(val);
+                    subscriber.accept(val);
                 }
             }
         };
@@ -234,8 +235,8 @@ public class EventStreams {
             }
 
             @Override
-            protected void newObserver(Subscriber<? super T> subscriber) {
-                subscriber.onEvent(previousValue);
+            protected void newObserver(Consumer<? super T> subscriber) {
+                subscriber.accept(previousValue);
             }
         };
     }

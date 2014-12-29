@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javafx.beans.value.ObservableValue;
@@ -41,7 +42,7 @@ implements SuspendableEventStream<T> {
 
     protected SuspendableEventStreamBase(
             EventStream<T> source,
-            NotificationAccumulator<Subscriber<? super T>, T> pn) {
+            NotificationAccumulator<Consumer<? super T>, T> pn) {
         super(pn);
         this.source = source;
     }
@@ -193,7 +194,7 @@ abstract class AbstractReducibleEventStream<T> extends SuspendableEventStreamBas
 
     protected AbstractReducibleEventStream(
             EventStream<T> source,
-            NotificationAccumulator<Subscriber<? super T>, T> pn) {
+            NotificationAccumulator<Consumer<? super T>, T> pn) {
         super(source, pn);
     }
 

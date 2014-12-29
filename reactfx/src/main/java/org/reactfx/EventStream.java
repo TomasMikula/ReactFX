@@ -44,7 +44,7 @@ public interface EventStream<T> {
      * @return subscription that can be used to stop observing this event
      * stream.
      */
-    Subscription subscribe(Subscriber<? super T> subscriber);
+    Subscription subscribe(Consumer<? super T> subscriber);
 
     /**
      * Starts pushing all events emitted by this stream to the given event sink.

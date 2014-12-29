@@ -5,9 +5,9 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.reactfx.Subscriber;
 import org.reactfx.collection.ListChange;
 import org.reactfx.collection.ListModificationSequence;
 import org.reactfx.collection.ObsList;
@@ -20,7 +20,7 @@ import org.reactfx.util.AccuMap.Empty;
  */
 public interface NotificationAccumulator<O, V> {
 
-    static <T, A> NotificationAccumulator<Subscriber<? super T>, T> accumulativeStreamNotifications(
+    static <T, A> NotificationAccumulator<Consumer<? super T>, T> accumulativeStreamNotifications(
             Function<? super A, AccumulatorSize> size,
             Function<? super A, ? extends T> head,
             Function<? super A, ? extends A> tail,
@@ -30,19 +30,19 @@ public interface NotificationAccumulator<O, V> {
                 size, head, tail, initialTransformation, reduction);
     }
 
-    static <T> NotificationAccumulator<Subscriber<? super T>, T> queuingStreamNotifications() {
+    static <T> NotificationAccumulator<Consumer<? super T>, T> queuingStreamNotifications() {
         return new QueuingStreamNotifications<>();
     }
 
-    static <T> NotificationAccumulator<Subscriber<? super T>, T> reducingStreamNotifications(BinaryOperator<T> reduction) {
+    static <T> NotificationAccumulator<Consumer<? super T>, T> reducingStreamNotifications(BinaryOperator<T> reduction) {
         return new ReducingStreamNotifications<>(reduction);
     }
 
-    static <T> NotificationAccumulator<Subscriber<? super T>, T> retainLatestStreamNotifications() {
+    static <T> NotificationAccumulator<Consumer<? super T>, T> retainLatestStreamNotifications() {
         return new RetainLatestStreamNotifications<>();
     }
 
-    static <T> NotificationAccumulator<Subscriber<? super T>, T> nonRecursiveStreamNotifications() {
+    static <T> NotificationAccumulator<Consumer<? super T>, T> nonRecursiveStreamNotifications() {
         return new NonRecursiveStreamNotifications<>();
     }
 
@@ -113,7 +113,7 @@ implements NotificationAccumulator<O, V> {
  * ******************** */
 
 final class NonRecursiveStreamNotifications<T>
-extends NotificationAccumulatorBase<Subscriber<? super T>, T, T> {
+extends NotificationAccumulatorBase<Consumer<? super T>, T, T> {
 
     public NonRecursiveStreamNotifications() {
         super(AccuMap.emptyNonAdditiveMap());
@@ -121,18 +121,18 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, T> {
 
     @Override
     protected AccumulatorSize size(
-            Subscriber<? super T> observer,
+            Consumer<? super T> observer,
             T accumulatedValue) {
         return AccumulatorSize.ONE;
     }
 
     @Override
-    protected Runnable head(Subscriber<? super T> observer, T accumulatedValue) {
-        return () -> observer.onEvent(accumulatedValue);
+    protected Runnable head(Consumer<? super T> observer, T accumulatedValue) {
+        return () -> observer.accept(accumulatedValue);
     }
 
     @Override
-    protected T tail(Subscriber<? super T> observer, T accumulatedValue) {
+    protected T tail(Consumer<? super T> observer, T accumulatedValue) {
         throw new NoSuchElementException();
     }
 }
@@ -143,7 +143,7 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, T> {
  * ******************* */
 
 final class AccumulativeStreamNotifications<T, A>
-extends NotificationAccumulatorBase<Subscriber<? super T>, T, A> {
+extends NotificationAccumulatorBase<Consumer<? super T>, T, A> {
     private final Function<? super A, AccumulatorSize> size;
     private final Function<? super A, ? extends T> head;
     private final Function<? super A, ? extends A> tail;
@@ -161,18 +161,18 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, A> {
     }
 
     @Override
-    protected AccumulatorSize size(Subscriber<? super T> observer, A accumulatedValue) {
+    protected AccumulatorSize size(Consumer<? super T> observer, A accumulatedValue) {
         return size.apply(accumulatedValue);
     }
 
     @Override
-    protected Runnable head(Subscriber<? super T> observer, A accumulatedValue) {
+    protected Runnable head(Consumer<? super T> observer, A accumulatedValue) {
         T event = head.apply(accumulatedValue);
-        return () -> observer.onEvent(event);
+        return () -> observer.accept(event);
     }
 
     @Override
-    protected A tail(Subscriber<? super T> observer, A accumulatedValue) {
+    protected A tail(Consumer<? super T> observer, A accumulatedValue) {
         return tail.apply( accumulatedValue);
     }
 }
@@ -183,7 +183,7 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, A> {
  * ************** */
 
 final class QueuingStreamNotifications<T>
-extends NotificationAccumulatorBase<Subscriber<? super T>, T, Deque<T>> {
+extends NotificationAccumulatorBase<Consumer<? super T>, T, Deque<T>> {
 
     QueuingStreamNotifications() {
         super(AccuMap.emptyQueueMap());
@@ -191,22 +191,22 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, Deque<T>> {
 
     @Override
     protected AccumulatorSize size(
-            Subscriber<? super T> observer,
+            Consumer<? super T> observer,
             Deque<T> accumulatedValue) {
         return AccumulatorSize.fromInt(accumulatedValue.size());
     }
 
     @Override
     protected Runnable head(
-            Subscriber<? super T> observer,
+            Consumer<? super T> observer,
             Deque<T> accumulatedValue) {
         T t = accumulatedValue.getFirst();
-        return () -> observer.onEvent(t);
+        return () -> observer.accept(t);
     }
 
     @Override
     protected Deque<T> tail(
-            Subscriber<? super T> observer,
+            Consumer<? super T> observer,
             Deque<T> accumulatedValue) {
         accumulatedValue.removeFirst();
         return accumulatedValue;
@@ -220,27 +220,27 @@ extends NotificationAccumulatorBase<Subscriber<? super T>, T, Deque<T>> {
  * *************** */
 
 abstract class AbstractReducingStreamNotifications<T>
-extends NotificationAccumulatorBase<Subscriber<? super T>, T, T> {
+extends NotificationAccumulatorBase<Consumer<? super T>, T, T> {
 
     AbstractReducingStreamNotifications(
-            Empty<Subscriber<? super T>, T, T> accuMap) {
+            Empty<Consumer<? super T>, T, T> accuMap) {
         super(accuMap);
     }
 
     @Override
     protected final AccumulatorSize size(
-            Subscriber<? super T> observer,
+            Consumer<? super T> observer,
             T accumulatedValue) {
         return AccumulatorSize.ONE;
     }
 
     @Override
-    protected final Runnable head(Subscriber<? super T> observer, T accumulatedValue) {
-        return () -> observer.onEvent(accumulatedValue);
+    protected final Runnable head(Consumer<? super T> observer, T accumulatedValue) {
+        return () -> observer.accept(accumulatedValue);
     }
 
     @Override
-    protected final T tail(Subscriber<? super T> observer, T accumulatedValue) {
+    protected final T tail(Consumer<? super T> observer, T accumulatedValue) {
         throw new NoSuchElementException();
     }
 }

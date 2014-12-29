@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import java.util.function.Consumer;
+
 import org.reactfx.util.NotificationAccumulator;
 
 
@@ -8,7 +10,7 @@ class RecursiveStream<T> extends EventStreamBase<T> {
 
     public RecursiveStream(
             EventStream<T> input,
-            NotificationAccumulator<Subscriber<? super T>, T> pn) {
+            NotificationAccumulator<Consumer<? super T>, T> pn) {
         super(pn);
         this.input = input;
     }

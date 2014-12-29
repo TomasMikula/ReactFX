@@ -40,6 +40,9 @@ public abstract class Try<T> {
         public Try<T> orElse(Supplier<Try<T>> fallback) { return this; }
 
         @Override
+        public Try<T> orElseTry(Callable<? extends T> fallback) { return this; }
+
+        @Override
         public Try<T> recover(Function<Throwable, Optional<T>> f) { return this; }
 
         @Override
@@ -110,6 +113,9 @@ public abstract class Try<T> {
 
         @Override
         public Try<T> orElse(Supplier<Try<T>> fallback) { return fallback.get(); }
+
+        @Override
+        public Try<T> orElseTry(Callable<? extends T> fallback) { return tryGet(fallback); }
 
         @Override
         public Try<T> recover(Function<Throwable, Optional<T>> f) {
@@ -188,6 +194,7 @@ public abstract class Try<T> {
     public abstract Throwable getFailure();
     public abstract Try<T> orElse(Try<T> fallback);
     public abstract Try<T> orElse(Supplier<Try<T>> fallback);
+    public abstract Try<T> orElseTry(Callable<? extends T> fallback);
     public abstract Try<T> recover(Function<Throwable, Optional<T>> f);
     public abstract Optional<T> toOptional();
     public abstract void ifSuccess(Consumer<? super T> f);

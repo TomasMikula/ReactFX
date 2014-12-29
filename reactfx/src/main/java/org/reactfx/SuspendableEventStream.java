@@ -36,7 +36,7 @@ implements EventStreamHelpers<T>, SuspendableEventStream<T> {
 
     protected SuspendableEventStreamBase(
             EventStream<T> source,
-            NotificationAccumulator<Consumer<? super T>, T> pn) {
+            NotificationAccumulator<Consumer<? super T>, T, ?> pn) {
         super(source, pn);
     }
 }
@@ -132,7 +132,7 @@ abstract class AbstractReducibleEventStream<T> extends SuspendableEventStreamBas
 
     protected AbstractReducibleEventStream(
             EventStream<T> source,
-            NotificationAccumulator<Consumer<? super T>, T> pn) {
+            NotificationAccumulator<Consumer<? super T>, T, ?> pn) {
         super(source, pn);
     }
 

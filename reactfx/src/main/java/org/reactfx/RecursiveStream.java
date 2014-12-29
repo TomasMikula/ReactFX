@@ -10,7 +10,7 @@ class RecursiveStream<T> extends EventStreamBase<T> {
 
     public RecursiveStream(
             EventStream<T> input,
-            NotificationAccumulator<Consumer<? super T>, T> pn) {
+            NotificationAccumulator<Consumer<? super T>, T, ?> pn) {
         super(pn);
         this.input = input;
     }

@@ -18,7 +18,7 @@ implements EventStreamHelpers<T> {
         this(NotificationAccumulator.nonRecursiveStreamNotifications());
     }
 
-    EventStreamBase(NotificationAccumulator<Consumer<? super T>, T> pn) {
+    EventStreamBase(NotificationAccumulator<Consumer<? super T>, T, ?> pn) {
         super(pn);
     }
 }

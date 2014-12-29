@@ -14,7 +14,7 @@ implements Suspendable {
 
     protected SuspendableBase(
             EventStream<T> input,
-            NotificationAccumulator<O, T> pn) {
+            NotificationAccumulator<O, T, ?> pn) {
         super(pn);
         this.input = input;
     }

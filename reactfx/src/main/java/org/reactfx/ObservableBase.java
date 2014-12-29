@@ -22,9 +22,9 @@ import org.reactfx.util.NotificationAccumulator;
 public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
     private ListHelper<O> observers = null;
     private Subscription inputSubscription = null;
-    private final NotificationAccumulator<O, T> pendingNotifications;
+    private final NotificationAccumulator<O, T, ?> pendingNotifications;
 
-    protected ObservableBase(NotificationAccumulator<O, T> pendingNotificationsImpl) {
+    protected ObservableBase(NotificationAccumulator<O, T, ?> pendingNotificationsImpl) {
         this.pendingNotifications = pendingNotificationsImpl;
     }
 

@@ -31,75 +31,13 @@ public interface SuspendableEventStream<T> extends EventStream<T>, Suspendable {
 }
 
 abstract class SuspendableEventStreamBase<T, A>
-extends EventStreamBase<T>
-implements SuspendableEventStream<T> {
-
-    private final EventStream<T> source;
-
-    private int suspended = 0;
-    private boolean hasValue = false;
-    private A accumulatedValue = null;
+extends SuspendableBase<Consumer<? super T>, T, A>
+implements EventStreamHelpers<T>, SuspendableEventStream<T> {
 
     protected SuspendableEventStreamBase(
             EventStream<T> source,
             NotificationAccumulator<Consumer<? super T>, T> pn) {
-        super(pn);
-        this.source = source;
-    }
-
-    protected abstract AccumulatorSize sizeOf(A accum);
-    protected abstract T headOf(A accum);
-    protected abstract A tailOf(A accum);
-    protected abstract A initialAccumulator(T event);
-    protected abstract A reduce(A accum, T event);
-
-    protected final boolean isSuspended() {
-        return suspended > 0;
-    }
-
-    @Override
-    public final Guard suspend() {
-        ++suspended;
-        return Guard.closeableOnce(this::resume);
-    }
-
-    @Override
-    protected final Subscription bindToInputs() {
-        Subscription sub = source.subscribe(this::handleEvent);
-        return sub.and(this::reset);
-    }
-
-    private void resume() {
-        --suspended;
-        if(suspended == 0 && hasValue) {
-            while(sizeOf(accumulatedValue) == AccumulatorSize.MANY) {
-                enqueueNotifications(headOf(accumulatedValue));
-                accumulatedValue = tailOf(accumulatedValue);
-            }
-            if(sizeOf(accumulatedValue) == AccumulatorSize.ONE) {
-                enqueueNotifications(headOf(accumulatedValue));
-            }
-            reset();
-            notifyObservers();
-        }
-    }
-
-    private void reset() {
-        hasValue = false;
-        accumulatedValue = null;
-    }
-
-    private void handleEvent(T event) {
-        if(isSuspended()) {
-            if(hasValue) {
-                accumulatedValue = reduce(accumulatedValue, event);
-            } else {
-                accumulatedValue = initialAccumulator(event);
-                hasValue = true;
-            }
-        } else {
-            emit(event);
-        }
+        super(source, pn);
     }
 }
 

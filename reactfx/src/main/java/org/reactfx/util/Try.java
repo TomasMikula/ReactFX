@@ -3,6 +3,7 @@ package org.reactfx.util;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -168,9 +169,9 @@ public abstract class Try<T> {
         return new Failure<>(thrown);
     }
 
-    public static <T> Try<T> tryGet(Supplier<? extends T> f) {
+    public static <T> Try<T> tryGet(Callable<? extends T> f) {
         try {
-            return success(f.get());
+            return success(f.call());
         } catch(Throwable t) {
             return failure(t);
         }

@@ -19,6 +19,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.reactfx.util.Try;
 
 public class AwaitTest {
 
@@ -43,11 +44,11 @@ public class AwaitTest {
     public void testAwaitCompletionStage() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        AwaitingEventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).await(executor);
+        AwaitingEventStream<Try<Integer>> squares = src.mapToCompletionStage(x -> async(x*x)).await(executor);
         executor.execute(() -> {
             List<Object> res = aggregate(EventStreams.merge(
-                    mapped,
-                    EventStreams.valuesOf(mapped.pendingProperty())));
+                    squares.map(Try::get),
+                    EventStreams.valuesOf(squares.pendingProperty())));
             src.push(1);
             src.push(2);
             src.push(3);
@@ -61,11 +62,11 @@ public class AwaitTest {
     public void testAwaitTask() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        AwaitingEventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).await();
+        AwaitingEventStream<Try<Integer>> squares = src.mapToTask(x -> background(x*x)).await();
         Platform.runLater(() -> {
             List<Object> res = aggregate(EventStreams.merge(
-                    mapped,
-                    EventStreams.valuesOf(mapped.pendingProperty())));
+                    squares.map(Try::get),
+                    EventStreams.valuesOf(squares.pendingProperty())));
             src.push(1);
             src.push(2);
             src.push(3);
@@ -79,11 +80,11 @@ public class AwaitTest {
     public void testAwaitLatestCompletionStage() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        AwaitingEventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(executor);
+        AwaitingEventStream<Try<Integer>> squares = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(executor);
         executor.execute(() -> {
             List<Object> res = aggregate(EventStreams.merge(
-                    mapped,
-                    EventStreams.valuesOf(mapped.pendingProperty())));
+                    squares.map(Try::get),
+                    EventStreams.valuesOf(squares.pendingProperty())));
             src.push(1);
             src.push(2);
             executor.execute(() -> executor.execute(() -> {
@@ -99,11 +100,11 @@ public class AwaitTest {
     public void testAwaitLatestTask() throws InterruptedException, ExecutionException {
         CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
-        AwaitingEventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest();
+        AwaitingEventStream<Try<Integer>> squares = src.mapToTask(x -> background(x*x)).awaitLatest();
         executor.execute(() -> {
             List<Object> res = aggregate(EventStreams.merge(
-                    mapped,
-                    EventStreams.valuesOf(mapped.pendingProperty())));
+                    squares.map(Try::get),
+                    EventStreams.valuesOf(squares.pendingProperty())));
             src.push(1);
             src.push(2);
             executor.execute(() -> Platform.runLater(() -> {
@@ -120,11 +121,11 @@ public class AwaitTest {
         CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
         EventSource<Void> canceller = new EventSource<>();
-        AwaitingEventStream<Integer> mapped = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(canceller, executor);
+        AwaitingEventStream<Try<Integer>> squares = src.mapToCompletionStage(x -> async(x*x)).awaitLatest(canceller, executor);
         executor.execute(() -> {
             List<Object> res = aggregate(EventStreams.merge(
-                    mapped,
-                    EventStreams.valuesOf(mapped.pendingProperty())));
+                    squares.map(Try::get),
+                    EventStreams.valuesOf(squares.pendingProperty())));
             src.push(1);
             src.push(2);
             canceller.push(null);
@@ -147,11 +148,11 @@ public class AwaitTest {
         CompletableFuture<List<Object>> emitted = new CompletableFuture<>();
         EventSource<Integer> src = new EventSource<>();
         EventSource<Void> canceller = new EventSource<>();
-        AwaitingEventStream<Integer> mapped = src.mapToTask(x -> background(x*x)).awaitLatest(canceller);
+        AwaitingEventStream<Try<Integer>> squares = src.mapToTask(x -> background(x*x)).awaitLatest(canceller);
         Platform.runLater(() -> {
             List<Object> res = aggregate(EventStreams.merge(
-                    mapped,
-                    EventStreams.valuesOf(mapped.pendingProperty())));
+                    squares.map(Try::get),
+                    EventStreams.valuesOf(squares.pendingProperty())));
             src.push(1);
             src.push(2);
             canceller.push(null);

@@ -325,7 +325,7 @@ public class EventStreams {
         return new EventStreamBase<T>() {
             @Override
             protected Subscription bindToInputs() {
-                return Subscription.multi(i -> subscribeTo(i, this::emit), inputs);
+                return Subscription.multi(i -> i.subscribe(this::emit), inputs);
             }
         };
     }
@@ -342,7 +342,7 @@ public class EventStreams {
         return new EventStreamBase<T>() {
             @Override
             protected Subscription bindToInputs() {
-                return Subscription.dynamic(set, s -> subscribeTo(s, this::emit));
+                return Subscription.dynamic(set, s -> s.subscribe(this::emit));
             }
         };
     }
@@ -362,7 +362,7 @@ public class EventStreams {
             protected Subscription bindToInputs() {
                 return Subscription.dynamic(
                         set,
-                        t -> subscribeTo(f.apply(t), this::emit));
+                        t -> f.apply(t).subscribe(this::emit));
             }
         };
     }
@@ -377,8 +377,8 @@ public class EventStreams {
                 pocketA.clear();
                 pocketB.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }));
             }
 
             protected void tryEmit() {
@@ -401,9 +401,9 @@ public class EventStreams {
                 pocketB.clear();
                 pocketC.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
-                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
+                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }));
             }
 
             protected void tryEmit() {
@@ -426,8 +426,8 @@ public class EventStreams {
                 pocketA.clear();
                 pocketB.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }));
             }
 
             void tryEmit() {
@@ -453,9 +453,9 @@ public class EventStreams {
                 pocketB.clear();
                 pocketC.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
-                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
+                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }));
             }
 
             void tryEmit() {
@@ -484,10 +484,10 @@ public class EventStreams {
                 pocketC.clear();
                 pocketD.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
-                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }),
-                        subscribeTo(srcD, d -> { pocketD.set(d); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
+                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }),
+                        srcD.subscribe(d -> { pocketD.set(d); tryEmit(); }));
             }
 
             void tryEmit() {
@@ -522,11 +522,11 @@ public class EventStreams {
                 pocketD.clear();
                 pocketE.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
-                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }),
-                        subscribeTo(srcD, d -> { pocketD.set(d); tryEmit(); }),
-                        subscribeTo(srcE, e -> { pocketE.set(e); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
+                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }),
+                        srcD.subscribe(d -> { pocketD.set(d); tryEmit(); }),
+                        srcE.subscribe(e -> { pocketE.set(e); tryEmit(); }));
             }
 
             void tryEmit() {
@@ -565,12 +565,12 @@ public class EventStreams {
                 pocketE.clear();
                 pocketF.clear();
                 return Subscription.multi(
-                        subscribeTo(srcA, a -> { pocketA.set(a); tryEmit(); }),
-                        subscribeTo(srcB, b -> { pocketB.set(b); tryEmit(); }),
-                        subscribeTo(srcC, c -> { pocketC.set(c); tryEmit(); }),
-                        subscribeTo(srcD, d -> { pocketD.set(d); tryEmit(); }),
-                        subscribeTo(srcE, e -> { pocketE.set(e); tryEmit(); }),
-                        subscribeTo(srcF, f -> { pocketF.set(f); tryEmit(); }));
+                        srcA.subscribe(a -> { pocketA.set(a); tryEmit(); }),
+                        srcB.subscribe(b -> { pocketB.set(b); tryEmit(); }),
+                        srcC.subscribe(c -> { pocketC.set(c); tryEmit(); }),
+                        srcD.subscribe(d -> { pocketD.set(d); tryEmit(); }),
+                        srcE.subscribe(e -> { pocketE.set(e); tryEmit(); }),
+                        srcF.subscribe(f -> { pocketF.set(f); tryEmit(); }));
             }
 
             void tryEmit() {

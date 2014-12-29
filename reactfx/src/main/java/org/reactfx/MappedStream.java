@@ -18,7 +18,7 @@ class MappedStream<T, U> extends EventStreamBase<U> {
 
     @Override
     protected Subscription bindToInputs() {
-        return subscribeTo(input, value -> {
+        return input.subscribe(value -> {
             emit(f.apply(value));
         });
     }

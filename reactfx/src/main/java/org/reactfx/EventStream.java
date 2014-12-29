@@ -26,7 +26,6 @@ import org.reactfx.util.Either;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.NotificationAccumulator;
 import org.reactfx.util.Timer;
-import org.reactfx.util.Try;
 import org.reactfx.util.Tuple2;
 
 /**
@@ -40,44 +39,12 @@ import org.reactfx.util.Tuple2;
 public interface EventStream<T> {
 
     /**
-     * Get notified every time this event stream emits a value or encounters
-     * an error. An error is encountered when a user provided function (e.g.
-     * an event subscriber or an argument to a stream combinator, such as
-     * {@link #map(Function)}), throws an exception.
-     * @param subscriber handles emitted events and encountered errors.
+     * Get notified every time this event stream emits a value.
+     * @param subscriber handles emitted events.
      * @return subscription that can be used to stop observing this event
      * stream.
      */
     Subscription subscribe(Subscriber<? super T> subscriber);
-
-    /**
-     * Get notified every time this event stream emits a value or encounters
-     * an error. An error is encountered when a user provided function (e.g.
-     * an event subscriber or an argument to a stream combinator, such as
-     * {@link #map(Function)}), throws an exception.
-     * @param onEvent function to call on the emitted value.
-     * @param onError function to call for the encountered error.
-     * @return subscription that can be used to stop observing
-     * this event stream.
-     */
-    default Subscription subscribe(
-            Consumer<? super T> onEvent,
-            Consumer<? super Throwable> onError) {
-        return subscribe(Subscriber.create(onEvent, onError));
-    }
-
-    /**
-     * Get notified every time this event stream encounters an error. An error
-     * is encountered when a user provided function (e.g. an event subscriber
-     * or an argument to a stream combinator, such as {@link #map(Function)}),
-     * throws an exception.
-     * @param onError function to call for the encountered error.
-     * @return subscription that can be used to stop monitoring this event
-     * stream.
-     */
-    default Subscription monitor(Consumer<? super Throwable> onError) {
-        return subscribe(Subscriber.fromErrorHandler(onError));
-    }
 
     /**
      * Starts pushing all events emitted by this stream to the given event sink.
@@ -282,8 +249,8 @@ public interface EventStream<T> {
             @Override
             protected Subscription bindToInputs() {
                 return Subscription.multi(
-                        subscribeTo(left, l -> emit(Either.<T, U>left(l))),
-                        subscribeTo(right, r -> emit(Either.<T, U>right(r))));
+                        left.subscribe(l -> emit(Either.<T, U>left(l))),
+                        right.subscribe(r -> emit(Either.<T, U>right(r))));
             }
         };
     }
@@ -1314,57 +1281,5 @@ public interface EventStream<T> {
      */
     default EventStream<T> guardedBy(Guardian... guardians) {
         return new GuardedStream<>(this, guardians);
-    }
-
-    /**
-     * Returns a new event stream that emits every event {@code e} emitted from
-     * this stream as {@code Try.success(e)} and emits every error {@code err}
-     * reported by this stream as {@code Try.failure(err)}.
-     *
-     * <p>In other words, errors reported by this stream are not propagated
-     * through the returned stream's error-reporting mechanism, but rather
-     * materialized in the event type.
-     *
-     * <p>Note, however, that the returned stream may report errors of its own,
-     * thrown by its subscribers.
-     */
-    default EventStream<Try<T>> materializeErrors() {
-        return new EventStreamBase<Try<T>>() {
-            @Override
-            protected Subscription bindToInputs() {
-                return EventStream.this.subscribe(
-                        t -> emit(Try.success(t)),
-                        er -> emit(Try.failure(er)));
-            }
-        };
-    }
-
-    /**
-     * Returns a new event stream that emits the same events as this event
-     * stream, but does not propagate any of this stream's errors. Instead,
-     * errors reported by this stream are passed to the given handler.
-     *
-     * <p>Note that the returned stream may report errors of its own, thrown
-     * by its subscribers.
-     */
-    default EventStream<T> handleErrors(Consumer<? super Throwable> handler) {
-        return new EventStreamBase<T>() {
-            @Override
-            protected Subscription bindToInputs() {
-                return EventStream.this.subscribe(this::emit, handler);
-            }
-        };
-    }
-
-    /**
-     * Returns a stream of errors reported by this event stream.
-     */
-    default EventStream<Throwable> errors() {
-        return new EventStreamBase<Throwable>() {
-            @Override
-            protected Subscription bindToInputs() {
-                return EventStream.this.monitor(this::emit);
-            }
-        };
     }
 }

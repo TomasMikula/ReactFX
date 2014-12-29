@@ -13,29 +13,25 @@ public class RecursionTest {
     @Test
     public void allowRecursionWithOneSubscriber() {
         List<Integer> emitted = new ArrayList<>();
-        List<Throwable> errors = new ArrayList<>();
         EventSource<Integer> source = new EventSource<>();
         source.hook(emitted::add).subscribe(
-                i -> { if(i > 0) source.push(i-1); },
-                errors::add);
+                i -> { if(i > 0) source.push(i-1); });
         source.push(5);
         assertEquals(Arrays.asList(5, 4, 3, 2, 1, 0), emitted);
-        assertEquals(0, errors.size());
     }
 
-    @Test
+    @Test(expected=IllegalStateException.class)
     public void preventRecursionWithTwoSubscribers() {
-        List<Integer> emitted = new ArrayList<>();
-        List<Throwable> errors = new ArrayList<>();
         EventSource<Integer> source = new EventSource<>();
-        source.subscribe(emitted::add);
+
+        // XXX this test depends on the implementation detail
+        // that subscribers are notified in registration order
         source.subscribe(i -> {
             if(i > 0) source.push(i-1);
         });
-        source.monitor(errors::add);
+        source.pin();
+
         source.push(5);
-        assertTrue("At most one event got emitted", emitted.size() <= 1);
-        assertEquals(1, errors.size());
     }
 
     @Test

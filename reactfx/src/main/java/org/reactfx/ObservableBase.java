@@ -39,15 +39,6 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
      */
     protected abstract Subscription bindToInputs();
 
-    /**
-     * Runs the given action. If {@code action} does not throw an exception,
-     * returns {@code true}. If {@code action} throws an exception, then the
-     * implementation may either let that exception propagate, or handle the
-     * exception and return {@code false}.
-     * @param action action to execute. May throw an exception.
-     */
-    protected abstract boolean runUnsafeAction(Runnable action);
-
     protected final boolean isBound() {
         return inputSubscription != null;
     }
@@ -63,17 +54,14 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
     }
 
     protected final void enqueueNotifications(T event) {
-        runUnsafeAction(() -> {
-            // may throw if pendingNotifications not empty and recursion not allowed
-            pendingNotifications.addAll(ListHelper.iterator(observers), event);
-        });
+        // may throw if pendingNotifications not empty and recursion not allowed
+        pendingNotifications.addAll(ListHelper.iterator(observers), event);
     }
 
     protected final void notifyObservers() {
         try {
             while(!pendingNotifications.isEmpty()) {
-                Runnable notification = pendingNotifications.takeOne();
-                runUnsafeAction(notification); // may throw
+                pendingNotifications.takeOne().run(); // run() may throw
             }
         } finally {
             pendingNotifications.clear();
@@ -113,7 +101,7 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
     public final void addObserver(O observer) {
         observers = ListHelper.add(observers, observer);
         if(ListHelper.size(observers) == 1) {
-            runUnsafeAction(() -> inputSubscription = bindToInputs());
+            inputSubscription = bindToInputs();
         }
         newObserver(observer);
     }
@@ -122,10 +110,8 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
     public final void removeObserver(O observer) {
         observers = ListHelper.remove(observers, observer);
         if(ListHelper.isEmpty(observers) && inputSubscription != null) {
-            runUnsafeAction(() -> {
-                inputSubscription.unsubscribe();
-                inputSubscription = null;
-            });
+            inputSubscription.unsubscribe();
+            inputSubscription = null;
         }
     }
 

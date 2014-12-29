@@ -43,6 +43,6 @@ implements ConnectableEventStream<T>, ConnectableEventSink<T> {
     }
 
     private final Subscription subscribeToInput(EventStream<? extends T> input) {
-        return subscribeTo(input, this::push);
+        return input.subscribe(this::push);
     }
 }

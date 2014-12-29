@@ -18,9 +18,9 @@ class FlatMapStream<T, U> extends EventStreamBase<U> {
 
     @Override
     protected Subscription bindToInputs() {
-        Subscription s = subscribeTo(source, t -> {
+        Subscription s = source.subscribe(t -> {
             mappedSubscription.unsubscribe();
-            mappedSubscription = mapper.apply(t).subscribe(u -> emit(u));
+            mappedSubscription = mapper.apply(t).subscribe(this::emit);
         });
         return () -> {
             s.unsubscribe();
@@ -43,8 +43,6 @@ class FlatMapOptStream<T, U> extends EventStreamBase<U> {
 
     @Override
     protected Subscription bindToInputs() {
-        return subscribeTo(
-                source,
-                t -> mapper.apply(t).ifPresent(this::emit));
+        return source.subscribe(t -> mapper.apply(t).ifPresent(this::emit));
     }
 }

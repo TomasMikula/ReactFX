@@ -15,6 +15,6 @@ class RecursiveStream<T> extends EventStreamBase<T> {
 
     @Override
     protected Subscription bindToInputs() {
-        return subscribeTo(input, this::emit);
+        return input.subscribe(this::emit);
     }
 }

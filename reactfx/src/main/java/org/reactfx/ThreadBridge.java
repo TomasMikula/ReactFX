@@ -22,17 +22,13 @@ class ThreadBridge<T> extends EventStreamBase<T> {
         CompletableFuture<Subscription> subscription = new CompletableFuture<>();
         sourceThreadExecutor.execute(() -> {
             subscription.complete(
-                    Subscription.multi(
-                            input.subscribe(e -> {
-                                targetThreadExecutor.execute(() -> emit(e));
-                            }),
-                            input.monitor(error -> {
-                                targetThreadExecutor.execute(() -> reportError(error));
-                            })));
+                    input.subscribe(e -> {
+                        targetThreadExecutor.execute(() -> emit(e));
+                    }));
         });
         return () -> {
             subscription.thenAcceptAsync(
-                    sub -> sub.unsubscribe(),
+                    Subscription::unsubscribe,
                     sourceThreadExecutor);
         };
     }

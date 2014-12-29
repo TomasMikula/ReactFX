@@ -14,34 +14,19 @@ import javafx.concurrent.Task;
 import org.reactfx.util.TriConsumer;
 import org.reactfx.util.Try;
 
-class Await<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R> {
+class Await<T, F> extends EventStreamBase<Try<T>> implements AwaitingEventStream<Try<T>> {
 
-    public static <T> AwaitingEventStream<T> awaitCompletionStage(
+    public static <T> AwaitingEventStream<Try<T>> awaitCompletionStage(
             EventStream<CompletionStage<T>> source,
             Executor clientThreadExecutor) {
         return new Await<>(
                 source,
-                (future, handler) -> addCompletionHandler(future, handler, clientThreadExecutor),
-                reportingEmitter());
+                (future, handler) -> addCompletionHandler(future, handler, clientThreadExecutor));
     }
 
-    public static <T> AwaitingEventStream<Try<T>> tryAwaitCompletionStage(
-            EventStream<CompletionStage<T>> source,
-            Executor clientThreadExecutor) {
-        return new Await<>(
-                source,
-                (future, handler) -> addCompletionHandler(future, handler, clientThreadExecutor),
-                tryEmitter());
-    }
-
-    public static <T> AwaitingEventStream<T> awaitTask(
+    public static <T> AwaitingEventStream<Try<T>> awaitTask(
             EventStream<Task<T>> source) {
-        return new Await<>(source, Await::addCompletionHandler, reportingEmitter());
-    }
-
-    public static <T> AwaitingEventStream<Try<T>> tryAwaitTask(
-            EventStream<Task<T>> source) {
-        return new Await<>(source, Await::addCompletionHandler, tryEmitter());
+        return new Await<>(source, Await::addCompletionHandler);
     }
 
     static <T> void addCompletionHandler(
@@ -61,38 +46,15 @@ class Await<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R
         t.addEventHandler(WORKER_STATE_CANCELLED, e -> handler.accept(null, null, true));
     }
 
-    static <T> TriConsumer<EventStreamBase<T>, T, Throwable> reportingEmitter() {
-        return (stream, value, error) -> {
-            if(error == null) {
-                stream.emit(value);
-            } else {
-                stream.reportError(error);
-            }
-        };
-    }
-
-    static <T> TriConsumer<EventStreamBase<Try<T>>, T, Throwable> tryEmitter() {
-        return (stream, value, error) -> {
-            if(error == null) {
-                stream.emit(Try.success(value));
-            } else {
-                stream.emit(Try.failure(error));
-            }
-        };
-    }
-
     private final EventStream<F> source;
     private final Indicator pending = new Indicator();
     private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
-    private final TriConsumer<EventStreamBase<R>, T, Throwable> emitter;
 
     private Await(
             EventStream<F> source,
-            BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler,
-            TriConsumer<EventStreamBase<R>, T, Throwable> emitter) {
+            BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler) {
         this.source = source;
         this.addCompletionHandler = addCompletionHandler;
-        this.emitter = emitter;
     }
 
     @Override
@@ -107,11 +69,11 @@ class Await<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R
 
     @Override
     protected final Subscription bindToInputs() {
-        return subscribeTo(source, future -> {
+        return source.subscribe(future -> {
             Guard g = pending.on();
             addCompletionHandler.accept(future, (result, error, cancelled) -> {
                 if(!cancelled) {
-                    emitter.accept(this, result, error);
+                    emit(error == null ? Try.success(result) : Try.failure(error));
                 }
                 g.close();
             });
@@ -120,51 +82,28 @@ class Await<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R
 }
 
 
-class AwaitLatest<T, F, R> extends EventStreamBase<R> implements AwaitingEventStream<R> {
+class AwaitLatest<T, F> extends EventStreamBase<Try<T>> implements AwaitingEventStream<Try<T>> {
 
-    public static <T> AwaitingEventStream<T> awaitCompletionStage(
+    public static <T> AwaitingEventStream<Try<T>> awaitCompletionStage(
             EventStream<CompletionStage<T>> source,
             Executor clientThreadExecutor) {
         return new AwaitLatest<>(
                 source,
                 EventStreams.never(), // no cancel impulse
                 future -> {}, // cannot cancel a CompletionStage
-                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
-                Await.reportingEmitter());
+                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor));
     }
 
-    public static <T> AwaitingEventStream<Try<T>> tryAwaitCompletionStage(
-            EventStream<CompletionStage<T>> source,
-            Executor clientThreadExecutor) {
-        return new AwaitLatest<>(
-                source,
-                EventStreams.never(), // no cancel impulse
-                future -> {}, // cannot cancel a CompletionStage
-                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
-                Await.tryEmitter());
-    }
-
-    public static <T> AwaitingEventStream<T> awaitTask(
+    public static <T> AwaitingEventStream<Try<T>> awaitTask(
             EventStream<Task<T>> source) {
         return new AwaitLatest<>(
                 source,
                 EventStreams.never(), // no cancel impulse
                 Task::cancel,
-                Await::addCompletionHandler,
-                Await.reportingEmitter());
+                Await::addCompletionHandler);
     }
 
-    public static <T> AwaitingEventStream<Try<T>> tryAwaitTask(
-            EventStream<Task<T>> source) {
-        return new AwaitLatest<>(
-                source,
-                EventStreams.never(), // no cancel impulse
-                Task::cancel,
-                Await::addCompletionHandler,
-                Await.tryEmitter());
-    }
-
-    public static <T> AwaitingEventStream<T> awaitCompletionStage(
+    public static <T> AwaitingEventStream<Try<T>> awaitCompletionStage(
             EventStream<CompletionStage<T>> source,
             EventStream<?> cancelImpulse,
             Executor clientThreadExecutor) {
@@ -172,49 +111,23 @@ class AwaitLatest<T, F, R> extends EventStreamBase<R> implements AwaitingEventSt
                 source,
                 cancelImpulse,
                 future -> {}, // cannot cancel a CompletionStage
-                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
-                Await.reportingEmitter());
+                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor));
     }
 
-    public static <T> AwaitingEventStream<Try<T>> tryAwaitCompletionStage(
-            EventStream<CompletionStage<T>> source,
-            EventStream<?> cancelImpulse,
-            Executor clientThreadExecutor) {
-        return new AwaitLatest<>(
-                source,
-                cancelImpulse,
-                future -> {}, // cannot cancel a CompletionStage
-                (future, handler) -> Await.addCompletionHandler(future, handler, clientThreadExecutor),
-                Await.tryEmitter());
-    }
-
-    public static <T> AwaitingEventStream<T> awaitTask(
+    public static <T> AwaitingEventStream<Try<T>> awaitTask(
             EventStream<Task<T>> source,
             EventStream<?> cancelImpulse) {
         return new AwaitLatest<>(
                 source,
                 cancelImpulse,
                 Task::cancel,
-                Await::addCompletionHandler,
-                Await.reportingEmitter());
-    }
-
-    public static <T> AwaitingEventStream<Try<T>> tryAwaitTask(
-            EventStream<Task<T>> source,
-            EventStream<?> cancelImpulse) {
-        return new AwaitLatest<>(
-                source,
-                cancelImpulse,
-                Task::cancel,
-                Await::addCompletionHandler,
-                Await.tryEmitter());
+                Await::addCompletionHandler);
     }
 
     private final EventStream<F> source;
     private final EventStream<?> cancelImpulse;
     private final Consumer<F> canceller;
     private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
-    private final TriConsumer<EventStreamBase<R>, T, Throwable> emitter;
 
     private long revision = 0;
     private F expectedFuture = null;
@@ -225,13 +138,11 @@ class AwaitLatest<T, F, R> extends EventStreamBase<R> implements AwaitingEventSt
             EventStream<F> source,
             EventStream<?> cancelImpulse,
             Consumer<F> canceller,
-            BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler,
-            TriConsumer<EventStreamBase<R>, T, Throwable> emitter) {
+            BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler) {
         this.source = source;
         this.cancelImpulse = cancelImpulse;
         this.canceller = canceller;
         this.addCompletionHandler = addCompletionHandler;
-        this.emitter = emitter;
     }
 
     @Override
@@ -254,19 +165,20 @@ class AwaitLatest<T, F, R> extends EventStreamBase<R> implements AwaitingEventSt
 
     @Override
     protected Subscription bindToInputs() {
-        Subscription s1 = subscribeTo(source, future -> {
+        Subscription s1 = source.subscribe(future -> {
             long rev = replaceExpected(future);
             addCompletionHandler.accept(future, (result, error, cancelled) -> {
                 if(rev == revision) {
                     if(!cancelled) {
-                        emitter.accept(this, result, error); // emit before setting pending to false
+                        // emit before setting pending to false
+                        emit(error == null ? Try.success(result) : Try.failure(error));
                     }
                     setExpected(null);
                 }
             });
         });
 
-        Subscription s2 = subscribeTo(cancelImpulse, x -> replaceExpected(null));
+        Subscription s2 = cancelImpulse.subscribe(x -> replaceExpected(null));
 
         return s1.and(s2);
     }

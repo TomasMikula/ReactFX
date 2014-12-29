@@ -18,12 +18,12 @@ class EmitBothOnEachStream<A, I> extends EventStreamBase<Tuple2<A, I>> {
 
     @Override
     protected Subscription bindToInputs() {
-        Subscription s1 = subscribeTo(source, a -> {
+        Subscription s1 = source.subscribe(a -> {
             hasValue = true;
             this.a = a;
         });
 
-        Subscription s2 = subscribeTo(impulse, i -> {
+        Subscription s2 = impulse.subscribe(i -> {
             if(hasValue) {
                 emit(t(a, i));
             }

@@ -15,7 +15,7 @@ class SideEffectStream<T> extends EventStreamBase<T> {
 
     @Override
     protected Subscription bindToInputs() {
-        return subscribeTo(source, t -> {
+        return source.subscribe(t -> {
             if(sideEffectInProgress) {
                 sideEffectCausedRecursion = true;
                 throw new IllegalStateException("Side effect is not allowed to cause recursive event emission");

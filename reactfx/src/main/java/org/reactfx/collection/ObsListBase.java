@@ -10,10 +10,4 @@ implements ObsListHelpers<E>, AccessorListMethods<E> {
     public ObsListBase() {
         super(NotificationAccumulator.listNotifications());
     }
-
-    @Override
-    protected final boolean runUnsafeAction(Runnable action) {
-        action.run();
-        return true;
-    }
 }

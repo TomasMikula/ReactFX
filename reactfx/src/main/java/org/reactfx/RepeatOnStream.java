@@ -15,13 +15,13 @@ class RepeatOnStream<T> extends EventStreamBase<T> {
 
     @Override
     protected Subscription bindToInputs() {
-        Subscription s1 = subscribeTo(source, v -> {
+        Subscription s1 = source.subscribe(v -> {
             hasValue = true;
             value = v;
             emit(v);
         });
 
-        Subscription s2 = subscribeTo(impulse, i -> {
+        Subscription s2 = impulse.subscribe(i -> {
             if(hasValue) {
                 emit(value);
             }

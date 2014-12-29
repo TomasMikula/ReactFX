@@ -127,7 +127,7 @@ class StateStream<S> extends EventStreamBase<S> {
 
     public StateStream(S initialState, LL<TransitionBuilder<S>> transitions) {
         inputHandlers = transitions.stream()
-                .map(t -> t.build(this::handleTransition, this::reportError))
+                .map(t -> t.build(this::handleTransition))
                 .toArray(n -> new InputHandler[n]);
         state = initialState;
     }
@@ -189,15 +189,15 @@ class StatefulStream<S, O> extends EventStreamBase<O> {
         this.inputHandlers = new ArrayList<>(transitions.size() + emissions.size() + transmissions.size());
 
         for(TransitionBuilder<S> tb: transitions) {
-            inputHandlers.add(tb.build(this::handleTransition, this::reportError));
+            inputHandlers.add(tb.build(this::handleTransition));
         }
 
         for(EmissionBuilder<S, O> eb: emissions) {
-            inputHandlers.add(eb.build(this::handleEmission, this::reportError));
+            inputHandlers.add(eb.build(this::handleEmission));
         }
 
         for(TransmissionBuilder<S, O> tb: transmissions) {
-            inputHandlers.add(tb.build(this::handleTransmission, this::reportError));
+            inputHandlers.add(tb.build(this::handleTransmission));
         }
     }
 
@@ -307,24 +307,19 @@ interface InputHandler {
 }
 
 class InputHandlerBuilder<S, TGT> {
-    private final BiFunction<
+    private final Function<
             Consumer<Function<S, TGT>>,
-            Consumer<? super Throwable>,
             InputHandler> inputSubscriberProvider;
 
     public <I> InputHandlerBuilder(EventStream<I> input,
             BiFunction<? super S, ? super I, ? extends TGT> f) {
-        this.inputSubscriberProvider = (publisher, errorReporter) -> {
-            return () -> Subscription.multi(
-                    input.subscribe(i -> publisher.accept(s -> f.apply(s, i))),
-                    input.monitor(errorReporter));
+        this.inputSubscriberProvider = publisher -> {
+            return () -> input.subscribe(i -> publisher.accept(s -> f.apply(s, i)));
         };
     }
 
-    public InputHandler build(
-            Consumer<Function<S, TGT>> c,
-            Consumer<? super Throwable> errorReporter) {
-        return inputSubscriberProvider.apply(c, errorReporter);
+    public InputHandler build(Consumer<Function<S, TGT>> c) {
+        return inputSubscriberProvider.apply(c);
     }
 }
 

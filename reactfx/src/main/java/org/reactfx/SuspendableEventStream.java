@@ -6,7 +6,6 @@ import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javafx.beans.value.ObservableValue;
 
@@ -18,17 +17,7 @@ import org.reactfx.util.NotificationAccumulator;
  * events, if any, are emitted when emission is resumed depends on the concrete
  * implementation.
  */
-public interface SuspendableEventStream<T> extends EventStream<T> {
-
-    Guard suspend();
-
-    default void suspendWhile(Runnable r) {
-        try(Guard g = suspend()) { r.run(); }
-    };
-
-    default <U> U suspendWhile(Supplier<U> f) {
-        try(Guard g = suspend()) { return f.get(); }
-    }
+public interface SuspendableEventStream<T> extends EventStream<T>, Suspendable {
 
     /**
      * Returns an event stream that is suspended when the given

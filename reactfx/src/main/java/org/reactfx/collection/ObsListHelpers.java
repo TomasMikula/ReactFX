@@ -3,9 +3,15 @@ package org.reactfx.collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.reactfx.ObservableBase;
 import org.reactfx.ObservableHelpers;
 import org.reactfx.util.Lists;
 
+/**
+ * Trait to be mixed into {@link ObservableBase} to obtain default
+ * implementation of some {@link ObsList} methods and get additional
+ * helper methods.
+ */
 public interface ObsListHelpers<E>
 extends ObsList<E>, ObservableHelpers<ObsList.Observer<? super E, ?>, ListChange<? extends E>> {
 

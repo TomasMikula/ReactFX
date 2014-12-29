@@ -12,7 +12,7 @@ import org.reactfx.util.NotificationAccumulator;
  */
 public abstract class EventStreamBase<T>
 extends ObservableBase<Consumer<? super T>, T>
-implements EventStream<T> {
+implements EventStreamHelpers<T> {
 
     public EventStreamBase() {
         this(NotificationAccumulator.nonRecursiveStreamNotifications());
@@ -20,14 +20,5 @@ implements EventStream<T> {
 
     EventStreamBase(NotificationAccumulator<Consumer<? super T>, T> pn) {
         super(pn);
-    }
-
-    protected final void emit(T value) {
-        notifyObservers(value);
-    }
-
-    @Override
-    public final Subscription subscribe(Consumer<? super T> subscriber) {
-        return observe(subscriber);
     }
 }

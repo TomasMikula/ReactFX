@@ -15,7 +15,7 @@ extends ObservableBase<Consumer<? super T>, T>
 implements EventStreamHelpers<T> {
 
     public EventStreamBase() {
-        this(NotificationAccumulator.nonRecursiveStreamNotifications());
+        this(NotificationAccumulator.nonAccumulativeStreamNotifications());
     }
 
     EventStreamBase(NotificationAccumulator<Consumer<? super T>, T, ?> pn) {

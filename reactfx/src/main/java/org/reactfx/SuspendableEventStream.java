@@ -146,7 +146,7 @@ final class ForgetfulEventStream<T> extends AbstractReducibleEventStream<T> {
 final class SuppressibleEventStream<T> extends SuspendableEventStreamBase<T, T> {
 
     SuppressibleEventStream(EventStream<T> source) {
-        super(source, NotificationAccumulator.nonRecursiveStreamNotifications());
+        super(source, NotificationAccumulator.nonAccumulativeStreamNotifications());
     }
 
     @Override
@@ -169,6 +169,7 @@ final class SuppressibleEventStream<T> extends SuspendableEventStreamBase<T, T> 
         return null;
     }
 
+    // Override reduce so that it permits accumulation.
     @Override
     protected T reduce(T accum, T value) {
         return null;

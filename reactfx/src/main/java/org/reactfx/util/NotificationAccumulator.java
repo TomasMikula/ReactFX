@@ -42,8 +42,8 @@ public interface NotificationAccumulator<O, V, A> {
         return new RetainLatestStreamNotifications<>();
     }
 
-    static <T> NotificationAccumulator<Consumer<? super T>, T, T> nonRecursiveStreamNotifications() {
-        return new NonRecursiveStreamNotifications<>();
+    static <T> NotificationAccumulator<Consumer<? super T>, T, T> nonAccumulativeStreamNotifications() {
+        return new NonAccumulativeStreamNotifications<>();
     }
 
     static <E> NotificationAccumulator<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>> listNotifications() {
@@ -114,7 +114,7 @@ implements NotificationAccumulator<O, V, A>, AccumulationFacility<V, A> {
  * Non-recursive stream *
  * ******************** */
 
-final class NonRecursiveStreamNotifications<T>
+final class NonAccumulativeStreamNotifications<T>
 extends NotificationAccumulatorBase<Consumer<? super T>, T, T>
 implements AccumulationFacility.NoAccumulation<T> {
 

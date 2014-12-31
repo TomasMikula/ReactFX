@@ -186,6 +186,14 @@ public interface ObsList<E> extends ObservableList<E> {
             Function<? super E, ? extends F> f) {
         return new MappedList<>(list, f);
     }
+
+    static <E> SuspendableList<E> suspendable(ObservableList<E> list) {
+        if(list instanceof SuspendableList) {
+            return (SuspendableList<E>) list;
+        } else {
+            return new SuspendableListWrapper<E>(list);
+        }
+    }
 }
 
 

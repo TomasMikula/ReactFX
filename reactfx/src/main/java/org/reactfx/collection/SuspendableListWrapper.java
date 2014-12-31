@@ -1,76 +1,41 @@
-package org.reactfx.inhibeans.collection;
+package org.reactfx.collection;
 
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.NoSuchElementException;
 
-import javafx.beans.InvalidationListener;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ListChangeListener.Change;
+import javafx.collections.ObservableList;
 
-import org.reactfx.Guard;
-import org.reactfx.collection.ListChangeAccumulator;
-import org.reactfx.util.ListHelper;
+import org.reactfx.SuspendableBase;
+import org.reactfx.util.AccumulatorSize;
+import org.reactfx.util.NotificationAccumulator;
 
-class ObservableListWrapper<E> implements ObservableList<E> {
-    private final javafx.collections.ObservableList<E> delegate;
+final class SuspendableListWrapper<E>
+extends SuspendableBase<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>>
+implements SuspendableList<E>, ObsListHelpers<E> {
+    private final ObservableList<E> delegate;
 
-    private ListHelper<InvalidationListener> invalidationListeners = null;
-    private ListHelper<ListChangeListener<? super E>> listListeners = null;
-
-    private boolean blocked;
-    private final ListChangeAccumulator<E> pendingChanges = new ListChangeAccumulator<>();
-
-    ObservableListWrapper(javafx.collections.ObservableList<E> delegate) {
-        this.delegate = delegate;
-        delegate.addListener((Change<? extends E> change) -> {
-            if(blocked) {
-                pendingChanges.add(change);
-            } else {
-                notifyListeners(change);
-            }
-        });
+    SuspendableListWrapper(ObservableList<E> source) {
+        super(ObsList.changesOf(source), NotificationAccumulator.listNotifications());
+        this.delegate = source;
     }
 
     @Override
-    public Guard block() {
-        if(blocked) {
-            return Guard.EMPTY_GUARD;
-        } else {
-            blocked = true;
-            return this::release;
-        }
-    }
-
-    private void release() {
-        blocked = false;
-        pendingChanges.fetch().toJavaFx().ifPresent(this::notifyListeners);
-    }
-
-    private void notifyListeners(Change<? extends E> change) {
-        ListHelper.forEach(invalidationListeners, l -> l.invalidated(this));
-        ListHelper.forEach(listListeners, l -> l.onChanged(change));
+    protected AccumulatorSize sizeOf(ListModificationSequence<E> accum) {
+        return AccumulatorSize.ONE;
     }
 
     @Override
-    public void addListener(ListChangeListener<? super E> listener) {
-        listListeners = ListHelper.add(listListeners, listener);
+    protected ListChange<? extends E> headOf(ListModificationSequence<E> accum) {
+        return accum.asListChange();
     }
 
     @Override
-    public void removeListener(ListChangeListener<? super E> listener) {
-        listListeners = ListHelper.remove(listListeners, listener);
-    }
-
-    @Override
-    public void addListener(InvalidationListener listener) {
-        invalidationListeners = ListHelper.add(invalidationListeners, listener);
-    }
-
-    @Override
-    public void removeListener(InvalidationListener listener) {
-        invalidationListeners = ListHelper.remove(invalidationListeners, listener);
+    protected ListModificationSequence<E> tailOf(
+            ListModificationSequence<E> accum) {
+        throw new NoSuchElementException();
     }
 
     @SafeVarargs

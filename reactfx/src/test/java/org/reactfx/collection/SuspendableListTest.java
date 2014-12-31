@@ -1,4 +1,4 @@
-package org.reactfx.inhibeans.collection;
+package org.reactfx.collection;
 
 import static org.junit.Assert.*;
 
@@ -10,13 +10,15 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener.Change;
 
 import org.junit.Test;
+import org.reactfx.collection.ObsList;
+import org.reactfx.collection.SuspendableList;
 
-public class ObservableListTest {
+public class SuspendableListTest {
 
     @Test
     public void test() {
         javafx.collections.ObservableList<Integer> base = FXCollections.observableArrayList(10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
-        ObservableList<Integer> wrapped = Collections.wrap(base);
+        SuspendableList<Integer> wrapped = ObsList.suspendable(base);
         List<Integer> mirror = new ArrayList<>(wrapped);
         wrapped.addListener((Change<? extends Integer> change) -> {
             while(change.next()) {

@@ -1,6 +1,9 @@
 package org.reactfx.util;
 
 import java.util.AbstractList;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -68,5 +71,75 @@ public final class Lists {
                 return source.size();
             }
         };
+    }
+
+    @SafeVarargs
+    public static <E> List<E> concatView(List<? extends E>... lists) {
+        return concatView(Arrays.asList(lists));
+    }
+
+    public static <E> List<E> concatView(List<List<? extends E>> lists) {
+        List<List<? extends E>> lsts = new ArrayList<>(lists);
+        lsts.removeIf(List::isEmpty);
+
+        if(lsts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            return ListsHelper.concatView(lsts);
+        }
+    }
+}
+
+class ListsHelper {
+
+    static <E> List<E> concatView(List<List<? extends E>> lists) {
+        return concatView(lists, true);
+    }
+
+    private static <E> List<E> concatView(
+            List<List<? extends E>> lists, boolean makeUnmodifiable) {
+        int len = lists.size();
+        if(len < 1) {
+            throw new AssertionError("Supposedly unreachable code");
+        } else if(len == 1) {
+            List<? extends E> list = lists.get(0);
+            if(makeUnmodifiable) {
+                return Collections.unmodifiableList(list);
+            } else {
+                @SuppressWarnings("unchecked")
+                List<E> lst = (List<E>) list;
+                return lst;
+            }
+        } else {
+            int mid = len / 2;
+            return new ConcatListView<>(
+                    concatView(lists.subList(0, mid), false),
+                    concatView(lists.subList(mid, len), false));
+        }
+    }
+
+    private static class ConcatListView<E> extends AbstractList<E> {
+        private final List<? extends E> first;
+        private final List<? extends E> second;
+
+        ConcatListView(List<? extends E> first, List<? extends E> second) {
+            this.first = first;
+            this.second = second;
+        }
+
+        @Override
+        public E get(int index) {
+            if(index < first.size()) {
+                return first.get(index);
+            } else {
+                return second.get(index - first.size());
+            }
+        }
+
+        @Override
+        public int size() {
+            return first.size() + second.size();
+        }
+
     }
 }

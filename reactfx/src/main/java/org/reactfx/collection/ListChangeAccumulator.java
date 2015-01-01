@@ -1,11 +1,12 @@
 package org.reactfx.collection;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import javafx.collections.ListChangeListener;
+
+import org.reactfx.util.Lists;
 
 public final class ListChangeAccumulator<E> implements ListModificationSequence<E> {
     private ListChangeImpl<E> modifications = new ListChangeImpl<>();
@@ -119,16 +120,17 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
             return mods.get(0);
         }
 
-        List<E> removed = new ArrayList<>();
+        List<List<? extends E>> removedLists = new ArrayList<>(2*mods.size() - 1);
         TransientListModification<? extends E> prev = mods.get(0);
         int from = prev.getFrom();
-        removed.addAll(prev.getRemoved());
+        removedLists.add(prev.getRemoved());
         for(int i = 1; i < mods.size(); ++i) {
             TransientListModification<? extends E> m = mods.get(i);
-            removed.addAll(gone.subList(prev.getTo() - goneOffset, m.getFrom() - goneOffset));
-            removed.addAll(m.getRemoved());
+            removedLists.add(gone.subList(prev.getTo() - goneOffset, m.getFrom() - goneOffset));
+            removedLists.add(m.getRemoved());
             prev = m;
         }
+        List<E> removed = Lists.concatView(removedLists);
         return new TransientListModificationImpl<>(prev.getList(), from, prev.getTo(), removed);
     }
 
@@ -143,34 +145,24 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
             return new TransientListModificationImpl<>(former.getList(), former.getFrom(), to, removed);
         } else if(latter.getFrom() <= former.getFrom() && latter.getFrom() + latter.getRemovedSize() >= former.getTo()) {
             // former is within latter
-            List<E> removed = concat(
+            List<E> removed = Lists.concatView(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
             return new TransientListModificationImpl<>(latter.getList(), latter.getFrom(), latter.getTo(), removed);
         } else if(latter.getFrom() >= former.getFrom()) {
             // latter overlaps to the right
-            List<E> removed = concat(
+            List<E> removed = Lists.concatView(
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
             return new TransientListModificationImpl<>(former.getList(), former.getFrom(), latter.getTo(), removed);
         } else {
             // latter overlaps to the left
-            List<E> removed = concat(
+            List<E> removed = Lists.concatView(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved());
             int to = former.getTo() - latter.getRemovedSize() + latter.getAddedSize();
             return new TransientListModificationImpl<>(latter.getList(), latter.getFrom(), to, removed);
         }
-    }
-
-    @SafeVarargs
-    private static <T> List<T> concat(List<? extends T>... lists) {
-        int n = Arrays.asList(lists).stream().mapToInt(List::size).sum();
-        List<T> res = new ArrayList<>(n);
-        for(List<? extends T> l: lists) {
-            res.addAll(l);
-        }
-        return res;
     }
 }

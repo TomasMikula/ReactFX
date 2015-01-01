@@ -46,13 +46,13 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return this;
     }
 
-    public ListChangeAccumulator<E> add(TransientListModification<? extends E> change) {
+    public ListChangeAccumulator<E> add(TransientListModification<? extends E> mod) {
         if(modifications.isEmpty()) {
-            modifications.add(TransientListModification.safeCast(change));
+            modifications.add(TransientListModification.safeCast(mod));
         } else {
-            // find first and last overlapping change
-            int from = change.getFrom();
-            int to = from + change.getRemovedSize();
+            // find first and last overlapping modification
+            int from = mod.getFrom();
+            int to = from + mod.getRemovedSize();
             int firstOverlapping = 0;
             for(; firstOverlapping < modifications.size(); ++firstOverlapping) {
                 if(modifications.get(firstOverlapping).getTo() >= from) {
@@ -66,19 +66,19 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
                 }
             }
 
-            // offset changes farther in the list
-            int diff = change.getTo() - change.getFrom() - change.getRemovedSize();
-            offsetPendingChanges(lastOverlapping + 1, diff);
+            // offset modifications farther in the list
+            int diff = mod.getTo() - mod.getFrom() - mod.getRemovedSize();
+            offsetPendingModifications(lastOverlapping + 1, diff);
 
-            // combine overlapping changes into one
+            // combine overlapping modifications into one
             if(lastOverlapping < firstOverlapping) { // no overlap
-                modifications.add(firstOverlapping, TransientListModification.safeCast(change));
-            } else { // overlaps one or more former changes
+                modifications.add(firstOverlapping, TransientListModification.safeCast(mod));
+            } else { // overlaps one or more former modifications
                 List<TransientListModification<E>> overlapping = modifications.subList(firstOverlapping, lastOverlapping + 1);
-                TransientListModification<? extends E> joined = join(overlapping, change.getRemoved(), change.getFrom());
-                TransientListModification<E> newChange = combine(joined, change);
+                TransientListModification<? extends E> joined = join(overlapping, mod.getRemoved(), mod.getFrom());
+                TransientListModification<E> newMod = combine(joined, mod);
                 overlapping.clear();
-                modifications.add(firstOverlapping, newChange);
+                modifications.add(firstOverlapping, newMod);
             }
         }
 
@@ -101,33 +101,33 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return this;
     }
 
-    private void offsetPendingChanges(int from, int offset) {
+    private void offsetPendingModifications(int from, int offset) {
         modifications.subList(from, modifications.size())
-                .replaceAll(change -> new TransientListModificationImpl<>(
-                        change.getList(),
-                        change.getFrom() + offset,
-                        change.getTo() + offset,
-                        change.getRemoved()));
+                .replaceAll(mod -> new TransientListModificationImpl<>(
+                        mod.getList(),
+                        mod.getFrom() + offset,
+                        mod.getTo() + offset,
+                        mod.getRemoved()));
     }
 
     private static <E> TransientListModification<? extends E> join(
-            List<TransientListModification<E>> changes,
+            List<TransientListModification<E>> mods,
             List<? extends E> gone,
             int goneOffset) {
 
-        if(changes.size() == 1) {
-            return changes.get(0);
+        if(mods.size() == 1) {
+            return mods.get(0);
         }
 
         List<E> removed = new ArrayList<>();
-        TransientListModification<? extends E> prev = changes.get(0);
+        TransientListModification<? extends E> prev = mods.get(0);
         int from = prev.getFrom();
         removed.addAll(prev.getRemoved());
-        for(int i = 1; i < changes.size(); ++i) {
-            TransientListModification<? extends E> ch = changes.get(i);
-            removed.addAll(gone.subList(prev.getTo() - goneOffset, ch.getFrom() - goneOffset));
-            removed.addAll(ch.getRemoved());
-            prev = ch;
+        for(int i = 1; i < mods.size(); ++i) {
+            TransientListModification<? extends E> m = mods.get(i);
+            removed.addAll(gone.subList(prev.getTo() - goneOffset, m.getFrom() - goneOffset));
+            removed.addAll(m.getRemoved());
+            prev = m;
         }
         return new TransientListModificationImpl<>(prev.getList(), from, prev.getTo(), removed);
     }

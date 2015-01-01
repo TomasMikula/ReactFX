@@ -127,6 +127,10 @@ public interface ObsList<E> extends ObservableList<E> {
         return map(this, f);
     }
 
+    default SuspendableList<E> suspendable() {
+        return suspendable(this);
+    }
+
     default EventStream<ListChange<? extends E>> changes() {
         return new EventStreamBase<ListChange<? extends E>>() {
             @Override

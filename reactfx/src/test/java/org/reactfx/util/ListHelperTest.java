@@ -1,6 +1,9 @@
 package org.reactfx.util;
 
 import static org.junit.Assert.*;
+
+import java.util.Iterator;
+
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -18,7 +21,7 @@ public class ListHelperTest {
         lh = ListHelper.add(lh, 1);
         lh = ListHelper.add(lh, 2);
 
-        CloseableIterator<Integer> it = ListHelper.iterator(lh);
+        Iterator<Integer> it = ListHelper.iterator(lh);
         int i = 2;
         while(it.hasNext()) {
             lh = ListHelper.remove(lh, i--);
@@ -37,7 +40,7 @@ public class ListHelperTest {
         lh = ListHelper.add(lh, 1);
         lh = ListHelper.add(lh, 2);
 
-        CloseableIterator<Integer> it = ListHelper.iterator(lh);
+        Iterator<Integer> it = ListHelper.iterator(lh);
         int i = 2;
         while(it.hasNext()) {
             lh = ListHelper.add(lh, i--);
@@ -49,7 +52,7 @@ public class ListHelperTest {
 
         it = ListHelper.iterator(lh);
         assertFalse(lh == ListHelper.add(lh, 5)); // test that a copy is made
-        it.close();
+        while(it.hasNext()) it.next(); // drain the iterator
         assertTrue(lh == ListHelper.add(lh, 5)); // test that change is made in place
     }
 
@@ -87,22 +90,5 @@ public class ListHelperTest {
 
         assertEquals(3, iterations.get());
         assertArrayEquals(new Integer[] { 0, 1, 2, 2, 1, 0 }, ListHelper.toArray(lh.get(), n -> new Integer[n]));
-    }
-
-    @Test
-    public void testIdempotencyOfIteratorClose() {
-        ListHelper<Integer> lh = null;
-
-        lh = ListHelper.add(lh, 0);
-        lh = ListHelper.add(lh, 1);
-        lh = ListHelper.add(lh, 2);
-
-        CloseableIterator<Integer> it = ListHelper.iterator(lh);
-        while(it.hasNext()) it.next(); // deplete the iterator
-        it.close();
-        it.close();
-
-        it = ListHelper.iterator(lh);
-        assertFalse(lh == ListHelper.add(lh, 5));
     }
 }

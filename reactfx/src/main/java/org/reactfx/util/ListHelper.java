@@ -93,34 +93,26 @@ public abstract class ListHelper<T> {
         // private constructor to prevent subclassing
     };
 
-    protected abstract T get(int index);
-
-    protected abstract ListHelper<T> add(T elem);
-
-    protected abstract ListHelper<T> remove(T elem);
-
-    protected abstract void forEach(Consumer<T> f);
-
-    protected abstract Iterator<T> iterator();
-
-    protected abstract Optional<T> reduce(BinaryOperator<T> f);
-
-    protected abstract <U> U reduce(U unit, BiFunction<U, T, U> f);
-
-    protected abstract T[] toArray(IntFunction<T[]> allocator);
-
-    protected abstract int size();
+    abstract T get(int index);
+    abstract ListHelper<T> add(T elem);
+    abstract ListHelper<T> remove(T elem);
+    abstract void forEach(Consumer<T> f);
+    abstract Iterator<T> iterator();
+    abstract Optional<T> reduce(BinaryOperator<T> f);
+    abstract <U> U reduce(U unit, BiFunction<U, T, U> f);
+    abstract T[] toArray(IntFunction<T[]> allocator);
+    abstract int size();
 
 
     private static class SingleElemHelper<T> extends ListHelper<T> {
         private final T elem;
 
-        public SingleElemHelper(T elem) {
+        SingleElemHelper(T elem) {
             this.elem = elem;
         }
 
         @Override
-        protected T get(int index) {
+        T get(int index) {
             if(index == 0) {
                 return elem;
             } else {
@@ -129,12 +121,12 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected ListHelper<T> add(T elem) {
+        ListHelper<T> add(T elem) {
             return new MultiElemHelper<>(this.elem, elem);
         }
 
         @Override
-        protected ListHelper<T> remove(T elem) {
+        ListHelper<T> remove(T elem) {
             if(Objects.equals(this.elem, elem)) {
                 return null;
             } else {
@@ -143,12 +135,12 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected void forEach(Consumer<T> f) {
+        void forEach(Consumer<T> f) {
             f.accept(elem);
         }
 
         @Override
-        protected Iterator<T> iterator() {
+        Iterator<T> iterator() {
             return new Iterator<T>() {
                 boolean hasNext = true;
 
@@ -170,24 +162,24 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected Optional<T> reduce(BinaryOperator<T> f) {
+        Optional<T> reduce(BinaryOperator<T> f) {
             return Optional.of(elem);
         }
 
         @Override
-        protected <U> U reduce(U unit, BiFunction<U, T, U> f) {
+        <U> U reduce(U unit, BiFunction<U, T, U> f) {
             return f.apply(unit, elem);
         }
 
         @Override
-        protected T[] toArray(IntFunction<T[]> allocator) {
+        T[] toArray(IntFunction<T[]> allocator) {
             T[] res = allocator.apply(1);
             res[0] = elem;
             return res;
         }
 
         @Override
-        protected int size() {
+        int size() {
             return 1;
         }
     }
@@ -200,7 +192,7 @@ public abstract class ListHelper<T> {
         private int iterating = 0;
 
         @SafeVarargs
-        public MultiElemHelper(T... elems) {
+        MultiElemHelper(T... elems) {
             this(Arrays.asList(elems));
         }
 
@@ -213,12 +205,12 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected T get(int index) {
+        T get(int index) {
             return elems.get(index);
         }
 
         @Override
-        protected ListHelper<T> add(T elem) {
+        ListHelper<T> add(T elem) {
             if(iterating > 0) {
                 return copy().add(elem);
             } else {
@@ -228,7 +220,7 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected ListHelper<T> remove(T elem) {
+        ListHelper<T> remove(T elem) {
             int idx = elems.indexOf(elem);
             if(idx == -1) {
                 return this;
@@ -249,7 +241,7 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected void forEach(Consumer<T> f) {
+        void forEach(Consumer<T> f) {
             ++iterating;
             try {
                 for(T elem: elems) {
@@ -261,7 +253,7 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected Iterator<T> iterator() {
+        Iterator<T> iterator() {
             ++iterating;
             return new Iterator<T>() {
                 int next = 0;
@@ -288,12 +280,12 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected Optional<T> reduce(BinaryOperator<T> f) {
+        Optional<T> reduce(BinaryOperator<T> f) {
             return elems.stream().reduce(f);
         }
 
         @Override
-        protected <U> U reduce(U unit, BiFunction<U, T, U> f) {
+        <U> U reduce(U unit, BiFunction<U, T, U> f) {
             U u = unit;
             for(T elem: elems) {
                 u = f.apply(u, elem);
@@ -302,12 +294,12 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        protected T[] toArray(IntFunction<T[]> allocator) {
+        T[] toArray(IntFunction<T[]> allocator) {
             return elems.toArray(allocator.apply(size()));
         }
 
         @Override
-        protected int size() {
+        int size() {
             return elems.size();
         }
     }

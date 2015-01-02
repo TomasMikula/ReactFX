@@ -36,14 +36,14 @@ public abstract class ListHelper<T> {
         }
     }
 
-    public static <T> void forEach(ListHelper<T> listHelper, Consumer<T> f) {
+    public static <T> void forEach(ListHelper<T> listHelper, Consumer<? super T> f) {
         if(listHelper != null) {
             listHelper.forEach(f);
         }
     }
 
     public static <T> void forEachBetween(
-            ListHelper<T> listHelper, int from, int to, Consumer<T> f) {
+            ListHelper<T> listHelper, int from, int to, Consumer<? super T> f) {
         Lists.checkRange(from, to, size(listHelper));
         if(from < to) {
             listHelper.forEachBetween(from, to, f);
@@ -110,8 +110,8 @@ public abstract class ListHelper<T> {
     abstract T get(int index);
     abstract ListHelper<T> add(T elem);
     abstract ListHelper<T> remove(T elem);
-    abstract void forEach(Consumer<T> f);
-    abstract void forEachBetween(int from, int to, Consumer<T> f);
+    abstract void forEach(Consumer<? super T> f);
+    abstract void forEachBetween(int from, int to, Consumer<? super T> f);
     abstract Iterator<T> iterator();
     abstract Iterator<T> iterator(int from, int to);
     abstract Optional<T> reduce(BinaryOperator<T> f);
@@ -148,12 +148,12 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        void forEach(Consumer<T> f) {
+        void forEach(Consumer<? super T> f) {
             f.accept(elem);
         }
 
         @Override
-        void forEachBetween(int from, int to, Consumer<T> f) {
+        void forEachBetween(int from, int to, Consumer<? super T> f) {
             assert from == 0 && to == 1;
             f.accept(elem);
         }
@@ -266,7 +266,7 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        void forEach(Consumer<T> f) {
+        void forEach(Consumer<? super T> f) {
             ++iterating;
             try {
                 elems.forEach(f);
@@ -276,7 +276,7 @@ public abstract class ListHelper<T> {
         }
 
         @Override
-        void forEachBetween(int from, int to, Consumer<T> f) {
+        void forEachBetween(int from, int to, Consumer<? super T> f) {
             ++iterating;
             try {
                 elems.subList(from, to).forEach(f);

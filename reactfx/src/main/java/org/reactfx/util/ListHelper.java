@@ -16,11 +16,8 @@ import java.util.function.IntFunction;
 public abstract class ListHelper<T> {
 
     public static <T> T get(ListHelper<T> listHelper, int index) {
-        if(listHelper == null) {
-            throw new IndexOutOfBoundsException(index + " not in [0, 0)");
-        } else {
-            return listHelper.get(index);
-        }
+        Lists.checkIndex(index, size(listHelper)); // always throws for listHelper == null
+        return listHelper.get(index);
     }
 
     public static <T> ListHelper<T> add(ListHelper<T> listHelper, T elem) {
@@ -45,9 +42,26 @@ public abstract class ListHelper<T> {
         }
     }
 
+    public static <T> void forEachBetween(
+            ListHelper<T> listHelper, int from, int to, Consumer<T> f) {
+        Lists.checkRange(from, to, size(listHelper));
+        if(from < to) {
+            listHelper.forEachBetween(from, to, f);
+        }
+    }
+
     public static <T> Iterator<T> iterator(ListHelper<T> listHelper) {
         if(listHelper != null) {
             return listHelper.iterator();
+        } else {
+            return Collections.emptyIterator();
+        }
+    }
+
+    public static <T> Iterator<T> iterator(ListHelper<T> listHelper, int from, int to) {
+        Lists.checkRange(from, to, size(listHelper));
+        if(from < to) {
+            return listHelper.iterator(from, to);
         } else {
             return Collections.emptyIterator();
         }
@@ -97,7 +111,9 @@ public abstract class ListHelper<T> {
     abstract ListHelper<T> add(T elem);
     abstract ListHelper<T> remove(T elem);
     abstract void forEach(Consumer<T> f);
+    abstract void forEachBetween(int from, int to, Consumer<T> f);
     abstract Iterator<T> iterator();
+    abstract Iterator<T> iterator(int from, int to);
     abstract Optional<T> reduce(BinaryOperator<T> f);
     abstract <U> U reduce(U unit, BiFunction<U, T, U> f);
     abstract T[] toArray(IntFunction<T[]> allocator);
@@ -113,11 +129,8 @@ public abstract class ListHelper<T> {
 
         @Override
         T get(int index) {
-            if(index == 0) {
-                return elem;
-            } else {
-                throw new IndexOutOfBoundsException(index + " not in [0, 1)");
-            }
+            assert index == 0;
+            return elem;
         }
 
         @Override
@@ -136,6 +149,12 @@ public abstract class ListHelper<T> {
 
         @Override
         void forEach(Consumer<T> f) {
+            f.accept(elem);
+        }
+
+        @Override
+        void forEachBetween(int from, int to, Consumer<T> f) {
+            assert from == 0 && to == 1;
             f.accept(elem);
         }
 
@@ -159,6 +178,12 @@ public abstract class ListHelper<T> {
                     }
                 }
             };
+        }
+
+        @Override
+        Iterator<T> iterator(int from, int to) {
+            assert from == 0 && to == 1;
+            return iterator();
         }
 
         @Override
@@ -244,9 +269,17 @@ public abstract class ListHelper<T> {
         void forEach(Consumer<T> f) {
             ++iterating;
             try {
-                for(T elem: elems) {
-                    f.accept(elem);
-                }
+                elems.forEach(f);
+            } finally {
+                --iterating;
+            }
+        }
+
+        @Override
+        void forEachBetween(int from, int to, Consumer<T> f) {
+            ++iterating;
+            try {
+                elems.subList(from, to).forEach(f);
             } finally {
                 --iterating;
             }
@@ -254,21 +287,28 @@ public abstract class ListHelper<T> {
 
         @Override
         Iterator<T> iterator() {
+            return iterator(0, elems.size());
+        }
+
+        @Override
+        Iterator<T> iterator(int from, int to) {
+            assert from < to;
+
             ++iterating;
             return new Iterator<T>() {
-                int next = 0;
+                int next = from;
 
                 @Override
                 public boolean hasNext() {
-                    return next < elems.size();
+                    return next < to;
                 }
 
                 @Override
                 public T next() {
-                    if(next < elems.size()) {
+                    if(next < to) {
                         T res = elems.get(next);
                         ++next;
-                        if(next == elems.size()) {
+                        if(next == to) {
                             --iterating;
                         }
                         return res;

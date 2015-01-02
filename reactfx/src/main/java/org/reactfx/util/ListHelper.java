@@ -15,6 +15,14 @@ import java.util.function.IntFunction;
 
 public abstract class ListHelper<T> {
 
+    public static <T> T get(ListHelper<T> listHelper, int index) {
+        if(listHelper == null) {
+            throw new IndexOutOfBoundsException(index + " not in [0, 0)");
+        } else {
+            return listHelper.get(index);
+        }
+    }
+
     public static <T> ListHelper<T> add(ListHelper<T> listHelper, T elem) {
         if(listHelper == null) {
             return new SingleElemHelper<>(elem);
@@ -85,6 +93,8 @@ public abstract class ListHelper<T> {
         // private constructor to prevent subclassing
     };
 
+    protected abstract T get(int index);
+
     protected abstract ListHelper<T> add(T elem);
 
     protected abstract ListHelper<T> remove(T elem);
@@ -107,6 +117,15 @@ public abstract class ListHelper<T> {
 
         public SingleElemHelper(T elem) {
             this.elem = elem;
+        }
+
+        @Override
+        protected T get(int index) {
+            if(index == 0) {
+                return elem;
+            } else {
+                throw new IndexOutOfBoundsException(index + " not in [0, 1)");
+            }
         }
 
         @Override
@@ -191,6 +210,11 @@ public abstract class ListHelper<T> {
 
         private MultiElemHelper<T> copy() {
             return new MultiElemHelper<>(elems);
+        }
+
+        @Override
+        protected T get(int index) {
+            return elems.get(index);
         }
 
         @Override

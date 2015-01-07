@@ -1,18 +1,13 @@
 package org.reactfx;
 
-import static org.reactfx.LL.*;
+import static org.reactfx.util.LL.*;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
-import java.util.Spliterator;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 import javafx.beans.binding.Binding;
 
@@ -21,6 +16,7 @@ import org.reactfx.StateMachine.ObservableStateBuilder;
 import org.reactfx.StateMachine.ObservableStateBuilderOn;
 import org.reactfx.StateMachine.StatefulStreamBuilder;
 import org.reactfx.StateMachine.StatefulStreamBuilderOn;
+import org.reactfx.util.LL;
 import org.reactfx.util.Tuple2;
 
 public class StateMachine {
@@ -341,130 +337,5 @@ class TransmissionBuilder<S, O> extends InputHandlerBuilder<S, Tuple2<S, Optiona
     public <I> TransmissionBuilder(EventStream<I> input,
             BiFunction<? super S, ? super I, ? extends Tuple2<S, Optional<O>>> f) {
         super(input, f);
-    }
-}
-
-/**
- * Immutable linked list.
- */
-interface LL<T> extends Iterable<T> {
-    static <T> LL<T> nil() { return Nil.instance(); }
-    static <T> LL<T> cons(T head, LL<T> tail) { return new NonEmpty<>(head, tail); }
-
-    boolean isEmpty();
-    int size();
-    T head();
-    LL<T> tail();
-
-    default LL<T> prepend(T head) {
-        return new NonEmpty<>(head, this);
-    }
-
-    @Override
-    default Iterator<T> iterator() {
-        return new Iterator<T>() {
-            private LL<T> l = LL.this;
-
-            @Override
-            public boolean hasNext() {
-                return !l.isEmpty();
-            }
-
-            @Override
-            public T next() {
-                T res = l.head();
-                l = l.tail();
-                return res;
-            }
-        };
-    }
-
-    default List<T> toList() {
-        List<T> res = new ArrayList<>(size());
-        for(LL<T> l = this; !l.isEmpty(); l = l.tail()) {
-            res.add(l.head());
-        }
-        return res;
-    }
-
-
-    default Stream<T> stream() {
-        Spliterator<T> spliterator = new Spliterator<T>() {
-            private final Iterator<T> iterator = iterator();
-
-            @Override
-            public boolean tryAdvance(Consumer<? super T> action) {
-                if(iterator.hasNext()) {
-                    action.accept(iterator.next());
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-
-            @Override
-            public Spliterator<T> trySplit() {
-                return null;
-            }
-
-            @Override
-            public long estimateSize() {
-                return size();
-            }
-
-            @Override
-            public int characteristics() {
-                return Spliterator.IMMUTABLE | Spliterator.SIZED;
-            }
-        };
-
-        return StreamSupport.stream(spliterator, false);
-    }
-}
-
-class Nil<T> implements LL<T> {
-    private static final Nil<?> INSTANCE = new Nil<Void>();
-
-    @SuppressWarnings("unchecked")
-    static <T> Nil<T> instance() { return (Nil<T>) INSTANCE; }
-
-    @Override public boolean isEmpty() { return true; }
-    @Override public int size() { return 0; }
-    @Override public T head() { throw new NoSuchElementException(); }
-    @Override public LL<T> tail() { throw new NoSuchElementException(); }
-}
-
-class NonEmpty<T> implements LL<T> {
-    private final T head;
-    private final LL<T> tail;
-
-    NonEmpty(T head, LL<T> tail) {
-        this.head = head;
-        this.tail = tail;
-    }
-
-    private int size = -1;
-
-    @Override
-    public boolean isEmpty() {
-        return false;
-    }
-
-    @Override
-    public int size() {
-        if(size == -1) {
-            size = 1 + tail.size();
-        }
-        return size;
-    }
-
-    @Override
-    public T head() {
-        return head;
-    }
-
-    @Override
-    public LL<T> tail() {
-        return tail;
     }
 }

@@ -3,8 +3,13 @@ package org.reactfx.util;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Spliterator;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -23,7 +28,22 @@ public abstract class LL<T> implements Iterable<T> {
         @Override public int size() { return 0; }
         @Override public T head() { throw new NoSuchElementException(); }
         @Override public LL<T> tail() { throw new NoSuchElementException(); }
+        @Override public <U> LL<U> map(Function<? super T, ? extends U> f) { return instance(); }
         @Override public Iterator<T> iterator() { return Collections.emptyIterator(); }
+
+        @Override
+        public <R> R fold(
+                R acc,
+                BiFunction<? super R, ? super T, ? extends R> reduction) {
+            return acc;
+        }
+
+        @Override
+        public <R> Optional<R> mapReduce(
+                Function<? super T, ? extends R> map,
+                BinaryOperator<R> reduce) {
+            return Optional.empty();
+        }
     }
 
     public static final class Cons<T> extends LL<T> {
@@ -58,6 +78,18 @@ public abstract class LL<T> implements Iterable<T> {
         }
 
         @Override
+        public <U> Cons<U> map(Function<? super T, ? extends U> f) {
+            return cons(f.apply(head), tail.map(f));
+        }
+
+        @Override
+        public <R> R fold(
+                R acc,
+                BiFunction<? super R, ? super T, ? extends R> reduction) {
+            return tail.fold(reduction.apply(acc, head), reduction);
+        }
+
+        @Override
         public final Iterator<T> iterator() {
             return new Iterator<T>() {
                 private LL<? extends T> l = Cons.this;
@@ -75,19 +107,33 @@ public abstract class LL<T> implements Iterable<T> {
                 }
             };
         }
+
+        @Override
+        public <R> Optional<R> mapReduce(
+                Function<? super T, ? extends R> map,
+                BinaryOperator<R> reduce) {
+            return Optional.of(mapReduce1(map, reduce));
+        }
+
+        public <R> R mapReduce1(
+                Function<? super T, ? extends R> map,
+                BinaryOperator<R> reduce) {
+            R acc = map.apply(head);
+            return tail.fold(acc, (r, t) -> reduce.apply(r, map.apply(t)));
+        }
     }
 
     public static <T> LL<T> nil() {
         return Nil.instance();
     }
 
-    public static <T> LL<T> cons(T head, LL<? extends T> tail) {
+    public static <T> Cons<T> cons(T head, LL<? extends T> tail) {
         return new Cons<>(head, tail);
     }
 
     @SafeVarargs
-    public static <T> LL<T> of(T... elems) {
-        return of(elems, elems.length, LL.<T>nil());
+    public static <T> Cons<T> of(T head, T... tail) {
+        return cons(head, of(tail, tail.length, LL.<T>nil()));
     }
 
     private static <T> LL<T> of(T[] elems, int to, LL<T> tail) {
@@ -98,6 +144,14 @@ public abstract class LL<T> implements Iterable<T> {
         }
     }
 
+    public static <T> LL<? extends T> concat(LL<? extends T> l1, LL<? extends T> l2) {
+        if(l1.isEmpty()) {
+            return l2;
+        } else {
+            return cons(l1.head(), concat(l1.tail(), l2));
+        }
+    }
+
     // private constructor to prevent subclassing
     private LL() {}
 
@@ -105,6 +159,15 @@ public abstract class LL<T> implements Iterable<T> {
     public abstract int size();
     public abstract T head();
     public abstract LL<? extends T> tail();
+    public abstract <U> LL<U> map(Function<? super T, ? extends U> f);
+    public abstract <R> R fold(R acc, BiFunction<? super R, ? super T, ? extends R> reduction);
+    public abstract <R> Optional<R> mapReduce(
+            Function<? super T, ? extends R> map,
+            BinaryOperator<R> reduce);
+
+    public boolean all(Predicate<T> cond) {
+        return fold(true, (b, t) -> b && cond.test(t));
+    }
 
     public Stream<T> stream() {
         Spliterator<T> spliterator = new Spliterator<T>() {

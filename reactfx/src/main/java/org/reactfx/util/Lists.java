@@ -136,6 +136,22 @@ public final class Lists {
         return isNonEmptyRange(min, from, to, max) && (min < from || to < max);
     }
 
+    public static boolean isStrictlyInsideRange(int from, int to, int size) {
+        return isStrictlyInsideRange(0, from, to, size);
+    }
+
+    public static boolean isStrictlyInsideRange(int min, int from, int to, int max) {
+        return min < from && from <= to && to < max;
+    }
+
+    public static boolean isStrictlyInsideNonEmptyRange(int from, int to, int size) {
+        return isStrictlyInsideNonEmptyRange(0, from, to, size);
+    }
+
+    public static boolean isStrictlyInsideNonEmptyRange(int min, int from, int to, int max) {
+        return min < from && from < to && to < max;
+    }
+
     public static <E, F> List<F> mappedView(
             List<? extends E> source,
             Function<? super E, ? extends F> f) {

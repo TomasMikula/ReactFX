@@ -26,6 +26,16 @@ public abstract class Either<L, R> {
         public R getRight() { throw new NoSuchElementException(); }
 
         @Override
+        public L toLeft(Function<? super R, ? extends L> f) {
+            return value;
+        }
+
+        @Override
+        public R toRight(Function<? super L, ? extends R> f) {
+            return f.apply(value);
+        }
+
+        @Override
         public Optional<L> asLeft() { return Optional.of(value); }
 
         @Override
@@ -124,6 +134,16 @@ public abstract class Either<L, R> {
 
         @Override
         public R getRight() { return value; }
+
+        @Override
+        public L toLeft(Function<? super R, ? extends L> f) {
+            return f.apply(value);
+        }
+
+        @Override
+        public R toRight(Function<? super L, ? extends R> f) {
+            return value;
+        }
 
         @Override
         public Optional<L> asLeft() { return Optional.empty(); }
@@ -239,6 +259,8 @@ public abstract class Either<L, R> {
     public abstract boolean isRight();
     public abstract L getLeft();
     public abstract R getRight();
+    public abstract L toLeft(Function<? super R, ? extends L> f);
+    public abstract R toRight(Function<? super L, ? extends R> f);
     public abstract Optional<L> asLeft();
     public abstract Optional<R> asRight();
     public abstract void ifLeft(Consumer<? super L> f);

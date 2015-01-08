@@ -169,6 +169,26 @@ public abstract class LL<T> implements Iterable<T> {
         return fold(true, (b, t) -> b && cond.test(t));
     }
 
+    public <U> U with2(BiFunction<? super T, ? super T, ? extends U> f) {
+        return f.apply(head(), tail().head());
+    }
+
+    public <U> U with3(TriFunction<? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().with2(f.pApply(head()));
+    }
+
+    public <U> U with4(TetraFunction<? super T, ? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().with3(f.pApply(head()));
+    }
+
+    public <U> U with5(PentaFunction<? super T, ? super T, ? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().with4(f.pApply(head()));
+    }
+
+    public <U> U with6(HexaFunction<? super T, ? super T, ? super T, ? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().with5(f.pApply(head()));
+    }
+
     public Stream<T> stream() {
         Spliterator<T> spliterator = new Spliterator<T>() {
             private final Iterator<T> iterator = iterator();

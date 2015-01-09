@@ -189,6 +189,24 @@ public abstract class LL<T> implements Iterable<T> {
         return tail().with5(f.pApply(head()));
     }
 
+    @Override
+    public String toString() {
+        if(isEmpty()) {
+            return "[]";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[");
+            sb.append(head());
+            LL<? extends T> tail = tail();
+            while(!tail.isEmpty()) {
+                sb.append(",").append(tail.head());
+                tail = tail.tail();
+            }
+            sb.append("]");
+            return sb.toString();
+        }
+    }
+
     public Stream<T> stream() {
         Spliterator<T> spliterator = new Spliterator<T>() {
             private final Iterator<T> iterator = iterator();

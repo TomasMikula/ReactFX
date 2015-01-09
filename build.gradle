@@ -2,6 +2,7 @@ subprojects {
     version = '2.0-SNAPSHOT'
 
     apply plugin: 'java'
+    apply plugin: 'eclipse'
 
     repositories {
         mavenCentral()

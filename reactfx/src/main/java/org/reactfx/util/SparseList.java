@@ -23,10 +23,6 @@ final class SparseList<E> {
         Segment<E> subSegment(int from, int to);
         boolean possiblyDestructiveAppend(Segment<E> suffix);
 
-        default Stats getStats() {
-            return new Stats(getLength(), getPresentCount());
-        }
-
         default Stats getStatsBetween(int from, int to) {
             return new Stats(to - from, getPresentCountBetween(from, to));
         }
@@ -211,7 +207,8 @@ final class SparseList<E> {
         int getPresentCount() { return presentCount; }
     }
 
-    private static final MapToMonoid<Segment<?>, Stats> MONOID = new MapToMonoid<Segment<?>, Stats>() {
+    private static final MapToMonoid<Segment<?>, Stats> SEGMENT_STATS =
+            new MapToMonoid<Segment<?>, Stats>() {
 
         @Override
         public Stats unit() {
@@ -232,7 +229,7 @@ final class SparseList<E> {
     };
 
     private static <E> FingerTree<Segment<E>, Stats> emptyTree() {
-        return FingerTree.emptyTree(MONOID);
+        return FingerTree.empty(SEGMENT_STATS);
     }
 
     private FingerTree<Segment<E>, Stats> tree;
@@ -262,7 +259,10 @@ final class SparseList<E> {
     }
 
     public E getPresent(int presentIndex) {
-        return tree.get(Stats::getPresentCount, presentIndex, Segment::getOrThrow);
+        return tree.get(
+                Stats::getPresentCount,
+                presentIndex,
+                Segment::getOrThrow);
     }
 
     public int getPresentCountBefore(int position) {
@@ -289,7 +289,13 @@ final class SparseList<E> {
 
     public List<E> collect(int from, int to) {
         List<E> acc = new ArrayList<E>(getPresentCountBetween(from, to));
-        return tree.foldBetween(acc, (l, seg) -> seg.appendTo(l), Stats::getSize, from, to, (l, seg, start, end) -> seg.appendRangeTo(l, start, end));
+        return tree.foldBetween(
+                acc,
+                (l, seg) -> seg.appendTo(l),
+                Stats::getSize,
+                from,
+                to,
+                (l, seg, start, end) -> seg.appendRangeTo(l, start, end));
     }
 
     public void clear() {
@@ -334,7 +340,8 @@ final class SparseList<E> {
 
     public void insertVoid(int position, int length) {
         if(length < 0) {
-            throw new IllegalArgumentException("length cannot be negative: " + length);
+            throw new IllegalArgumentException(
+                    "length cannot be negative: " + length);
         } else if(length == 0) {
             return;
         }
@@ -350,7 +357,9 @@ final class SparseList<E> {
         } else if(from == to) {
             insertAll(from, elems);
         } else {
-            spliceSegments(from, to, Collections.singletonList(new PresentSegment<>(elems)));
+            spliceSegments(
+                    from, to,
+                    Collections.singletonList(new PresentSegment<>(elems)));
         }
     }
 
@@ -358,11 +367,14 @@ final class SparseList<E> {
         if(length == 0) {
             remove(from, to);
         } else if(length < 0) {
-            throw new IllegalArgumentException("length cannot be negative: " + length);
+            throw new IllegalArgumentException(
+                    "length cannot be negative: " + length);
         } else if(from == to) {
             insertVoid(from, length);
         } else {
-            spliceSegments(from, to, Collections.singletonList(new AbsentSegment<>(length)));
+            spliceSegments(
+                    from, to,
+                    Collections.singletonList(new AbsentSegment<>(length)));
         }
     }
 
@@ -380,7 +392,10 @@ final class SparseList<E> {
             Segment<E> middle,
             Optional<Tuple2<Segment<E>, Integer>> rPrefix,
             FingerTree<Segment<E>, Stats> right) {
-        return join(left, lSuffix, Collections.singletonList(middle), rPrefix, right);
+        return join(
+                left, lSuffix,
+                Collections.singletonList(middle),
+                rPrefix, right);
     }
 
     private FingerTree<Segment<E>, Stats> join(

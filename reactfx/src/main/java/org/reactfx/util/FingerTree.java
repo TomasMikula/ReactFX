@@ -612,14 +612,14 @@ final class FingerTree<T, S> {
             if(suffix.getDepth() == this.getDepth()) {
                 return right(t(this, suffix));
             } else if(children.size() == 2) {
-                return children.with2((left, right) -> {
+                return children.mapFirst2((left, right) -> {
                     return right.appendLte(suffix).unify(
                             r -> left(new Branch(left, r)),
                             mr -> left(mr.map((m, r) -> new Branch(left, m, r))));
                 });
             } else {
                 assert children.size() == 3;
-                return children.with3((left, middle, right) -> {
+                return children.mapFirst3((left, middle, right) -> {
                     return right.appendLte(suffix).<Either<Node, Tuple2<Node, Node>>>unify(
                             r -> left(new Branch(left, middle, r)),
                             mr -> right(t(new Branch(left, middle), mr.map(Branch::new))));
@@ -633,14 +633,14 @@ final class FingerTree<T, S> {
             if(prefix.getDepth() == this.getDepth()) {
                 return right(t(prefix, this));
             } else if(children.size() == 2) {
-                return children.with2((left, right) -> {
+                return children.mapFirst2((left, right) -> {
                     return left.prependLte(prefix).unify(
                             l -> left(new Branch(l, right)),
                             lm -> left(lm.map((l, m) -> new Branch(l, m, right))));
                 });
             } else {
                 assert children.size() == 3;
-                return children.with3((left, middle, right) -> {
+                return children.mapFirst3((left, middle, right) -> {
                     return left.prependLte(prefix).<Either<Node, Tuple2<Node, Node>>>unify(
                             l -> left(new Branch(l, middle, right)),
                             lm -> right(t(lm.map(Branch::new), new Branch(middle, right))));

@@ -169,24 +169,24 @@ public abstract class LL<T> implements Iterable<T> {
         return fold(true, (b, t) -> b && cond.test(t));
     }
 
-    public <U> U with2(BiFunction<? super T, ? super T, ? extends U> f) {
+    public <U> U mapFirst2(BiFunction<? super T, ? super T, ? extends U> f) {
         return f.apply(head(), tail().head());
     }
 
-    public <U> U with3(TriFunction<? super T, ? super T, ? super T, ? extends U> f) {
-        return tail().with2(f.pApply(head()));
+    public <U> U mapFirst3(TriFunction<? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().mapFirst2(f.pApply(head()));
     }
 
-    public <U> U with4(TetraFunction<? super T, ? super T, ? super T, ? super T, ? extends U> f) {
-        return tail().with3(f.pApply(head()));
+    public <U> U mapFirst4(TetraFunction<? super T, ? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().mapFirst3(f.pApply(head()));
     }
 
-    public <U> U with5(PentaFunction<? super T, ? super T, ? super T, ? super T, ? super T, ? extends U> f) {
-        return tail().with4(f.pApply(head()));
+    public <U> U mapFirst5(PentaFunction<? super T, ? super T, ? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().mapFirst4(f.pApply(head()));
     }
 
-    public <U> U with6(HexaFunction<? super T, ? super T, ? super T, ? super T, ? super T, ? super T, ? extends U> f) {
-        return tail().with5(f.pApply(head()));
+    public <U> U mapFirst6(HexaFunction<? super T, ? super T, ? super T, ? super T, ? super T, ? super T, ? extends U> f) {
+        return tail().mapFirst5(f.pApply(head()));
     }
 
     @Override

@@ -232,7 +232,7 @@ final class SparseList<E> {
     };
 
     private static <E> FingerTree<Segment<E>, Stats> emptyTree() {
-        return FingerTree.newEmptyTree(MONOID);
+        return FingerTree.emptyTree(MONOID);
     }
 
     private FingerTree<Segment<E>, Stats> tree;

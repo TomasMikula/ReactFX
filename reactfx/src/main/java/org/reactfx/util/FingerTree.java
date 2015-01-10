@@ -14,14 +14,39 @@ import org.reactfx.util.LL.Cons;
 
 final class FingerTree<T, S> {
 
-    private abstract class Node {
+    private static abstract class Node<T, S> {
+        final MapToMonoid<? super T, S> monoid;
+
+        Node(MapToMonoid<? super T, S> monoid) {
+            this.monoid = monoid;
+        }
 
         abstract int getDepth();
         abstract int getLeafCount();
         abstract T getLeaf(int index);
-        abstract Node updateLeaf(int index, T data);
+        abstract Node<T, S> updateLeaf(int index, T data);
         abstract T getData(); // valid for leafs only
         abstract S getStats();
+
+        EmptyNode<T, S> emptyNode() {
+            return new EmptyNode<>(monoid);
+        }
+
+        Leaf<T, S> leaf(T data) {
+            return new Leaf<>(monoid, data);
+        }
+
+        Branch<T, S> branch(Node<T, S> left, Node<T, S> right) {
+            return branch(LL.of(left, right));
+        }
+
+        Branch<T, S> branch(Node<T, S> left, Node<T, S> middle, Node<T, S> right) {
+            return branch(LL.of(left, middle, right));
+        }
+
+        Branch<T, S> branch(Cons<Node<T, S>> children) {
+            return new Branch<>(monoid, children);
+        }
 
         final boolean isEmpty() {
             return getDepth() == 0;
@@ -62,33 +87,37 @@ final class FingerTree<T, S> {
                 int endPosition,
                 TriFunction<? super T, Integer, Integer, ? extends S> subStats);
 
-        abstract Tuple2<Node, Node> split(int beforeLeaf);
+        abstract Tuple2<Node<T, S>, Node<T, S>> split(int beforeLeaf);
 
-        abstract Tuple3<Node, Optional<Tuple2<T, Integer>>, Node> split(
+        abstract Tuple3<Node<T, S>, Optional<Tuple2<T, Integer>>, Node<T, S>> split(
                 ToIntFunction<? super S> metric,
                 int position);
 
-        final Node append(Node right) {
+        final Node<T, S> append(Node<T, S> right) {
             if(this.getDepth() >= right.getDepth()) {
-                return appendLte(right).toLeft(two -> two.map(Branch::new));
+                return appendLte(right).toLeft(two -> two.map(this::branch));
             } else {
                 return right.prepend(this);
             }
         }
 
-        final Node prepend(Node left) {
+        final Node<T, S> prepend(Node<T, S> left) {
             if(this.getDepth() >= left.getDepth()) {
-                return prependLte(left).toLeft(two -> two.map(Branch::new));
+                return prependLte(left).toLeft(two -> two.map(this::branch));
             } else {
                 return left.append(this);
             }
         }
 
-        abstract Either<Node, Tuple2<Node, Node>> appendLte(Node right);
-        abstract Either<Node, Tuple2<Node, Node>> prependLte(Node left);
+        abstract Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> appendLte(Node<T, S> right);
+        abstract Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> prependLte(Node<T, S> left);
     }
 
-    private final class EmptyNode extends Node {
+    private static final class EmptyNode<T, S> extends Node<T, S> {
+
+        EmptyNode(MapToMonoid<? super T, S> monoid) {
+            super(monoid);
+        }
 
         @Override
         public String toString() {
@@ -111,7 +140,7 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Node updateLeaf(int index, T data) {
+        Node<T, S> updateLeaf(int index, T data) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -175,39 +204,40 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Tuple2<Node, Node> split(
+        Tuple2<Node<T, S>, Node<T, S>> split(
                 int beforeLeaf) {
             assert beforeLeaf == 0;
             return t(this, this);
         }
 
         @Override
-        Tuple3<Node, Optional<Tuple2<T, Integer>>, Node> split(
+        Tuple3<Node<T, S>, Optional<Tuple2<T, Integer>>, Node<T, S>> split(
                 ToIntFunction<? super S> metric, int position) {
             assert position == 0;
             return t(this, Optional.empty(), this);
         }
 
         @Override
-        Either<Node, Tuple2<Node, Node>> appendLte(Node right) {
+        Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> appendLte(Node<T, S> right) {
             assert right.getDepth() == 0;
             return left(right);
         }
 
         @Override
-        Either<Node, Tuple2<Node, Node>> prependLte(Node left) {
+        Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> prependLte(Node<T, S> left) {
             assert left.getDepth() == 0;
             return left(left);
         }
     }
 
-    private class Leaf extends Node {
+    private static class Leaf<T, S> extends Node<T, S> {
         private final T data;
         private final S stats;
 
-        Leaf(T data) {
+        Leaf(MapToMonoid<? super T, S> monoid, T data) {
+            super(monoid);
             this.data = data;
-            this.stats = leafStats.apply(data);
+            this.stats = monoid.apply(data);
         }
 
         @Override
@@ -232,9 +262,9 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Node updateLeaf(int index, T data) {
+        Node<T, S> updateLeaf(int index, T data) {
             assert index == 0;
-            return new Leaf(data);
+            return leaf(data);
         }
 
         @Override
@@ -315,7 +345,7 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Either<Node, Tuple2<Node, Node>> appendLte(Node right) {
+        Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> appendLte(Node<T, S> right) {
             assert right.getDepth() <= this.getDepth();
             if(right.getDepth() == 0) {
                 return left(this);
@@ -325,7 +355,7 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Either<Node, Tuple2<Node, Node>> prependLte(Node left) {
+        Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> prependLte(Node<T, S> left) {
             assert left.getDepth() <= this.getDepth();
             if(left.getDepth() == 0) {
                 return left(this);
@@ -335,54 +365,47 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Tuple2<Node, Node> split(int beforeLeaf) {
+        Tuple2<Node<T, S>, Node<T, S>> split(int beforeLeaf) {
             assert Lists.isValidPosition(beforeLeaf, 1);
             if(beforeLeaf == 0) {
-                return t(EMPTY_NODE, this);
+                return t(emptyNode(), this);
             } else {
-                return t(this, EMPTY_NODE);
+                return t(this, emptyNode());
             }
         }
 
         @Override
-        Tuple3<Node, Optional<Tuple2<T, Integer>>, Node> split(
+        Tuple3<Node<T, S>, Optional<Tuple2<T, Integer>>, Node<T, S>> split(
                 ToIntFunction<? super S> metric, int position) {
             assert Lists.isValidPosition(position, measure(metric));
             if(position == 0) {
-                return t(EMPTY_NODE, Optional.empty(), this);
+                return t(emptyNode(), Optional.empty(), this);
             } else if(position == measure(metric)) {
-                return t(this, Optional.empty(), EMPTY_NODE);
+                return t(this, Optional.empty(), emptyNode());
             } else {
-                return t(EMPTY_NODE, Optional.of(t(data, position)), EMPTY_NODE);
+                return t(emptyNode(), Optional.of(t(data, position)), emptyNode());
             }
         }
     }
 
-    private final class Branch extends Node {
-        private final Cons<Node> children;
+    private static final class Branch<T, S> extends Node<T, S> {
+        private final Cons<Node<T, S>> children;
         private final int depth;
         private final int leafCount;
         private final S stats;
 
-        private Branch(Cons<Node> children) {
+        private Branch(MapToMonoid<? super T, S> monoid, Cons<Node<T, S>> children) {
+            super(monoid);
             assert children.size() == 2 || children.size() == 3;
-            Node head = children.head();
+            Node<T, S> head = children.head();
             int headDepth = head.getDepth();
             assert children.all(n -> n.getDepth() == headDepth);
             this.children = children;
             this.depth  = 1 + headDepth;
             this.leafCount = children.fold(0, (s, n) -> s + n.getLeafCount());
             this.stats = children.mapReduce1(
-                    Node::getStats,
+                    Node<T, S>::getStats,
                     monoid::reduce);
-        }
-
-        Branch(Node left, Node right) {
-            this(LL.of(left, right));
-        }
-
-        Branch(Node left, Node middle, Node right) {
-            this(LL.of(left, middle, right));
         }
 
         @Override
@@ -411,8 +434,8 @@ final class FingerTree<T, S> {
             return getLeaf(index, children);
         }
 
-        private T getLeaf(int index, LL<? extends Node> nodes) {
-            Node head = nodes.head();
+        private T getLeaf(int index, LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headSize = head.getLeafCount();
             if(index < headSize) {
                 return head.getLeaf(index);
@@ -422,13 +445,13 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Node updateLeaf(int index, T data) {
+        Node<T, S> updateLeaf(int index, T data) {
             assert Lists.isValidIndex(index, getLeafCount());
-            return new Branch(updateLeaf(index, data, children));
+            return branch(updateLeaf(index, data, children));
         }
 
-        private Cons<Node> updateLeaf(int index, T data, LL<? extends Node> nodes) {
-            Node head = nodes.head();
+        private Cons<Node<T, S>> updateLeaf(int index, T data, LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headSize = head.getLeafCount();
             if(index < headSize) {
                 return cons(head.updateLeaf(index, data), nodes.tail());
@@ -446,8 +469,8 @@ final class FingerTree<T, S> {
         private BiIndex locate(
                 ToIntFunction<? super S> metric,
                 int position,
-                LL<? extends Node> nodes) {
-            Node head = nodes.head();
+                LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headLen = head.measure(metric);
             if(position < headLen || position == headLen && nodes.tail().isEmpty()) {
                 return head.locate(metric, position);
@@ -479,8 +502,8 @@ final class FingerTree<T, S> {
                 BiFunction<? super R, ? super T, ? extends R> reduction,
                 int startLeaf,
                 int endLeaf,
-                LL<? extends Node> nodes) {
-            Node head = nodes.head();
+                LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headSize = head.getLeafCount();
             int headTo = Math.min(endLeaf, headSize);
             int tailFrom = Math.max(startLeaf - headSize, 0);
@@ -513,8 +536,8 @@ final class FingerTree<T, S> {
                 int startPosition,
                 int endPosition,
                 TetraFunction<? super R, ? super T, Integer, Integer, ? extends R> rangeReduction,
-                LL<? extends Node> nodes) {
-            Node head = nodes.head();
+                LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headLen = head.measure(metric);
             int headTo = Math.min(endPosition, headLen);
             int tailFrom = Math.max(startPosition - headLen, 0);
@@ -548,8 +571,8 @@ final class FingerTree<T, S> {
         private S getStatsBetween(
                 int startLeaf,
                 int endLeaf,
-                LL<? extends Node> nodes) {
-            Node head = nodes.head();
+                LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headSize = head.getLeafCount();
             int headTo = Math.min(endLeaf, headSize);
             int tailFrom = Math.max(startLeaf - headSize, 0);
@@ -587,8 +610,8 @@ final class FingerTree<T, S> {
                 int startPosition,
                 int endPosition,
                 TriFunction<? super T, Integer, Integer, ? extends S> subStats,
-                LL<? extends Node> nodes) {
-            Node head = nodes.head();
+                LL<? extends Node<T, S>> nodes) {
+            Node<T, S> head = nodes.head();
             int headLen = head.measure(metric);
             int headTo = Math.min(endPosition, headLen);
             int tailFrom = Math.max(startPosition - headLen, 0);
@@ -607,61 +630,61 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Either<Node, Tuple2<Node, Node>> appendLte(Node suffix) {
+        Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> appendLte(Node<T, S> suffix) {
             assert suffix.getDepth() <= this.getDepth();
             if(suffix.getDepth() == this.getDepth()) {
                 return right(t(this, suffix));
             } else if(children.size() == 2) {
                 return children.mapFirst2((left, right) -> {
                     return right.appendLte(suffix).unify(
-                            r -> left(new Branch(left, r)),
-                            mr -> left(mr.map((m, r) -> new Branch(left, m, r))));
+                            r -> left(branch(left, r)),
+                            mr -> left(mr.map((m, r) -> branch(left, m, r))));
                 });
             } else {
                 assert children.size() == 3;
                 return children.mapFirst3((left, middle, right) -> {
-                    return right.appendLte(suffix).<Either<Node, Tuple2<Node, Node>>>unify(
-                            r -> left(new Branch(left, middle, r)),
-                            mr -> right(t(new Branch(left, middle), mr.map(Branch::new))));
+                    return right.appendLte(suffix).<Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>>>unify(
+                            r -> left(branch(left, middle, r)),
+                            mr -> right(t(branch(left, middle), mr.map(this::branch))));
                 });
             }
         }
 
         @Override
-        Either<Node, Tuple2<Node, Node>> prependLte(Node prefix) {
+        Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>> prependLte(Node<T, S> prefix) {
             assert prefix.getDepth() <= this.getDepth();
             if(prefix.getDepth() == this.getDepth()) {
                 return right(t(prefix, this));
             } else if(children.size() == 2) {
                 return children.mapFirst2((left, right) -> {
                     return left.prependLte(prefix).unify(
-                            l -> left(new Branch(l, right)),
-                            lm -> left(lm.map((l, m) -> new Branch(l, m, right))));
+                            l -> left(branch(l, right)),
+                            lm -> left(lm.map((l, m) -> branch(l, m, right))));
                 });
             } else {
                 assert children.size() == 3;
                 return children.mapFirst3((left, middle, right) -> {
-                    return left.prependLte(prefix).<Either<Node, Tuple2<Node, Node>>>unify(
-                            l -> left(new Branch(l, middle, right)),
-                            lm -> right(t(lm.map(Branch::new), new Branch(middle, right))));
+                    return left.prependLte(prefix).<Either<Node<T, S>, Tuple2<Node<T, S>, Node<T, S>>>>unify(
+                            l -> left(branch(l, middle, right)),
+                            lm -> right(t(lm.map(this::branch), branch(middle, right))));
                 });
             }
         }
 
         @Override
-        Tuple2<Node, Node> split(int beforeLeaf) {
+        Tuple2<Node<T, S>, Node<T, S>> split(int beforeLeaf) {
             assert Lists.isValidPosition(beforeLeaf, getLeafCount());
             if(beforeLeaf == 0) {
-                return t(EMPTY_NODE, this);
+                return t(emptyNode(), this);
             } else {
                 return split(beforeLeaf, children);
             }
         }
 
-        private Tuple2<Node, Node> split(
-                int beforeLeaf, LL<? extends Node> nodes) {
+        private Tuple2<Node<T, S>, Node<T, S>> split(
+                int beforeLeaf, LL<? extends Node<T, S>> nodes) {
             assert beforeLeaf > 0;
-            Node head = nodes.head();
+            Node<T, S> head = nodes.head();
             int headSize = head.getLeafCount();
             if(beforeLeaf <= headSize) {
                 return head.split(beforeLeaf)
@@ -673,22 +696,22 @@ final class FingerTree<T, S> {
         }
 
         @Override
-        Tuple3<Node, Optional<Tuple2<T, Integer>>, Node> split(
+        Tuple3<Node<T, S>, Optional<Tuple2<T, Integer>>, Node<T, S>> split(
                 ToIntFunction<? super S> metric, int position) {
             assert Lists.isValidPosition(position, measure(metric));
             if(position == 0) {
-                return t(EMPTY_NODE, Optional.empty(), this);
+                return t(emptyNode(), Optional.empty(), this);
             } else {
                 return split(metric, position, children);
             }
         }
 
-        private Tuple3<Node, Optional<Tuple2<T, Integer>>, Node> split(
+        private Tuple3<Node<T, S>, Optional<Tuple2<T, Integer>>, Node<T, S>> split(
                 ToIntFunction<? super S> metric,
                 int position,
-                LL<? extends Node> nodes) {
+                LL<? extends Node<T, S>> nodes) {
             assert position > 0;
-            Node head = nodes.head();
+            Node<T, S> head = nodes.head();
             int headLen = head.measure(metric);
             if(position <= headLen) {
                 return head.split(metric, position)
@@ -701,30 +724,22 @@ final class FingerTree<T, S> {
     }
 
     public static <T, S> FingerTree<T, S> newEmptyTree(
-            Function<? super T, ? extends S> leafStats,
-            Monoid<S> monoid) {
-        return new FingerTree<>(leafStats, monoid);
+            MapToMonoid<? super T, S> monoid) {
+        return new FingerTree<>(monoid);
     }
 
-    private final EmptyNode EMPTY_NODE = new EmptyNode();
-
-    private final Function<? super T, ? extends S> leafStats;
-    private final Monoid<S> monoid;
-    private final Node root;
+    private final MapToMonoid<? super T, S> monoid;
+    private final Node<T, S> root;
 
     private FingerTree(
-            Function<? super T, ? extends S> leafStats,
-            Monoid<S> monoid) {
-        this.leafStats = leafStats;
+            MapToMonoid<? super T, S> monoid) {
         this.monoid = monoid;
-        this.root = EMPTY_NODE;
+        this.root = new EmptyNode<>(monoid);
     }
 
     private FingerTree(
-            Function<? super T, ? extends S> leafStats,
-            Monoid<S> monoid,
-            Node root) {
-        this.leafStats = leafStats;
+            MapToMonoid<? super T, S> monoid,
+            Node<T, S> root) {
         this.monoid = monoid;
         this.root = root;
     }
@@ -845,8 +860,8 @@ final class FingerTree<T, S> {
         } else if(fromLeaf == 0 && toLeaf == getLeafCount()) {
             return newEmptyTree();
         } else {
-            Node left = root.split(fromLeaf)._1;
-            Node right = root.split(toLeaf)._2;
+            Node<T, S> left = root.split(fromLeaf)._1;
+            Node<T, S> right = root.split(toLeaf)._2;
             return newTree(left.append(right));
         }
     }
@@ -855,7 +870,7 @@ final class FingerTree<T, S> {
         Lists.checkPosition(position, getLeafCount());
         return newTree(
                 root.split(position)
-                        .map((l, r) -> l.append(new Leaf(data)).append(r)));
+                        .map((l, r) -> l.append(root.leaf(data)).append(r)));
     }
 
     public FingerTree<T, S> updateLeaf(int index, T data) {
@@ -864,27 +879,27 @@ final class FingerTree<T, S> {
     }
 
     public FingerTree<T, S> append(T data) {
-        return newTree(root.append(new Leaf(data)));
+        return newTree(root.append(root.leaf(data)));
     }
 
     public FingerTree<T, S> prepend(T data) {
-        return newTree(root.prepend(new Leaf(data)));
+        return newTree(root.prepend(root.leaf(data)));
     }
 
     public FingerTree<T, S> join(FingerTree<T, S> rightTree) {
         return newTree(root.append(rightTree.root));
     }
 
-    private FingerTree<T, S> newTree(Node newRoot) {
-        return new FingerTree<>(leafStats, monoid, newRoot);
+    private FingerTree<T, S> newTree(Node<T, S> newRoot) {
+        return new FingerTree<>(monoid, newRoot);
     }
 
     private FingerTree<T, S> newEmptyTree() {
-        return newEmptyTree(leafStats, monoid);
+        return newEmptyTree(monoid);
     }
 
-    private Node concat(Cons<? extends Node> nodes) {
-        Node head = nodes.head();
+    private static <T, S> Node<T, S> concat(Cons<? extends Node<T, S>> nodes) {
+        Node<T, S> head = nodes.head();
         return nodes.tail().fold(
                 head,
                 (v, w) -> v.append(w));
@@ -895,6 +910,8 @@ interface Monoid<T> {
     T unit();
     T reduce(T left, T right);
 }
+
+interface MapToMonoid<T, U> extends Function<T, U>, Monoid<U> {}
 
 final class BiIndex {
     public final int major;

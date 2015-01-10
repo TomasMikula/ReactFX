@@ -198,21 +198,6 @@ final class SparseList<E> {
     private static final class Stats {
         private static final Stats ZERO = new Stats(0, 0);
 
-        private static final Monoid<Stats> MONOID = new Monoid<Stats>() {
-
-            @Override
-            public Stats unit() {
-                return ZERO;
-            }
-
-            @Override
-            public Stats reduce(Stats left, Stats right) {
-                return new Stats(
-                        left.size + right.size,
-                        left.presentCount + right.presentCount);
-            }
-        };
-
         final int size;
         final int presentCount;
 
@@ -226,10 +211,28 @@ final class SparseList<E> {
         int getPresentCount() { return presentCount; }
     }
 
+    private static final MapToMonoid<Segment<?>, Stats> MONOID = new MapToMonoid<Segment<?>, Stats>() {
+
+        @Override
+        public Stats unit() {
+            return Stats.ZERO;
+        }
+
+        @Override
+        public Stats reduce(Stats left, Stats right) {
+            return new Stats(
+                    left.size + right.size,
+                    left.presentCount + right.presentCount);
+        }
+
+        @Override
+        public Stats apply(Segment<?> seg) {
+            return new Stats(seg.getLength(), seg.getPresentCount());
+        }
+    };
+
     private static <E> FingerTree<Segment<E>, Stats> emptyTree() {
-        return FingerTree.newEmptyTree(
-                Segment::getStats,
-                Stats.MONOID);
+        return FingerTree.newEmptyTree(MONOID);
     }
 
     private FingerTree<Segment<E>, Stats> tree;

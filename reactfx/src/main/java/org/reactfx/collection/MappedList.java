@@ -29,16 +29,16 @@ class MappedList<E, F> extends ObsListBase<E> implements ReadOnlyObsListImpl<E> 
 
     @Override
     protected Subscription bindToInputs() {
-        return ObsList.<F>observeChanges(source, this::sourceChanged);
+        return ObsList.<F>observeQuasiChanges(source, this::sourceChanged);
     }
 
-    private void sourceChanged(ListChange<? extends F> change) {
-        notifyObservers(new ListChange<E>() {
+    private void sourceChanged(QuasiListChange<? extends F> change) {
+        notifyObservers(new QuasiListChange<E>() {
 
             @Override
-            public List<TransientListModification<E>> getModifications() {
-                List<? extends TransientListModification<? extends F>> mods = change.getModifications();
-                return Lists.<TransientListModification<? extends F>, TransientListModification<E>>mappedView(mods, mod -> new TransientListModification<E>() {
+            public List<? extends QuasiListModification<? extends E>> getModifications() {
+                List<? extends QuasiListModification<? extends F>> mods = change.getModifications();
+                return Lists.<QuasiListModification<? extends F>, QuasiListModification<E>>mappedView(mods, mod -> new QuasiListModification<E>() {
 
                     @Override
                     public int getFrom() {
@@ -54,12 +54,6 @@ class MappedList<E, F> extends ObsListBase<E> implements ReadOnlyObsListImpl<E> 
                     public List<? extends E> getRemoved() {
                         return Lists.mappedView(mod.getRemoved(), mapper);
                     }
-
-                    @Override
-                    public ObservableList<? extends E> getList() {
-                        return MappedList.this;
-                    }
-
                 });
             }
 

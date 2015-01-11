@@ -3,7 +3,7 @@ package org.reactfx.util;
 import java.util.Deque;
 import java.util.LinkedList;
 
-import org.reactfx.collection.ListChange;
+import org.reactfx.collection.QuasiListChange;
 import org.reactfx.collection.ListChangeAccumulator;
 import org.reactfx.collection.ListModificationSequence;
 
@@ -46,18 +46,18 @@ public interface AccumulationFacility<T, A> {
     }
 
     interface ListChangeAccumulation<E>
-    extends AccumulationFacility<ListChange<? extends E>, ListModificationSequence<E>> {
+    extends AccumulationFacility<QuasiListChange<? extends E>, ListModificationSequence<E>> {
 
         @Override
         default ListModificationSequence<E> initialAccumulator(
-                ListChange<? extends E> value) {
-            return ListChange.safeCast(value);
+                QuasiListChange<? extends E> value) {
+            return QuasiListChange.safeCast(value);
         }
 
         @Override
         default ListChangeAccumulator<E> reduce(
                 ListModificationSequence<E> accum,
-                ListChange<? extends E> value) {
+                QuasiListChange<? extends E> value) {
             return accum.asListChangeAccumulator().add(value);
         }
     }

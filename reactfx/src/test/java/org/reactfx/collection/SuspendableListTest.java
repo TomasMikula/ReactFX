@@ -10,8 +10,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener.Change;
 
 import org.junit.Test;
-import org.reactfx.collection.ObsList;
-import org.reactfx.collection.SuspendableList;
 
 public class SuspendableListTest {
 
@@ -32,7 +30,7 @@ public class SuspendableListTest {
                 } else {
                     List<Integer> sub = mirror.subList(change.getFrom(), change.getFrom() + change.getRemovedSize());
                     sub.clear();
-                    sub.addAll(wrapped.subList(change.getFrom(), change.getTo()));
+                    sub.addAll(change.getAddedSubList());
                 }
             }
         });

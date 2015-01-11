@@ -13,12 +13,12 @@ import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.NotificationAccumulator;
 
 final class SuspendableListWrapper<E>
-extends SuspendableBase<ObsList.Observer<? super E, ?>, ListChange<? extends E>, ListModificationSequence<E>>
+extends SuspendableBase<ObsList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>>
 implements SuspendableList<E>, ObsListHelpers<E> {
     private final ObservableList<E> delegate;
 
     SuspendableListWrapper(ObservableList<E> source) {
-        super(ObsList.changesOf(source), NotificationAccumulator.listNotifications());
+        super(ObsList.quasiChangesOf(source), NotificationAccumulator.listNotifications());
         this.delegate = source;
     }
 
@@ -28,7 +28,7 @@ implements SuspendableList<E>, ObsListHelpers<E> {
     }
 
     @Override
-    protected ListChange<? extends E> headOf(ListModificationSequence<E> accum) {
+    protected QuasiListChange<? extends E> headOf(ListModificationSequence<E> accum) {
         return accum.asListChange();
     }
 

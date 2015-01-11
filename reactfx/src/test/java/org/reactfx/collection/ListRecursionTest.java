@@ -69,9 +69,9 @@ public class ListRecursionTest {
         List<MaterializedListModification<? extends Integer>> mods = new ArrayList<>();
         list.observeModifications(mod -> {
             mods.add(mod.materialize());
-            if(mod.getList().size() == 3) {
+            if(list.size() == 3) {
                 list.add(0, 0);
-            } else if(mod.getList().size() == 4) {
+            } else if(list.size() == 4) {
                 list.add(6);
             }
         });

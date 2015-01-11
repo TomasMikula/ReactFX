@@ -9,12 +9,12 @@ import javafx.collections.ListChangeListener;
 import org.reactfx.util.Lists;
 
 public final class ListChangeAccumulator<E> implements ListModificationSequence<E> {
-    private ListChangeImpl<E> modifications = new ListChangeImpl<>();
+    private QuasiListChangeImpl<E> modifications = new QuasiListChangeImpl<>();
 
     public ListChangeAccumulator() {}
 
-    public ListChangeAccumulator(ListChange<E> change) {
-        modifications = new ListChangeImpl<>(change);
+    public ListChangeAccumulator(QuasiListChange<E> change) {
+        modifications = new QuasiListChangeImpl<>(change);
     }
 
     @Override
@@ -23,12 +23,12 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
     }
 
     @Override
-    public ListChange<E> asListChange() {
+    public QuasiListChange<E> asListChange() {
         return fetch();
     }
 
     @Override
-    public List<TransientListModification<E>> getModifications() {
+    public List<QuasiListModification<? extends E>> getModifications() {
         return Collections.unmodifiableList(modifications);
     }
 
@@ -36,9 +36,9 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return modifications.isEmpty();
     }
 
-    public ListChange<E> fetch() {
-        ListChange<E> res = modifications;
-        modifications = new ListChangeImpl<>();
+    public QuasiListChange<E> fetch() {
+        QuasiListChange<E> res = modifications;
+        modifications = new QuasiListChangeImpl<>();
         return res;
     }
 
@@ -47,9 +47,9 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return this;
     }
 
-    public ListChangeAccumulator<E> add(TransientListModification<? extends E> mod) {
+    public ListChangeAccumulator<E> add(QuasiListModification<? extends E> mod) {
         if(modifications.isEmpty()) {
-            modifications.add(TransientListModification.safeCast(mod));
+            modifications.add(mod);
         } else {
             // find first and last overlapping modification
             int from = mod.getFrom();
@@ -73,11 +73,11 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
 
             // combine overlapping modifications into one
             if(lastOverlapping < firstOverlapping) { // no overlap
-                modifications.add(firstOverlapping, TransientListModification.safeCast(mod));
+                modifications.add(firstOverlapping, mod);
             } else { // overlaps one or more former modifications
-                List<TransientListModification<E>> overlapping = modifications.subList(firstOverlapping, lastOverlapping + 1);
-                TransientListModification<? extends E> joined = join(overlapping, mod.getRemoved(), mod.getFrom());
-                TransientListModification<E> newMod = combine(joined, mod);
+                List<QuasiListModification<? extends E>> overlapping = modifications.subList(firstOverlapping, lastOverlapping + 1);
+                QuasiListModification<? extends E> joined = join(overlapping, mod.getRemoved(), mod.getFrom());
+                QuasiListModification<E> newMod = combine(joined, mod);
                 overlapping.clear();
                 modifications.add(firstOverlapping, newMod);
             }
@@ -86,9 +86,9 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return this;
     }
 
-    public ListChangeAccumulator<E> add(ListChange<? extends E> change) {
-        for(TransientListModification<? extends E> mod: change) {
-            add(TransientListModification.safeCast(mod));
+    public ListChangeAccumulator<E> add(QuasiListChange<? extends E> change) {
+        for(QuasiListModification<? extends E> mod: change) {
+            add(mod);
         }
 
         return this;
@@ -96,7 +96,7 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
 
     public ListChangeAccumulator<E> add(ListChangeListener.Change<? extends E> change) {
         while(change.next()) {
-            add(TransientListModification.fromCurrentStateOf(change));
+            add(QuasiListModification.fromCurrentStateOf(change));
         }
 
         return this;
@@ -104,15 +104,14 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
 
     private void offsetPendingModifications(int from, int offset) {
         modifications.subList(from, modifications.size())
-                .replaceAll(mod -> new TransientListModificationImpl<>(
-                        mod.getList(),
+                .replaceAll(mod -> new QuasiListModificationImpl<>(
                         mod.getFrom() + offset,
-                        mod.getTo() + offset,
-                        mod.getRemoved()));
+                        mod.getRemoved(),
+                        mod.getAddedSize()));
     }
 
-    private static <E> TransientListModification<? extends E> join(
-            List<TransientListModification<E>> mods,
+    private static <E> QuasiListModification<? extends E> join(
+            List<QuasiListModification<? extends E>> mods,
             List<? extends E> gone,
             int goneOffset) {
 
@@ -121,48 +120,48 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         }
 
         List<List<? extends E>> removedLists = new ArrayList<>(2*mods.size() - 1);
-        TransientListModification<? extends E> prev = mods.get(0);
+        QuasiListModification<? extends E> prev = mods.get(0);
         int from = prev.getFrom();
         removedLists.add(prev.getRemoved());
         for(int i = 1; i < mods.size(); ++i) {
-            TransientListModification<? extends E> m = mods.get(i);
+            QuasiListModification<? extends E> m = mods.get(i);
             removedLists.add(gone.subList(prev.getTo() - goneOffset, m.getFrom() - goneOffset));
             removedLists.add(m.getRemoved());
             prev = m;
         }
         List<E> removed = Lists.concatView(removedLists);
-        return new TransientListModificationImpl<>(prev.getList(), from, prev.getTo(), removed);
+        return new QuasiListModificationImpl<>(from, removed, prev.getTo() - from);
     }
 
-    private static <E> TransientListModification<E> combine(
-            TransientListModification<? extends E> former,
-            TransientListModification<? extends E> latter) {
+    private static <E> QuasiListModification<E> combine(
+            QuasiListModification<? extends E> former,
+            QuasiListModification<? extends E> latter) {
 
         if(latter.getFrom() >= former.getFrom() && latter.getFrom() + latter.getRemovedSize() <= former.getTo()) {
             // latter is within former
             List<? extends E> removed = former.getRemoved();
-            int to = former.getTo() - latter.getRemovedSize() + latter.getAddedSize();
-            return new TransientListModificationImpl<>(former.getList(), former.getFrom(), to, removed);
+            int addedSize = former.getAddedSize() - latter.getRemovedSize() + latter.getAddedSize();
+            return new QuasiListModificationImpl<>(former.getFrom(), removed, addedSize);
         } else if(latter.getFrom() <= former.getFrom() && latter.getFrom() + latter.getRemovedSize() >= former.getTo()) {
             // former is within latter
             List<E> removed = Lists.concatView(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
-            return new TransientListModificationImpl<>(latter.getList(), latter.getFrom(), latter.getTo(), removed);
+            return new QuasiListModificationImpl<>(latter.getFrom(), removed, latter.getAddedSize());
         } else if(latter.getFrom() >= former.getFrom()) {
             // latter overlaps to the right
             List<E> removed = Lists.concatView(
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
-            return new TransientListModificationImpl<>(former.getList(), former.getFrom(), latter.getTo(), removed);
+            return new QuasiListModificationImpl<>(former.getFrom(), removed, latter.getTo() - former.getFrom());
         } else {
             // latter overlaps to the left
             List<E> removed = Lists.concatView(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved());
-            int to = former.getTo() - latter.getRemovedSize() + latter.getAddedSize();
-            return new TransientListModificationImpl<>(latter.getList(), latter.getFrom(), to, removed);
+            int addedSize = former.getTo() - latter.getRemovedSize() + latter.getAddedSize() - latter.getFrom();
+            return new QuasiListModificationImpl<>(latter.getFrom(), removed, addedSize);
         }
     }
 }

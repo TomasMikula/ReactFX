@@ -31,7 +31,7 @@ public class ListMapTest {
         List<Integer> removed = new ArrayList<>();
         List<Integer> added = new ArrayList<>();
         lengths.observeChanges(ch -> {
-            for(TransientListModification<? extends Integer> mod: ch.getModifications()) {
+            for(ListModification<? extends Integer> mod: ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
                 added.addAll(mod.getAddedSubList());
             }

@@ -13,50 +13,50 @@ import org.reactfx.util.Lists;
  * helper methods.
  */
 public interface ObsListHelpers<E>
-extends ObsList<E>, ObservableHelpers<ObsList.Observer<? super E, ?>, ListChange<? extends E>> {
+extends ObsList<E>, ObservableHelpers<ObsList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
 
     @Override
-    default void addChangeObserver(ChangeObserver<? super E> observer) {
+    default void addQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
         addObserver(observer);
     }
 
     @Override
-    default void removeChangeObserver(ChangeObserver<? super E> observer) {
+    default void removeQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
         removeObserver(observer);
     }
 
     @Override
-    default void addModificationObserver(ModificationObserver<? super E> observer) {
+    default void addQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
         addObserver(observer);
     }
 
     @Override
-    default void removeModificationObserver(ModificationObserver<? super E> observer) {
+    default void removeQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
         removeObserver(observer);
     }
 
-    default void fireModification(TransientListModification<? extends E> mod) {
+    default void fireModification(QuasiListModification<? extends E> mod) {
         notifyObservers(mod.asListChange());
     }
 
-    default TransientListModification<E> elemReplacement(int index, E replaced) {
-        return new TransientListModificationImpl<E>(
-                this, index, index+1, Collections.singletonList(replaced));
+    default QuasiListModification<E> elemReplacement(int index, E replaced) {
+        return new QuasiListModificationImpl<E>(
+                index, Collections.singletonList(replaced), 1);
     }
 
     default void fireElemReplacement(int index, E replaced) {
         fireModification(elemReplacement(index, replaced));
     }
 
-    default TransientListModification<E> contentReplacement(List<E> removed) {
-        return new TransientListModificationImpl<E>(this, 0, size(), removed);
+    default QuasiListModification<E> contentReplacement(List<E> removed) {
+        return new QuasiListModificationImpl<E>(0, removed, size());
     }
 
     default void fireContentReplacement(List<E> removed) {
         fireModification(contentReplacement(removed));
     }
 
-    default TransientListModification<E> elemInsertion(int index) {
+    default QuasiListModification<E> elemInsertion(int index) {
         return rangeInsertion(index, 1);
     }
 
@@ -64,27 +64,26 @@ extends ObsList<E>, ObservableHelpers<ObsList.Observer<? super E, ?>, ListChange
         fireModification(elemInsertion(index));
     }
 
-    default TransientListModification<E> rangeInsertion(int index, int size) {
-        return new TransientListModificationImpl<E>(
-                this, index, index + size, Collections.emptyList());
+    default QuasiListModification<E> rangeInsertion(int index, int size) {
+        return new QuasiListModificationImpl<E>(
+                index, Collections.emptyList(), size);
     }
 
     default void fireRangeInsertion(int index, int size) {
         fireModification(rangeInsertion(index, size));
     }
 
-    default TransientListModification<E> elemRemoval(int index, E removed) {
-        return new TransientListModificationImpl<E>(
-                this, index, index, Collections.singletonList(removed));
+    default QuasiListModification<E> elemRemoval(int index, E removed) {
+        return new QuasiListModificationImpl<E>(
+                index, Collections.singletonList(removed), 0);
     }
 
     default void fireElemRemoval(int index, E removed) {
         fireModification(elemRemoval(index, removed));
     }
 
-    default TransientListModification<E> rangeRemoval(int index, List<E> removed) {
-        return new TransientListModificationImpl<E>(
-                this, index, index, removed);
+    default QuasiListModification<E> rangeRemoval(int index, List<E> removed) {
+        return new QuasiListModificationImpl<E>(index, removed, 0);
     }
 
     default void fireRemoveRange(int index, List<E> removed) {

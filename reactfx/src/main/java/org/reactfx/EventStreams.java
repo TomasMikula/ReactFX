@@ -26,8 +26,8 @@ import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 
+import org.reactfx.collection.ListModification;
 import org.reactfx.collection.ObsList;
-import org.reactfx.collection.TransientListModification;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Tuple2;
@@ -164,17 +164,15 @@ public class EventStreams {
      * Use only when the subscriber does not cause {@code list} modification
      * of the underlying list.
      */
-    public static <T> EventStream<TransientListModification<T>> simpleChangesOf(ObservableList<T> list) {
-        return new EventStreamBase<TransientListModification<T>>() {
+    public static <T> EventStream<ListModification<? extends T>> simpleChangesOf(ObservableList<T> list) {
+        return new EventStreamBase<ListModification<? extends T>>() {
             @Override
             protected Subscription bindToInputs() {
-                ListChangeListener<T> listener = c ->  {
-                    while(c.next()) {
-                        emit(TransientListModification.fromCurrentStateOf(c));
+                return ObsList.observeChanges(list, c ->  {
+                    for(ListModification<? extends T> mod: c) {
+                        emit(mod);
                     }
-                };
-                list.addListener(listener);
-                return () -> list.removeListener(listener);
+                });
             }
         };
     }

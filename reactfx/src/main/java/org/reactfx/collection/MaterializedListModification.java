@@ -1,8 +1,10 @@
 package org.reactfx.collection;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public interface MaterializedListModification<E> extends ListModification<E> {
+public interface MaterializedListModification<E> extends ListModificationLike<E> {
     List<E> getAdded();
 
     @Override
@@ -15,11 +17,10 @@ implements MaterializedListModification<E> {
     private final List<E> added;
 
     MaterializedListModificationImpl(
-            int from,
-            List<? extends E> removed,
-            List<E> added) {
-        super(from, removed);
-        this.added = added;
+            QuasiListModification<? extends E> template,
+            List<E> addedSublist) {
+        super(template);
+        this.added = Collections.unmodifiableList(new ArrayList<>(addedSublist));
     }
 
     @Override

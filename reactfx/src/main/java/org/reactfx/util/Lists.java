@@ -3,6 +3,7 @@ package org.reactfx.util;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -54,6 +55,22 @@ public final class Lists {
         }
         res.append(']');
         return res.toString();
+    }
+
+    public static <E> Iterator<E> readOnlyIterator(Collection<? extends E> col) {
+        return new Iterator<E>() {
+            private final Iterator<? extends E> delegate = col.iterator();
+
+            @Override
+            public boolean hasNext() {
+                return delegate.hasNext();
+            }
+
+            @Override
+            public E next() {
+                return delegate.next();
+            }
+        };
     }
 
     public static boolean isValidIndex(int index, int size) {

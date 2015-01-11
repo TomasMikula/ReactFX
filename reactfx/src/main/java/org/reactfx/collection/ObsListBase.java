@@ -4,7 +4,7 @@ import org.reactfx.ObservableBase;
 import org.reactfx.util.NotificationAccumulator;
 
 abstract class ObsListBase<E>
-extends ObservableBase<ObsList.Observer<? super E, ?>, ListChange<? extends E>>
+extends ObservableBase<ObsList.Observer<? super E, ?>, QuasiListChange<? extends E>>
 implements ObsListHelpers<E>, AccessorListMethods<E> {
 
     public ObsListBase() {

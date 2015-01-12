@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-final class SparseList<E> {
+public final class SparseList<E> {
 
     private static interface Segment<E> {
         boolean isPresent();

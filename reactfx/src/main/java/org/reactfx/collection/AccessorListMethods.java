@@ -16,7 +16,7 @@ interface AccessorListMethods<E> extends List<E> {
 
     @Override
     default boolean isEmpty() {
-        return size() != 0;
+        return size() == 0;
     }
 
     @Override

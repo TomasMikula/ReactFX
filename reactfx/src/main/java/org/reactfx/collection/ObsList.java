@@ -96,6 +96,10 @@ public interface ObsList<E> extends ObservableList<E> {
      * Default Methods *
      * *************** */
 
+    default Subscription pin() {
+        return observeQuasiChanges(qc -> {});
+    }
+
     default void addChangeObserver(Consumer<? super ListChange<? extends E>> observer) {
         addQuasiChangeObserver(new ChangeObserverWrapper<>(this, observer));
     }
@@ -158,6 +162,10 @@ public interface ObsList<E> extends ObservableList<E> {
 
     default SuspendableList<E> suspendable() {
         return suspendable(this);
+    }
+
+    default MemoizationList<E> memoize() {
+        return memoize(this);
     }
 
     default EventStream<QuasiListChange<? extends E>> quasiChanges() {
@@ -244,7 +252,15 @@ public interface ObsList<E> extends ObservableList<E> {
         if(list instanceof SuspendableList) {
             return (SuspendableList<E>) list;
         } else {
-            return new SuspendableListWrapper<E>(list);
+            return new SuspendableListWrapper<>(list);
+        }
+    }
+
+    static <E> MemoizationList<E> memoize(ObservableList<E> list) {
+        if(list instanceof MemoizationList) {
+            return (MemoizationList<E>) list;
+        } else {
+            return new MemoizationListImpl<>(list);
         }
     }
 }

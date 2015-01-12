@@ -242,8 +242,7 @@ abstract class FingerTree<T, S> {
             assert Lists.isNonEmptyRange(startPosition, endPosition, measure(metric))
                     : "Didn't expect empty range [" + startPosition + ", " + endPosition + ")";
 
-            int len = measure(metric);
-            if(startPosition == 0 && endPosition == len) {
+            if(startPosition == 0 && endPosition == measure(metric)) {
                 return stats;
             } else {
                 return subStats.apply(data, startPosition, endPosition);
@@ -751,7 +750,11 @@ abstract class FingerTree<T, S> {
 
     public S getStatsBetween(int startLeaf, int endLeaf) {
         Lists.checkRange(startLeaf, endLeaf, getLeafCount());
-        return getStatsBetween0(startLeaf, endLeaf);
+        if(startLeaf == endLeaf) {
+            return monoid.unit();
+        } else {
+            return getStatsBetween0(startLeaf, endLeaf);
+        }
     }
 
     abstract S getStatsBetween0(
@@ -764,7 +767,11 @@ abstract class FingerTree<T, S> {
             int endPosition,
             TriFunction<? super T, Integer, Integer, ? extends S> subStats) {
         Lists.checkRange(startPosition, endPosition, measure(metric));
-        return getStatsBetween0(metric, startPosition, endPosition, subStats);
+        if(startPosition == endPosition) {
+            return monoid.unit();
+        } else {
+            return getStatsBetween0(metric, startPosition, endPosition, subStats);
+        }
     }
 
     abstract S getStatsBetween0(

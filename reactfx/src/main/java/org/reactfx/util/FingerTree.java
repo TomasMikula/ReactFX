@@ -905,4 +905,9 @@ final class BiIndex {
     public BiIndex adjustMinor(int adjustment) {
         return new BiIndex(major, minor + adjustment);
     }
+
+    @Override
+    public String toString() {
+        return "[" + major + ", " + minor + "]";
+    }
 }

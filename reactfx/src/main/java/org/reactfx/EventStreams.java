@@ -25,6 +25,7 @@ import javafx.event.EventHandler;
 import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
+import javafx.scene.control.MenuItem;
 
 import org.reactfx.collection.ListModification;
 import org.reactfx.collection.ObsList;
@@ -239,24 +240,38 @@ public class EventStreams {
         };
     }
 
-    public static <T extends Event> EventStream<T> eventsOf(Node node, EventType<T> eventType) {
+    public static <T extends Event> EventStream<T> eventsOf(
+            Node node, EventType<T> eventType) {
         return new EventStreamBase<T>() {
             @Override
             protected Subscription bindToInputs() {
-                EventHandler<T> handler = event -> emit(event);
+                EventHandler<T> handler = this::emit;
                 node.addEventHandler(eventType, handler);
                 return () -> node.removeEventHandler(eventType, handler);
             }
         };
     }
 
-    public static <T extends Event> EventStream<T> eventsOf(Scene scene, EventType<T> eventType) {
+    public static <T extends Event> EventStream<T> eventsOf(
+            Scene scene, EventType<T> eventType) {
         return new EventStreamBase<T>() {
             @Override
             protected Subscription bindToInputs() {
-                EventHandler<T> handler = event -> emit(event);
+                EventHandler<T> handler = this::emit;
                 scene.addEventHandler(eventType, handler);
                 return () -> scene.removeEventHandler(eventType, handler);
+            }
+        };
+    }
+
+    public static <T extends Event> EventStream<T> eventsOf(
+            MenuItem menuItem, EventType<T> eventType) {
+        return new EventStreamBase<T>() {
+            @Override
+            protected Subscription bindToInputs() {
+                EventHandler<T> handler = this::emit;
+                menuItem.addEventHandler(eventType, handler);
+                return () -> menuItem.removeEventHandler(eventType, handler);
             }
         };
     }

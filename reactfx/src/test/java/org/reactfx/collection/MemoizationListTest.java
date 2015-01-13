@@ -33,10 +33,6 @@ public class MemoizationListTest {
         assertEquals(0, memoized.size());
 
         source.add("4444");
-        assert memoized.isEmpty();
-        assert memoized.equals(Collections.emptyList());
-        assert Collections.emptyList().equals(memoized);
-        assert Collections.<String>emptyList().equals(new ArrayList<>());
         assertEquals(Collections.emptyList(), memoized);
         assertEquals(0, memoMirror.size());
         assertEquals(0, counter.get());

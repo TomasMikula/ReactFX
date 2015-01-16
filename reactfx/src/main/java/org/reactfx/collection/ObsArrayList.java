@@ -165,7 +165,7 @@ public final class ObsArrayList<E> extends ObsListBase<E> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return Subscription.EMPTY;
     }
 }

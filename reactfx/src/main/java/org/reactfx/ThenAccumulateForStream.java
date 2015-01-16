@@ -58,7 +58,7 @@ class ThenAccumulateForStream<T, A> extends EventStreamBase<T> implements Awaiti
     }
 
     @Override
-    protected final Subscription bindToInputs() {
+    protected final Subscription observeInputs() {
         return input.subscribe(this::handleEvent);
     }
 

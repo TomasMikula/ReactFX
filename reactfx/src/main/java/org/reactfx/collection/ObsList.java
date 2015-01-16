@@ -171,7 +171,7 @@ public interface ObsList<E> extends ObservableList<E> {
     default EventStream<QuasiListChange<? extends E>> quasiChanges() {
         return new EventStreamBase<QuasiListChange<? extends E>>() {
             @Override
-            protected Subscription bindToInputs() {
+            protected Subscription observeInputs() {
                 return observeQuasiChanges(this::emit);
             }
         };
@@ -184,7 +184,7 @@ public interface ObsList<E> extends ObservableList<E> {
     default EventStream<QuasiListModification<? extends E>> quasiModifications() {
         return new EventStreamBase<QuasiListModification<? extends E>>() {
             @Override
-            protected Subscription bindToInputs() {
+            protected Subscription observeInputs() {
                 return observeQuasiModifications(this::emit);
             }
         };
@@ -231,7 +231,7 @@ public interface ObsList<E> extends ObservableList<E> {
         } else {
             return new EventStreamBase<QuasiListChange<? extends E>>() {
                 @Override
-                protected Subscription bindToInputs() {
+                protected Subscription observeInputs() {
                     return ObsList.<E>observeQuasiChanges(list, this::emit);
                 }
             };

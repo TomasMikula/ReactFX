@@ -129,7 +129,7 @@ class StateStream<S> extends EventStreamBase<S> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return Subscription.multi(
                 InputHandler::subscribeToInput,
                 inputHandlers);
@@ -198,7 +198,7 @@ class StatefulStream<S, O> extends EventStreamBase<O> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return Subscription.multi(
                 InputHandler::subscribeToInput,
                 inputHandlers);

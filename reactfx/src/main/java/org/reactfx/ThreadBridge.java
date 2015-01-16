@@ -18,7 +18,7 @@ class ThreadBridge<T> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         CompletableFuture<Subscription> subscription = new CompletableFuture<>();
         sourceThreadExecutor.execute(() -> {
             subscription.complete(

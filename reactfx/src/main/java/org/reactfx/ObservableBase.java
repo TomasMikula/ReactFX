@@ -37,9 +37,9 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
      * is unsubscribed (i.e. input observation stops) when the number of
      * observers goes down to 0.
      */
-    protected abstract Subscription bindToInputs();
+    protected abstract Subscription observeInputs();
 
-    protected final boolean isBound() {
+    public final boolean isObservingInputs() {
         return inputSubscription != null;
     }
 
@@ -85,7 +85,7 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
      * to handle this event, for example to publish some initial events.
      *
      * <p>This method is called <em>after</em> the
-     * {@link #bindToInputs()} method.</p>
+     * {@link #observeInputs()} method.</p>
      */
     protected void newObserver(O observer) {
         // default implementation is empty
@@ -101,7 +101,7 @@ public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
     public final void addObserver(O observer) {
         observers = ListHelper.add(observers, observer);
         if(ListHelper.size(observers) == 1) {
-            inputSubscription = bindToInputs();
+            inputSubscription = observeInputs();
         }
         newObserver(observer);
     }

@@ -20,7 +20,7 @@ implements MemoizationList<E>, ReadOnlyObsListImpl<E> {
     implements ReadOnlyObsListImpl<E> {
 
         @Override
-        protected Subscription bindToInputs() {
+        protected Subscription observeInputs() {
             return MemoizationListImpl.this.pin();
         }
 
@@ -52,7 +52,7 @@ implements MemoizationList<E>, ReadOnlyObsListImpl<E> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         sparseList.insertVoid(0, source.size());
         return ObsList.<E>observeQuasiChanges(source, this::sourceChanged)
             .and(sparseList::clear);

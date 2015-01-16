@@ -247,7 +247,7 @@ public interface EventStream<T> {
         EventStream<T> left = this;
         return new EventStreamBase<Either<T, U>>() {
             @Override
-            protected Subscription bindToInputs() {
+            protected Subscription observeInputs() {
                 return Subscription.multi(
                         left.subscribe(l -> emit(Either.<T, U>left(l))),
                         right.subscribe(r -> emit(Either.<T, U>right(r))));

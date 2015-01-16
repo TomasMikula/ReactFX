@@ -11,7 +11,7 @@ class GuardedStream<T> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return source.subscribe(evt -> {
             try(Guard g = guardian.guard()) {
                 emit(evt);

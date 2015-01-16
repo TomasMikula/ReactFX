@@ -45,7 +45,7 @@ implements Suspendable {
     }
 
     @Override
-    protected final Subscription bindToInputs() {
+    protected final Subscription observeInputs() {
         Subscription sub = input.subscribe(this::handleEvent);
         return sub.and(this::reset);
     }

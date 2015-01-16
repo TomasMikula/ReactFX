@@ -13,7 +13,7 @@ class DistinctStream<T> extends EventStreamBase<T> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return input.subscribe(value -> {
             Object prevToCompare = previous;
             previous = value;

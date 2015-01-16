@@ -21,7 +21,7 @@ implements ConnectableEventStream<T>, ConnectableEventSink<T> {
             throw new IllegalStateException("Already connected to event stream " + input);
         }
 
-        Subscription sub = isBound() ? subscribeToInput(input) : null;
+        Subscription sub = isObservingInputs() ? subscribeToInput(input) : null;
         subscriptions = MapHelper.put(subscriptions, input, sub);
 
         return () -> {
@@ -34,7 +34,7 @@ implements ConnectableEventStream<T>, ConnectableEventSink<T> {
     }
 
     @Override
-    protected final Subscription bindToInputs() {
+    protected final Subscription observeInputs() {
         MapHelper.replaceAll(subscriptions, (input, sub) -> subscribeToInput(input));
         return () -> MapHelper.replaceAll(subscriptions, (input, sub) -> {
             sub.unsubscribe();

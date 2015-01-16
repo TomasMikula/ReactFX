@@ -28,7 +28,7 @@ class MappedList<E, F> extends ObsListBase<E> implements ReadOnlyObsListImpl<E> 
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return ObsList.<F>observeQuasiChanges(source, this::sourceChanged);
     }
 

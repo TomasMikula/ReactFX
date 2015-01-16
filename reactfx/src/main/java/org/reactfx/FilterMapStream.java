@@ -18,7 +18,7 @@ class FilterMapStream<T, U> extends EventStreamBase<U> {
     }
 
     @Override
-    protected Subscription bindToInputs() {
+    protected Subscription observeInputs() {
         return source.subscribe(value -> {
             if(predicate.test(value)) {
                 emit(f.apply(value));

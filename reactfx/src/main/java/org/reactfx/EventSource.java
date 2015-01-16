@@ -19,7 +19,7 @@ implements EventSink<T> {
     }
 
     @Override
-    protected final Subscription bindToInputs() {
+    protected final Subscription observeInputs() {
         return Subscription.EMPTY;
     }
 }

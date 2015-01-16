@@ -2,7 +2,6 @@ package org.reactfx.collection;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -16,6 +15,7 @@ import org.reactfx.Subscription;
 import org.reactfx.collection.ObsList.QuasiChangeObserver;
 import org.reactfx.collection.ObsList.QuasiModificationObserver;
 import org.reactfx.util.AccumulatorSize;
+import org.reactfx.util.WrapperBase;
 
 /**
  * Adds additional methods to {@link ObservableList}.
@@ -266,33 +266,6 @@ public interface ObsList<E> extends ObservableList<E> {
 }
 
 
-abstract class WrapperBase<T> {
-    final T delegate;
-
-    WrapperBase(T delegate) {
-        if(delegate == null) {
-            throw new IllegalArgumentException("delegate cannot be null");
-        }
-        this.delegate = delegate;
-    }
-
-    @Override
-    public final boolean equals(Object that) {
-        if(that instanceof WrapperBase) {
-            return Objects.equals(
-                    ((WrapperBase<?>) that).delegate,
-                    this.delegate);
-        } else {
-            return false;
-        }
-    }
-
-    @Override
-    public final int hashCode() {
-        return delegate.hashCode();
-    }
-}
-
 class ChangeObserverWrapper<T>
 extends WrapperBase<Consumer<? super ListChange<? extends T>>>
 implements QuasiChangeObserver<T> {
@@ -307,7 +280,7 @@ implements QuasiChangeObserver<T> {
 
     @Override
     public void onChange(QuasiListChange<? extends T> change) {
-        delegate.accept(QuasiListChange.instantiate(change, list));
+        getWrappedValue().accept(QuasiListChange.instantiate(change, list));
     }
 }
 
@@ -325,7 +298,7 @@ implements QuasiModificationObserver<T> {
 
     @Override
     public void onChange(QuasiListModification<? extends T> change) {
-        delegate.accept(QuasiListModification.instantiate(change, list));
+        getWrappedValue().accept(QuasiListModification.instantiate(change, list));
     }
 }
 
@@ -343,7 +316,7 @@ implements QuasiChangeObserver<T> {
 
     @Override
     public void onChange(QuasiListChange<? extends T> change) {
-        delegate.invalidated(list);
+        getWrappedValue().invalidated(list);
     }
 }
 
@@ -369,7 +342,7 @@ implements QuasiChangeObserver<T> {
             return;
         }
 
-        delegate.onChanged(new ListChangeListener.Change<T>(list) {
+        getWrappedValue().onChanged(new ListChangeListener.Change<T>(list) {
 
             private int current = -1;
 

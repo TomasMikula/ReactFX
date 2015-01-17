@@ -4,15 +4,16 @@ import static org.reactfx.util.Either.*;
 import static org.reactfx.util.LL.*;
 import static org.reactfx.util.Tuples.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 import org.reactfx.util.LL.Cons;
 
-abstract class FingerTree<T, S> {
+public abstract class FingerTree<T, S> {
 
     private static final class Empty<T, S> extends FingerTree<T, S> {
 
@@ -642,6 +643,41 @@ abstract class FingerTree<T, S> {
         return new Empty<>(statisticsProvider);
     }
 
+    public static <T, S> FingerTree<T, S> mkTree(
+            List<? extends T> initialItems,
+            MapToMonoid<? super T, S> statisticsProvider) {
+        if(initialItems.isEmpty()) {
+            return new Empty<>(statisticsProvider);
+        }
+        List<FingerTree<T, S>> leafs = new ArrayList<>(initialItems.size());
+        for(T item: initialItems) {
+            leafs.add(new Leaf<T, S>(statisticsProvider, item));
+        }
+        return mkTree(leafs);
+    }
+
+    private static <T, S> FingerTree<T, S> mkTree(List<FingerTree<T, S>> trees) {
+        while(trees.size() > 1) {
+            for(int i = 0; i < trees.size(); ++i) {
+                if(trees.size() - i >= 5 || trees.size() - i == 3) {
+                    FingerTree<T, S> t1 = trees.get(i);
+                    FingerTree<T, S> t2 = trees.get(i + 1);
+                    FingerTree<T, S> t3 = trees.get(i + 2);
+                    Branch<T, S> branch = t1.branch(t1, t2, t3);
+                    trees.set(i, branch);
+                    trees.subList(i + 1, i + 3).clear();
+                } else { // (trees.size() - i) is 4 or 2
+                    FingerTree<T, S> t1 = trees.get(i);
+                    FingerTree<T, S> t2 = trees.get(i + 1);
+                    Branch<T, S> b = t1.branch(t1, t2);
+                    trees.set(i, b);
+                    trees.remove(i + 1);
+                }
+            }
+        }
+        return trees.get(0);
+    }
+
     private static <T, S> FingerTree<T, S> concat(
             Cons<? extends FingerTree<T, S>> nodes) {
         FingerTree<T, S> head = nodes.head();
@@ -875,39 +911,5 @@ abstract class FingerTree<T, S> {
 
     final int measure(ToIntFunction<? super S> metric) {
         return metric.applyAsInt(getStats());
-    }
-}
-
-interface Monoid<T> {
-    T unit();
-    T reduce(T left, T right);
-}
-
-interface MapToMonoid<T, U> extends Function<T, U>, Monoid<U> {}
-
-final class BiIndex {
-    public final int major;
-    public final int minor;
-
-    public BiIndex(int major, int minor) {
-        this.major = major;
-        this.minor = minor;
-    }
-
-    public <T> T map(BiFunction<Integer, Integer, T> f) {
-        return f.apply(major, minor);
-    }
-
-    public BiIndex adjustMajor(int adjustment) {
-        return new BiIndex(major + adjustment, minor);
-    }
-
-    public BiIndex adjustMinor(int adjustment) {
-        return new BiIndex(major, minor + adjustment);
-    }
-
-    @Override
-    public String toString() {
-        return "[" + major + ", " + minor + "]";
     }
 }

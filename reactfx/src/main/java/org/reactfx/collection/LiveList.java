@@ -2,6 +2,7 @@ package org.reactfx.collection;
 
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -16,6 +17,7 @@ import org.reactfx.collection.LiveList.QuasiChangeObserver;
 import org.reactfx.collection.LiveList.QuasiModificationObserver;
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.WrapperBase;
+import org.reactfx.value.Val;
 
 /**
  * Adds additional methods to {@link ObservableList}.
@@ -168,6 +170,10 @@ public interface LiveList<E> extends ObservableList<E> {
         return memoize(this);
     }
 
+    default Val<E> reduce(BinaryOperator<E> reduction) {
+        return reduce(this, reduction);
+    }
+
     default EventStream<QuasiListChange<? extends E>> quasiChanges() {
         return new EventStreamBase<QuasiListChange<? extends E>>() {
             @Override
@@ -262,6 +268,11 @@ public interface LiveList<E> extends ObservableList<E> {
         } else {
             return new MemoizationListImpl<>(list);
         }
+    }
+
+    static <E> Val<E> reduce(
+            ObservableList<E> list, BinaryOperator<E> reduction) {
+        return new ListReduction<>(list, reduction);
     }
 }
 

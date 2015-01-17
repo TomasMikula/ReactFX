@@ -8,10 +8,10 @@ import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.reactfx.collection.QuasiListChange;
 import org.reactfx.collection.ListModificationSequence;
 import org.reactfx.collection.ObsList;
 import org.reactfx.collection.ObsList.Observer;
+import org.reactfx.collection.QuasiListChange;
 
 /**
  * @param <O> observer type
@@ -40,6 +40,10 @@ public interface NotificationAccumulator<O, V, A> {
 
     static <T> NotificationAccumulator<Consumer<? super T>, T, T> retainLatestStreamNotifications() {
         return new RetainLatestStreamNotifications<>();
+    }
+
+    static <T> NotificationAccumulator<Consumer<? super T>, T, T> retainOldestValNotifications() {
+        return new RetailOldestValNotifications<>();
     }
 
     static <T> NotificationAccumulator<Consumer<? super T>, T, T> nonAccumulativeStreamNotifications() {
@@ -272,6 +276,16 @@ extends AbstractReducingStreamNotifications<T> {
 final class RetainLatestStreamNotifications<T>
 extends AbstractReducingStreamNotifications<T>
 implements AccumulationFacility.RetainLatest<T> {}
+
+
+/* ***************** *
+ * Retain Oldest Val *
+ * ***************** */
+
+final class RetailOldestValNotifications<T>
+extends AbstractReducingStreamNotifications<T>
+implements AccumulationFacility.RetainOldest<T> {}
+
 
 
 /* ************************ *

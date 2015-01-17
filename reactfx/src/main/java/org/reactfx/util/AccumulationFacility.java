@@ -3,9 +3,9 @@ package org.reactfx.util;
 import java.util.Deque;
 import java.util.LinkedList;
 
-import org.reactfx.collection.QuasiListChange;
 import org.reactfx.collection.ListChangeAccumulator;
 import org.reactfx.collection.ListModificationSequence;
+import org.reactfx.collection.QuasiListChange;
 
 public interface AccumulationFacility<T, A> {
     A initialAccumulator(T value);
@@ -43,6 +43,11 @@ public interface AccumulationFacility<T, A> {
     interface RetainLatest<T> extends HomotypicAccumulation<T> {
         @Override
         default T reduce(T accum, T value) { return value; }
+    }
+
+    interface RetainOldest<T> extends HomotypicAccumulation<T> {
+        @Override
+        default T reduce(T accum, T value) { return accum; }
     }
 
     interface ListChangeAccumulation<E>

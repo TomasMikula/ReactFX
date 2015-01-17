@@ -18,7 +18,7 @@ public class ListMapTest {
     @Test
     public void testGet() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
-        ObsList<Integer> lengths = ObsList.map(strings, String::length);
+        LiveList<Integer> lengths = LiveList.map(strings, String::length);
 
         assertEquals(Arrays.asList(1, 2, 3), lengths);
     }
@@ -26,7 +26,7 @@ public class ListMapTest {
     @Test
     public void testChanges() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
-        ObsList<Integer> lengths = ObsList.map(strings, String::length);
+        LiveList<Integer> lengths = LiveList.map(strings, String::length);
 
         List<Integer> removed = new ArrayList<>();
         List<Integer> added = new ArrayList<>();
@@ -47,7 +47,7 @@ public class ListMapTest {
     public void testLaziness() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
         IntegerProperty evaluations = new SimpleIntegerProperty(0);
-        ObsList<Integer> lengths = ObsList.map(strings, s -> {
+        LiveList<Integer> lengths = LiveList.map(strings, s -> {
             evaluations.set(evaluations.get() + 1);
             return s.length();
         });
@@ -62,7 +62,7 @@ public class ListMapTest {
     public void testLazinessOnChangeAccumulation() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
         IntegerProperty evaluations = new SimpleIntegerProperty(0);
-        ObsList<Integer> lengths = ObsList.map(strings, s -> {
+        LiveList<Integer> lengths = LiveList.map(strings, s -> {
             evaluations.set(evaluations.get() + 1);
             return s.length();
         });

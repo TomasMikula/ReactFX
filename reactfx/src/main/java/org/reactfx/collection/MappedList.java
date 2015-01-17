@@ -8,7 +8,7 @@ import javafx.collections.ObservableList;
 import org.reactfx.Subscription;
 import org.reactfx.util.Lists;
 
-class MappedList<E, F> extends ObsListBase<E> implements ReadOnlyObsListImpl<E> {
+class MappedList<E, F> extends LiveListBase<E> implements ReadOnlyLiveListImpl<E> {
     private final ObservableList<? extends F> source;
     private final Function<? super F, ? extends E> mapper;
 
@@ -29,7 +29,7 @@ class MappedList<E, F> extends ObsListBase<E> implements ReadOnlyObsListImpl<E> 
 
     @Override
     protected Subscription observeInputs() {
-        return ObsList.<F>observeQuasiChanges(source, this::sourceChanged);
+        return LiveList.<F>observeQuasiChanges(source, this::sourceChanged);
     }
 
     private void sourceChanged(QuasiListChange<? extends F> change) {

@@ -9,11 +9,11 @@ import org.reactfx.util.Lists;
 
 /**
  * Trait to be mixed into {@link ObservableBase} to obtain default
- * implementation of some {@link ObsList} methods and get additional
+ * implementation of some {@link LiveList} methods and get additional
  * helper methods.
  */
-public interface ObsListHelpers<E>
-extends ObsList<E>, ObservableHelpers<ObsList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
+public interface LiveListHelpers<E>
+extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
 
     @Override
     default void addQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {

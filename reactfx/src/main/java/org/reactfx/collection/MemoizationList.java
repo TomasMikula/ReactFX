@@ -7,17 +7,17 @@ import javafx.collections.ObservableList;
 import org.reactfx.Subscription;
 import org.reactfx.util.SparseList;
 
-public interface MemoizationList<E> extends ObsList<E> {
-    ObsList<E> memoizedItems();
+public interface MemoizationList<E> extends LiveList<E> {
+    LiveList<E> memoizedItems();
 }
 
 class MemoizationListImpl<E>
-extends ObsListBase<E>
-implements MemoizationList<E>, ReadOnlyObsListImpl<E> {
+extends LiveListBase<E>
+implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
 
     private class MemoizedView
-    extends ObsListBase<E>
-    implements ReadOnlyObsListImpl<E> {
+    extends LiveListBase<E>
+    implements ReadOnlyLiveListImpl<E> {
 
         @Override
         protected Subscription observeInputs() {
@@ -54,7 +54,7 @@ implements MemoizationList<E>, ReadOnlyObsListImpl<E> {
     @Override
     protected Subscription observeInputs() {
         sparseList.insertVoid(0, source.size());
-        return ObsList.<E>observeQuasiChanges(source, this::sourceChanged)
+        return LiveList.<E>observeQuasiChanges(source, this::sourceChanged)
             .and(sparseList::clear);
     }
 
@@ -92,7 +92,7 @@ implements MemoizationList<E>, ReadOnlyObsListImpl<E> {
     }
 
     @Override
-    public ObsList<E> memoizedItems() {
+    public LiveList<E> memoizedItems() {
         return memoizedItems;
     }
 }

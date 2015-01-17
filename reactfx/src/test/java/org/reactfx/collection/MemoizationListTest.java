@@ -17,13 +17,13 @@ public class MemoizationListTest {
 
     @Test
     public void test() {
-        ObservableList<String> source = new ObsArrayList<>("1", "22", "333");
+        ObservableList<String> source = new LiveArrayList<>("1", "22", "333");
         IntegerProperty counter = new SimpleIntegerProperty(0);
-        MemoizationList<Integer> memoizing = ObsList.map(source, s -> {
+        MemoizationList<Integer> memoizing = LiveList.map(source, s -> {
             counter.set(counter.get() + 1);
             return s.length();
         }).memoize();
-        ObsList<Integer> memoized = memoizing.memoizedItems();
+        LiveList<Integer> memoized = memoizing.memoizedItems();
         List<Integer> memoMirror = new ArrayList<>();
         memoized.observeModifications(mod -> {
             memoMirror.subList(mod.getFrom(), mod.getFrom() + mod.getRemovedSize()).clear();

@@ -21,8 +21,8 @@ public class ListRecursionTest {
      */
     @Test
     public void testChangeAccumulation() {
-        ObservableList<String> strings = new ObsArrayList<>("1", "22", "333");
-        ObsList<Integer> lengths = ObsList.map(strings, String::length);
+        ObservableList<String> strings = new LiveArrayList<>("1", "22", "333");
+        LiveList<Integer> lengths = LiveList.map(strings, String::length);
 
         IntegerProperty firstListener = new SimpleIntegerProperty(0);
 
@@ -65,7 +65,7 @@ public class ListRecursionTest {
 
     @Test
     public void testModificationAccumulation() {
-        ObsList<Integer> list = new ObsArrayList<>(1,2,3,4,5);
+        LiveList<Integer> list = new LiveArrayList<>(1,2,3,4,5);
         List<MaterializedListModification<? extends Integer>> mods = new ArrayList<>();
         list.observeModifications(mod -> {
             mods.add(mod.materialize());

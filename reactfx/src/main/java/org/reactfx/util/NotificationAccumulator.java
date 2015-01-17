@@ -9,8 +9,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import org.reactfx.collection.ListModificationSequence;
-import org.reactfx.collection.ObsList;
-import org.reactfx.collection.ObsList.Observer;
+import org.reactfx.collection.LiveList;
+import org.reactfx.collection.LiveList.Observer;
 import org.reactfx.collection.QuasiListChange;
 
 /**
@@ -50,7 +50,7 @@ public interface NotificationAccumulator<O, V, A> {
         return new NonAccumulativeStreamNotifications<>();
     }
 
-    static <E> NotificationAccumulator<ObsList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>> listNotifications() {
+    static <E> NotificationAccumulator<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>> listNotifications() {
         return new ListNotifications<>();
     }
 
@@ -293,7 +293,7 @@ implements AccumulationFacility.RetainOldest<T> {}
  * ************************ */
 
 final class ListNotifications<E>
-extends NotificationAccumulatorBase<ObsList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>>
+extends NotificationAccumulatorBase<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>>
 implements AccumulationFacility.ListChangeAccumulation<E> {
 
     @Override

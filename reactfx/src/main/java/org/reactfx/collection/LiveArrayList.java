@@ -8,19 +8,19 @@ import java.util.List;
 
 import org.reactfx.Subscription;
 
-public final class ObsArrayList<E> extends ObsListBase<E> {
+public final class LiveArrayList<E> extends LiveListBase<E> {
     private List<E> list;
 
-    public ObsArrayList() {
+    public LiveArrayList() {
         list = new ArrayList<>();
     }
 
-    public ObsArrayList(Collection<? extends E> c) {
+    public LiveArrayList(Collection<? extends E> c) {
         list = new ArrayList<>(c);
     }
 
     @SafeVarargs
-    public ObsArrayList(E... initialElements) {
+    public LiveArrayList(E... initialElements) {
         this(Arrays.asList(initialElements));
     }
 

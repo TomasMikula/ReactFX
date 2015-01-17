@@ -28,7 +28,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
 
 import org.reactfx.collection.ListModification;
-import org.reactfx.collection.ObsList;
+import org.reactfx.collection.LiveList;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Tuple2;
@@ -148,7 +148,7 @@ public class EventStreams {
     }
 
     /**
-     * @see ObsList#changesOf(ObservableList)
+     * @see LiveList#changesOf(ObservableList)
      */
     public static <T> EventStream<ListChangeListener.Change<? extends T>> changesOf(ObservableList<T> list) {
         return new EventStreamBase<ListChangeListener.Change<? extends T>>() {
@@ -169,7 +169,7 @@ public class EventStreams {
         return new EventStreamBase<ListModification<? extends T>>() {
             @Override
             protected Subscription observeInputs() {
-                return ObsList.observeChanges(list, c ->  {
+                return LiveList.observeChanges(list, c ->  {
                     for(ListModification<? extends T> mod: c) {
                         emit(mod);
                     }

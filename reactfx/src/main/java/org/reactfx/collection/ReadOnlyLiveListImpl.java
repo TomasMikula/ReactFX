@@ -4,7 +4,7 @@ import java.util.Collection;
 
 import javafx.collections.ObservableList;
 
-interface ReadOnlyObsListImpl<E> extends ObservableList<E>, ReadOnlyListImpl<E> {
+interface ReadOnlyLiveListImpl<E> extends ObservableList<E>, ReadOnlyListImpl<E> {
 
     @Override
     default boolean addAll(@SuppressWarnings("unchecked") E... elems) {

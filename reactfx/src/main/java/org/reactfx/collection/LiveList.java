@@ -12,8 +12,8 @@ import javafx.collections.ObservableList;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
 import org.reactfx.Subscription;
-import org.reactfx.collection.ObsList.QuasiChangeObserver;
-import org.reactfx.collection.ObsList.QuasiModificationObserver;
+import org.reactfx.collection.LiveList.QuasiChangeObserver;
+import org.reactfx.collection.LiveList.QuasiModificationObserver;
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.WrapperBase;
 
@@ -22,7 +22,7 @@ import org.reactfx.util.WrapperBase;
  *
  * @param <E> type of list elements
  */
-public interface ObsList<E> extends ObservableList<E> {
+public interface LiveList<E> extends ObservableList<E> {
 
     /* ************ *
      * Nested Types *
@@ -156,7 +156,7 @@ public interface ObsList<E> extends ObservableList<E> {
         removeQuasiChangeObserver(new InvalidationListenerWrapper<>(this, listener));
     }
 
-    default <F> ObsList<F> map(Function<? super E, ? extends F> f) {
+    default <F> LiveList<F> map(Function<? super E, ? extends F> f) {
         return map(this, f);
     }
 
@@ -202,8 +202,8 @@ public interface ObsList<E> extends ObservableList<E> {
     static <E> Subscription observeQuasiChanges(
             ObservableList<? extends E> list,
             QuasiChangeObserver<? super E> observer) {
-        if(list instanceof ObsList) {
-            ObsList<? extends E> lst = (ObsList<? extends E>) list;
+        if(list instanceof LiveList) {
+            LiveList<? extends E> lst = (LiveList<? extends E>) list;
             return lst.observeQuasiChanges(observer);
         } else {
             ListChangeListener<E> listener = ch -> {
@@ -225,14 +225,14 @@ public interface ObsList<E> extends ObservableList<E> {
 
     static <E> EventStream<QuasiListChange<? extends E>> quasiChangesOf(
             ObservableList<E> list) {
-        if(list instanceof ObsList) {
-            ObsList<E> lst = (ObsList<E>) list;
+        if(list instanceof LiveList) {
+            LiveList<E> lst = (LiveList<E>) list;
             return lst.quasiChanges();
         } else {
             return new EventStreamBase<QuasiListChange<? extends E>>() {
                 @Override
                 protected Subscription observeInputs() {
-                    return ObsList.<E>observeQuasiChanges(list, this::emit);
+                    return LiveList.<E>observeQuasiChanges(list, this::emit);
                 }
             };
         }
@@ -242,7 +242,7 @@ public interface ObsList<E> extends ObservableList<E> {
         return quasiChangesOf(list).map(qc -> QuasiListChange.instantiate(qc, list));
     }
 
-    static <E, F> ObsList<F> map(
+    static <E, F> LiveList<F> map(
             ObservableList<? extends E> list,
             Function<? super E, ? extends F> f) {
         return new MappedList<>(list, f);

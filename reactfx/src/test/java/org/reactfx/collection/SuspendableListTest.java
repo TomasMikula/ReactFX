@@ -16,7 +16,7 @@ public class SuspendableListTest {
     @Test
     public void test() {
         javafx.collections.ObservableList<Integer> base = FXCollections.observableArrayList(10, 9, 8, 7, 6, 5, 4, 3, 2, 1);
-        SuspendableList<Integer> wrapped = ObsList.suspendable(base);
+        SuspendableList<Integer> wrapped = LiveList.suspendable(base);
         List<Integer> mirror = new ArrayList<>(wrapped);
         wrapped.addListener((Change<? extends Integer> change) -> {
             while(change.next()) {

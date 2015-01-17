@@ -1,6 +1,7 @@
 package org.reactfx.value;
 
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -85,7 +86,7 @@ public interface Val<T> extends ObservableValue<T> {
      * }</pre>
      */
     default Subscription observeInvalidations(InvalidationListener listener) {
-        return observe(oldValue -> listener.invalidated(this));
+        return observe(new InvalidationListenerWrapper<>(this, listener));
     }
 
     /**
@@ -94,7 +95,7 @@ public interface Val<T> extends ObservableValue<T> {
      * {@link #observeInvalidations(InvalidationListener)}.
      */
     default Subscription observeChanges(ChangeListener<? super T> listener) {
-        return observe(oldValue -> listener.changed(this, oldValue, getValue()));
+        return observe(new ChangeListenerWrapper<>(this, listener));
     }
 
     /**
@@ -342,6 +343,9 @@ implements Consumer<T> {
 
     @Override
     public void accept(T oldValue) {
-        getWrappedValue().changed(obs, oldValue, obs.getValue());
+        T newValue = obs.getValue();
+        if(!Objects.equals(oldValue, newValue)) {
+            getWrappedValue().changed(obs, oldValue, newValue);
+        }
     }
 }

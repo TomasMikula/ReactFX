@@ -9,7 +9,7 @@ import org.reactfx.util.NotificationAccumulator;
 public abstract class ValBase<T>
 extends ObservableBase<Consumer<? super T>, T>
 implements Val<T> {
-    private boolean valid = false;
+    private boolean valid = false; // irrelevant when not isObservingInputs()
     private T value = null;
 
     protected ValBase() {
@@ -17,9 +17,18 @@ implements Val<T> {
     }
 
     @Override
+    public final T getValue() {
+        if(!valid || !isObservingInputs()) {
+            value = computeValue();
+            valid = true;
+        }
+        return value;
+    }
+
+    @Override
     protected final Subscription observeInputs() {
-        assert !valid;
-        return connect().and(() -> { valid = false; });
+        valid = false;
+        return connect();
     }
 
     protected final void invalidate() {
@@ -27,6 +36,13 @@ implements Val<T> {
             valid = false;
             notifyObservers(value);
         }
+    }
+
+    @Override
+    protected final void newObserver(Consumer<? super T> oldValueObserver) {
+        // make sure the current value is valid, so that the observer
+        // does not miss any invalidations or changes
+        getValue();
     }
 
     /**
@@ -41,17 +57,4 @@ implements Val<T> {
      */
     protected abstract Subscription connect();
     protected abstract T computeValue();
-
-    @Override
-    public final T getValue() {
-        if(valid) {
-            assert isObservingInputs();
-        } else {
-            value = computeValue();
-            if(isObservingInputs()) {
-                valid = true;
-            }
-        }
-        return value;
-    }
 }

@@ -183,18 +183,6 @@ public class FlatMapTest {
         Subscription sub = selected.pin();
 
         assertTrue(base.isObservingInputs());
-        assertFalse(a.b.isObservingInputs()); // no need to observe yet
-        assertFalse(b.s.isObservingInputs()); // no need to observe yet
-
-        selected.setValue("X");
-
-        assertTrue(base.isObservingInputs());
-        assertTrue(a.b.isObservingInputs());
-        assertFalse(b.s.isObservingInputs()); // still no need to observe
-
-        selected.getValue();
-
-        assertTrue(base.isObservingInputs());
         assertTrue(a.b.isObservingInputs());
         assertTrue(b.s.isObservingInputs());
 

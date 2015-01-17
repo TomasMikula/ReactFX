@@ -32,4 +32,9 @@ implements ListModification<E> {
     public MaterializedListModification<E> materialize() {
         return QuasiListModification.materialize(getTemplate(), list);
     }
+
+    @Override
+    public String toString() {
+        return getTemplate().toString();
+    }
 }

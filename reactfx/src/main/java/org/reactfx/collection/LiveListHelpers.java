@@ -39,7 +39,7 @@ extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiLis
         notifyObservers(mod.asListChange());
     }
 
-    default QuasiListModification<E> elemReplacement(int index, E replaced) {
+    static <E> QuasiListModification<E> elemReplacement(int index, E replaced) {
         return new QuasiListModificationImpl<E>(
                 index, Collections.singletonList(replaced), 1);
     }
@@ -56,7 +56,7 @@ extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiLis
         fireModification(contentReplacement(removed));
     }
 
-    default QuasiListModification<E> elemInsertion(int index) {
+    static <E> QuasiListModification<E> elemInsertion(int index) {
         return rangeInsertion(index, 1);
     }
 
@@ -64,7 +64,7 @@ extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiLis
         fireModification(elemInsertion(index));
     }
 
-    default QuasiListModification<E> rangeInsertion(int index, int size) {
+    static <E> QuasiListModification<E> rangeInsertion(int index, int size) {
         return new QuasiListModificationImpl<E>(
                 index, Collections.emptyList(), size);
     }
@@ -73,7 +73,7 @@ extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiLis
         fireModification(rangeInsertion(index, size));
     }
 
-    default QuasiListModification<E> elemRemoval(int index, E removed) {
+    static <E> QuasiListModification<E> elemRemoval(int index, E removed) {
         return new QuasiListModificationImpl<E>(
                 index, Collections.singletonList(removed), 0);
     }
@@ -82,7 +82,7 @@ extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiLis
         fireModification(elemRemoval(index, removed));
     }
 
-    default QuasiListModification<E> rangeRemoval(int index, List<E> removed) {
+    static <E> QuasiListModification<E> rangeRemoval(int index, List<E> removed) {
         return new QuasiListModificationImpl<E>(index, removed, 0);
     }
 

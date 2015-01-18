@@ -60,7 +60,12 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        BiIndex locate0(ToIntFunction<? super S> metric, int position) {
+        BiIndex locateProgressively0(ToIntFunction<? super S> metric, int position) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        @Override
+        BiIndex locateRegressively0(ToIntFunction<? super S> metric, int position) {
             throw new IndexOutOfBoundsException();
         }
 
@@ -185,7 +190,13 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        BiIndex locate0(ToIntFunction<? super S> metric, int position) {
+        BiIndex locateProgressively0(ToIntFunction<? super S> metric, int position) {
+            assert Lists.isValidPosition(position, measure(metric));
+            return new BiIndex(0, position);
+        }
+
+        @Override
+        BiIndex locateRegressively0(ToIntFunction<? super S> metric, int position) {
             assert Lists.isValidPosition(position, measure(metric));
             return new BiIndex(0, position);
         }
@@ -372,12 +383,12 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        final BiIndex locate0(ToIntFunction<? super S> metric, int position) {
+        final BiIndex locateProgressively0(ToIntFunction<? super S> metric, int position) {
             assert Lists.isValidPosition(position, measure(metric));
-            return locate0(metric, position, children);
+            return locateProgressively0(metric, position, children);
         }
 
-        private BiIndex locate0(
+        private BiIndex locateProgressively0(
                 ToIntFunction<? super S> metric,
                 int position,
                 LL<? extends FingerTree<T, S>> nodes) {
@@ -385,9 +396,29 @@ public abstract class FingerTree<T, S> {
             int headLen = head.measure(metric);
             if(position < headLen ||
                     (position == headLen && nodes.tail().isEmpty())) {
-                return head.locate0(metric, position);
+                return head.locateProgressively0(metric, position);
             } else {
-                return locate0(metric, position - headLen, nodes.tail())
+                return locateProgressively0(metric, position - headLen, nodes.tail())
+                        .adjustMajor(head.getLeafCount());
+            }
+        }
+
+        @Override
+        final BiIndex locateRegressively0(ToIntFunction<? super S> metric, int position) {
+            assert Lists.isValidPosition(position, measure(metric));
+            return locateRegressively0(metric, position, children);
+        }
+
+        private BiIndex locateRegressively0(
+                ToIntFunction<? super S> metric,
+                int position,
+                LL<? extends FingerTree<T, S>> nodes) {
+            FingerTree<T, S> head = nodes.head();
+            int headLen = head.measure(metric);
+            if(position <= headLen) {
+                return head.locateRegressively0(metric, position);
+            } else {
+                return locateRegressively0(metric, position - headLen, nodes.tail())
                         .adjustMajor(head.getLeafCount());
             }
         }
@@ -712,7 +743,7 @@ public abstract class FingerTree<T, S> {
             int index) {
         int size = metric.applyAsInt(getStats());
         Lists.checkIndex(index, size);
-        BiIndex location = locate(metric, index);
+        BiIndex location = locateProgressively(metric, index);
         return t(getLeaf(location.major), location);
     }
 
@@ -720,7 +751,7 @@ public abstract class FingerTree<T, S> {
             ToIntFunction<? super S> metric,
             int index,
             BiFunction<? super T, Integer, E> leafAccessor) {
-        return locate(metric, index)
+        return locateProgressively(metric, index)
                 .map((major, minor) -> leafAccessor.apply(getLeaf(major), minor));
     }
 
@@ -730,7 +761,8 @@ public abstract class FingerTree<T, S> {
     }
 
     abstract FingerTree<T, S> updateLeaf0(int index, T data);
-    public BiIndex locate(
+
+    public BiIndex locateProgressively(
             ToIntFunction<? super S> metric,
             int position) {
 
@@ -739,10 +771,26 @@ public abstract class FingerTree<T, S> {
         }
 
         Lists.checkPosition(position, measure(metric));
-        return locate0(metric, position);
+        return locateProgressively0(metric, position);
     }
 
-    abstract BiIndex locate0(
+    abstract BiIndex locateProgressively0(
+            ToIntFunction<? super S> metric,
+            int position);
+
+    public BiIndex locateRegressively(
+            ToIntFunction<? super S> metric,
+            int position) {
+
+        if(getLeafCount() == 0) {
+            throw new IndexOutOfBoundsException("no leafs to locate in");
+        }
+
+        Lists.checkPosition(position, measure(metric));
+        return locateRegressively0(metric, position);
+    }
+
+    abstract BiIndex locateRegressively0(
             ToIntFunction<? super S> metric,
             int position);
 

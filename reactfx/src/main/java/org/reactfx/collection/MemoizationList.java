@@ -7,6 +7,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.IndexRange;
 
 import org.reactfx.Subscription;
+import org.reactfx.util.Lists;
 import org.reactfx.util.SparseList;
 
 public interface MemoizationList<E> extends LiveList<E> {
@@ -18,6 +19,7 @@ public interface MemoizationList<E> extends LiveList<E> {
     void forget(int from, int to);
     int indexOfMemoizedItem(int index);
     IndexRange getMemoizedItemsRange();
+    void force(int from, int to);
 }
 
 class MemoizationListImpl<E>
@@ -43,8 +45,8 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
             return sparseList.getPresentCount();
         }
 
-        private void prepareNotifications(QuasiListChange<? extends E> event) {
-            enqueueNotifications(event);
+        private void prepareNotifications(QuasiListChange<? extends E> change) {
+            enqueueNotifications(change);
         }
 
         private void publishNotifications() {
@@ -93,6 +95,23 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
             memoizedItems.fireElemInsertion(
                     sparseList.getPresentCountBefore(index));
             return elem;
+        }
+    }
+
+    @Override
+    public void force(int from, int to) {
+        Lists.checkRange(from, to, size());
+        int presentBefore = sparseList.getPresentCountBefore(from);
+        ListChangeAccumulator<E> mods = new ListChangeAccumulator<>();
+        for(int i = from; i < to; ++i) {
+            if(!sparseList.isPresent(i)) {
+                E elem = source.get(i);
+                sparseList.set(i, elem);
+                mods.add(LiveListHelpers.elemInsertion(presentBefore + (i - from)));
+            }
+        }
+        if(!mods.isEmpty()) {
+            memoizedItems.notifyObservers(mods.fetch());
         }
     }
 

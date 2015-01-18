@@ -76,4 +76,31 @@ public class MemoizationListTest {
         assertEquals(Arrays.asList(2, 3, 4), memoized);
         assertEquals(Arrays.asList(2, 3, 4), memoMirror);
     }
+
+    @Test
+    public void testForce() {
+        LiveList<Integer> source = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6);
+        MemoizationList<Integer> memoizing = source.memoize();
+        LiveList<Integer> memoized = memoizing.memoizedItems();
+
+        memoizing.pin(); // otherwise no memoization takes place
+
+        memoizing.get(3);
+        // _ _ _ 3 _ _ _
+        assertEquals(Collections.singletonList(3), memoized);
+
+        memoized.observeChanges(ch -> {
+            assertEquals(2, ch.getModificationCount());
+            ListModification<?> mod1 = ch.getModifications().get(0);
+            ListModification<?> mod2 = ch.getModifications().get(1);
+            assertEquals(0, mod1.getFrom());
+            assertEquals(0, mod1.getRemovedSize());
+            assertEquals(Arrays.asList(1, 2), mod1.getAddedSubList());
+            assertEquals(3, mod2.getFrom());
+            assertEquals(0, mod2.getRemovedSize());
+            assertEquals(Arrays.asList(4, 5), mod2.getAddedSubList());
+        });
+
+        memoizing.force(1, 6);
+    }
 }

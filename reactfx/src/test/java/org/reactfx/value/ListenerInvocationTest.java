@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 import static org.reactfx.util.Tuples.*;
 
 import org.junit.Test;
+import org.reactfx.Counter;
 import org.reactfx.util.Tuple2;
 
 public class ListenerInvocationTest {

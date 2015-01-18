@@ -1,6 +1,6 @@
-package org.reactfx.value;
+package org.reactfx;
 
-class Counter {
+public class Counter {
     private int count = 0;
     public void inc() {
         count += 1;

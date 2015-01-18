@@ -7,6 +7,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import org.junit.Test;
+import org.reactfx.Counter;
 import org.reactfx.Subscription;
 
 public class FlatMapTest {

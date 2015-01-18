@@ -47,6 +47,26 @@ public interface EventStream<T> {
     Subscription subscribe(Consumer<? super T> subscriber);
 
     /**
+     * Subscribes to this event stream for at most {@code n} events.
+     * The subscriber is automatically removed after handling {@code n} events.
+     * @param n limit on how many events may be handled by {@code subscriber}.
+     * Must be positive.
+     * @param subscriber handles emitted events.
+     * @return {@linkplain Subscription} that may be used to unsubscribe before
+     * reaching {@code n} events handled by {@code subscriber}.
+     */
+    default Subscription subscribeFor(int n, Consumer<? super T> subscriber) {
+        return new LimitedInvocationSubscriber<>(n, subscriber).subscribeTo(this);
+    }
+
+    /**
+     * Shorthand for {@code subscribeFor(1, subscriber)}.
+     */
+    default Subscription subscribeForOne(Consumer<? super T> subscriber) {
+        return subscribeFor(1, subscriber);
+    }
+
+    /**
      * Starts pushing all events emitted by this stream to the given event sink.
      * <p>{@code stream.feedTo(sink)} is equivalent to
      * {@code sink.feedFrom(stream)}

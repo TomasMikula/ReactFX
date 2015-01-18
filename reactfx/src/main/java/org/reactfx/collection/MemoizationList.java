@@ -1,14 +1,23 @@
 package org.reactfx.collection;
 
 import java.util.List;
+import java.util.Optional;
 
 import javafx.collections.ObservableList;
+import javafx.scene.control.IndexRange;
 
 import org.reactfx.Subscription;
 import org.reactfx.util.SparseList;
 
 public interface MemoizationList<E> extends LiveList<E> {
     LiveList<E> memoizedItems();
+    boolean isMemoized(int index);
+    Optional<E> getIfMemoized(int index);
+    int getMemoizedCountBefore(int position);
+    int getMemoizedCountAfter(int position);
+    void forget(int from, int to);
+    int indexOfMemoizedItem(int index);
+    IndexRange getMemoizedItemsRange();
 }
 
 class MemoizationListImpl<E>
@@ -94,5 +103,40 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
     @Override
     public LiveList<E> memoizedItems() {
         return memoizedItems;
+    }
+
+    @Override
+    public boolean isMemoized(int index) {
+        return sparseList.isPresent(index);
+    }
+
+    @Override
+    public Optional<E> getIfMemoized(int index) {
+        return sparseList.get(index);
+    }
+
+    @Override
+    public int getMemoizedCountBefore(int position) {
+        return sparseList.getPresentCountBefore(position);
+    }
+
+    @Override
+    public int getMemoizedCountAfter(int position) {
+        return sparseList.getPresentCountAfter(position);
+    }
+
+    @Override
+    public void forget(int from, int to) {
+        sparseList.spliceByVoid(from, to, to - from);
+    }
+
+    @Override
+    public int indexOfMemoizedItem(int index) {
+        return sparseList.indexOfPresentItem(index);
+    }
+
+    @Override
+    public IndexRange getMemoizedItemsRange() {
+        return sparseList.getPresentItemsRange();
     }
 }

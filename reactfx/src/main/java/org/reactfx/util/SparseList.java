@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import javafx.scene.control.IndexRange;
+
 public final class SparseList<E> {
 
     private static interface Segment<E> {
@@ -280,6 +282,28 @@ public final class SparseList<E> {
     public int getPresentCountBetween(int from, int to) {
         Lists.checkRange(from, to, size());
         return getPresentCountBefore(to) - getPresentCountBefore(from);
+    }
+
+    public int indexOfPresentItem(int presentIndex) {
+        Lists.checkIndex(presentIndex, getPresentCount());
+        return tree.locateProgressively(Stats::getPresentCount, presentIndex)
+                .map(this::locationToPosition);
+    }
+
+    public IndexRange getPresentItemsRange() {
+        if(getPresentCount() == 0) {
+            return new IndexRange(0, 0);
+        } else {
+            int lowerBound = tree.locateProgressively(Stats::getPresentCount, 0)
+                    .map(this::locationToPosition);
+            int upperBound = tree.locateRegressively(Stats::getPresentCount, getPresentCount())
+                    .map(this::locationToPosition);
+            return new IndexRange(lowerBound, upperBound);
+        }
+    }
+
+    private int locationToPosition(int major, int minor) {
+        return tree.getStatsBetween(0, major).size + minor;
     }
 
     public List<E> collect() {

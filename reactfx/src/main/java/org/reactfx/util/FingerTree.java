@@ -804,7 +804,11 @@ public abstract class FingerTree<T, S> {
             int startLeaf,
             int endLeaf) {
         Lists.checkRange(startLeaf, endLeaf, getLeafCount());
-        return foldBetween0(acc, reduction, startLeaf, endLeaf);
+        if(startLeaf == endLeaf) {
+            return acc;
+        } else {
+            return foldBetween0(acc, reduction, startLeaf, endLeaf);
+        }
     }
 
     abstract <R> R foldBetween0(
@@ -820,8 +824,12 @@ public abstract class FingerTree<T, S> {
             int endPosition,
             TetraFunction<? super R, ? super T, Integer, Integer, ? extends R> rangeReduction) {
         Lists.checkRange(startPosition, endPosition, measure(metric));
-        return foldBetween0(
-                acc, reduction, metric, startPosition, endPosition, rangeReduction);
+        if(startPosition == endPosition) {
+            return acc;
+        } else {
+            return foldBetween0(
+                    acc, reduction, metric, startPosition, endPosition, rangeReduction);
+        }
     }
 
     abstract <R> R foldBetween0(

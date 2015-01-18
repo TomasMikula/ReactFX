@@ -58,6 +58,7 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
 
     MemoizationListImpl(ObservableList<E> source) {
         this.source = source;
+        sparseList.insertVoid(0, source.size());
     }
 
     @Override

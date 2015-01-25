@@ -265,11 +265,11 @@ public interface Val<T> extends ObservableValue<T> {
      * Static methods *
      * ************** */
 
-    static <T> Subscription observeInvalidations(
-            ObservableValue<? extends T> obs,
+    static Subscription observeInvalidations(
+            ObservableValue<?> obs,
             InvalidationListener listener) {
         if(obs instanceof Val) {
-            return ((Val<? extends T>) obs).observeInvalidations(listener);
+            return ((Val<?>) obs).observeInvalidations(listener);
         } else {
             obs.addListener(listener);
             return () -> obs.removeListener(listener);

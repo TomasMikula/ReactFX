@@ -276,6 +276,27 @@ public interface Val<T> extends ObservableValue<T> {
         }
     }
 
+    static <T> Subscription observeChanges(
+            ObservableValue<? extends T> obs,
+            ChangeListener<? super T> listener) {
+        if(obs instanceof Val) {
+            return ((Val<? extends T>) obs).observeChanges(listener);
+        } else {
+            obs.addListener(listener);
+            return () -> obs.removeListener(listener);
+        }
+    }
+
+    static <T> Subscription observe(
+            ObservableValue<? extends T> obs,
+            Consumer<? super T> oldValueObserver) {
+        if(obs instanceof Val) {
+            return ((Val<? extends T>) obs).observe(oldValueObserver);
+        } else {
+            return observeChanges(obs, (o, oldVal, newVal) -> oldValueObserver.accept(oldVal));
+        }
+    }
+
     static <T> Val<T> orElseConst(ObservableValue<? extends T> src, T other) {
         return new OrElseConst<>(src, other);
     }

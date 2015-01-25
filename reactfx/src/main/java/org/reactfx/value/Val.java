@@ -9,6 +9,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -342,6 +343,33 @@ public interface Val<T> extends ObservableValue<T> {
             Function<? super T, ? extends Property<U>> f,
             U resetToOnUnbind) {
         return new FlatMappedVar<>(src, f, resetToOnUnbind);
+    }
+
+
+    static <T> Val<T> create(
+            Supplier<? extends T> computeValue,
+            Observable... dependencies) {
+        return new ValBase<T>() {
+
+            @Override
+            protected Subscription connect() {
+                InvalidationListener listener = obs -> invalidate();
+                for(Observable dep: dependencies) {
+                    dep.addListener(listener);
+                }
+
+                return () -> {
+                    for(Observable dep: dependencies) {
+                        dep.removeListener(listener);
+                    }
+                };
+            }
+
+            @Override
+            protected T computeValue() {
+                return computeValue.get();
+            }
+        };
     }
 }
 

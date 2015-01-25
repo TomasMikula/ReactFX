@@ -159,6 +159,10 @@ public interface LiveList<E> extends ObservableList<E> {
         removeQuasiChangeObserver(new InvalidationListenerWrapper<>(this, listener));
     }
 
+    default Val<Integer> sizeProperty() {
+        return sizeOf(this);
+    }
+
     default <F> LiveList<F> map(Function<? super E, ? extends F> f) {
         return map(this, f);
     }
@@ -252,6 +256,10 @@ public interface LiveList<E> extends ObservableList<E> {
 
     static <E> EventStream<ListChange<? extends E>> changesOf(ObservableList<E> list) {
         return quasiChangesOf(list).map(qc -> QuasiListChange.instantiate(qc, list));
+    }
+
+    static Val<Integer> sizeOf(ObservableList<?> list) {
+        return Val.create(() -> list.size(), list);
     }
 
     static <E, F> LiveList<F> map(

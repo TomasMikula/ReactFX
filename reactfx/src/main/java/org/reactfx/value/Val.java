@@ -216,6 +216,15 @@ public interface Val<T> extends ObservableValue<T> {
     }
 
     /**
+     * Like {@link #map(Function)}, but also allows dynamically changing
+     * map function.
+     */
+    default <U> Val<U> mapDynamic(
+            ObservableValue<? extends Function<? super T, ? extends U>> f) {
+        return mapDynamic(this, f);
+    }
+
+    /**
      * Returns a new {@linkplain Val} that, when this {@linkplain Val} holds
      * value {@code x}, holds the value held by {@code f(x)}, and is empty
      * when this {@linkplain Val} is empty.
@@ -287,6 +296,12 @@ public interface Val<T> extends ObservableValue<T> {
             ObservableValue<T> src,
             Function<? super T, ? extends U> f) {
         return new MappedVal<>(src, f);
+    }
+
+    static <T, U> Val<U> mapDynamic(
+            ObservableValue<T> src,
+            ObservableValue<? extends Function<? super T, ? extends U>> f) {
+        return new DynamicallyMappedVal<T, U>(src, f);
     }
 
     static <T, U> Val<U> flatMap(

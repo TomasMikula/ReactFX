@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import javafx.beans.InvalidationListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
@@ -162,6 +163,11 @@ public interface LiveList<E> extends ObservableList<E> {
         return map(this, f);
     }
 
+    default <F> LiveList<F> mapDynamic(
+            ObservableValue<? extends Function<? super E, ? extends F>> f) {
+        return mapDynamic(this, f);
+    }
+
     default SuspendableList<E> suspendable() {
         return suspendable(this);
     }
@@ -252,6 +258,12 @@ public interface LiveList<E> extends ObservableList<E> {
             ObservableList<? extends E> list,
             Function<? super E, ? extends F> f) {
         return new MappedList<>(list, f);
+    }
+
+    static <E, F> LiveList<F> mapDynamic(
+            ObservableList<? extends E> list,
+            ObservableValue<? extends Function<? super E, ? extends F>> f) {
+        return new DynamicallyMappedList<>(list, f);
     }
 
     static <E> SuspendableList<E> suspendable(ObservableList<E> list) {

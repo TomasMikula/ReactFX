@@ -5,6 +5,7 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -12,6 +13,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import org.junit.Test;
+import org.reactfx.value.Var;
 
 public class ListMapTest {
 
@@ -75,5 +77,26 @@ public class ListMapTest {
         });
 
         assertEquals(0, evaluations.get());
+    }
+
+    @Test
+    public void testDynamicMap() {
+        LiveList<String> strings = new LiveArrayList<>("1", "22", "333");
+        Var<Function<String, Integer>> fn = Var.newSimpleVar(String::length);
+        SuspendableList<Integer> ints = strings.mapDynamic(fn).suspendable();
+
+        assertEquals(2, ints.get(1).intValue());
+
+        ints.observeChanges(ch -> {
+            for(ListModification<?> mod: ch) {
+                assertEquals(Arrays.asList(1, 2, 3), mod.getRemoved());
+                assertEquals(Arrays.asList(1, 16, 9), mod.getAddedSubList());
+            }
+        });
+
+        ints.suspendWhile(() -> {
+            strings.set(1, "4444");
+            fn.setValue(s -> s.length() * s.length());
+        });
     }
 }

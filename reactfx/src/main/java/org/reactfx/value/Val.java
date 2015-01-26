@@ -3,6 +3,7 @@ package org.reactfx.value;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -15,6 +16,10 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
 import org.reactfx.Subscription;
+import org.reactfx.util.HexaFunction;
+import org.reactfx.util.PentaFunction;
+import org.reactfx.util.TetraFunction;
+import org.reactfx.util.TriFunction;
 import org.reactfx.util.WrapperBase;
 
 /**
@@ -345,6 +350,112 @@ public interface Val<T> extends ObservableValue<T> {
         return new FlatMappedVar<>(src, f, resetToOnUnbind);
     }
 
+
+    static <A, B, R> Val<R> combine(
+            ObservableValue<A> src1,
+            ObservableValue<B> src2,
+            BiFunction<A, B, R> f) {
+        return create(
+                () -> {
+                    if(src1.getValue() != null && src2.getValue() != null) {
+                        return f.apply(src1.getValue(), src2.getValue());
+                    } else {
+                        return null;
+                    }
+                },
+                src1, src2);
+    }
+
+    static <A, B, C, R> Val<R> combine(
+            ObservableValue<A> src1,
+            ObservableValue<B> src2,
+            ObservableValue<C> src3,
+            TriFunction<A, B, C, R> f) {
+        return create(
+                () -> {
+                    if(src1.getValue() != null &&
+                            src2.getValue() != null &&
+                            src3.getValue() != null) {
+                        return f.apply(
+                            src1.getValue(), src2.getValue(), src3.getValue());
+                    } else {
+                        return null;
+                    }
+                },
+                src1, src3, src3);
+    }
+
+    static <A, B, C, D, R> Val<R> combine(
+            ObservableValue<A> src1,
+            ObservableValue<B> src2,
+            ObservableValue<C> src3,
+            ObservableValue<D> src4,
+            TetraFunction<A, B, C, D, R> f) {
+        return create(
+                () -> {
+                    if(src1.getValue() != null &&
+                            src2.getValue() != null &&
+                            src3.getValue() != null &&
+                            src4.getValue() != null) {
+                        return f.apply(
+                            src1.getValue(), src2.getValue(),
+                            src3.getValue(), src4.getValue());
+                    } else {
+                        return null;
+                    }
+                },
+                src1, src2, src3, src4);
+    }
+
+    static <A, B, C, D, E, R> Val<R> combine(
+            ObservableValue<A> src1,
+            ObservableValue<B> src2,
+            ObservableValue<C> src3,
+            ObservableValue<D> src4,
+            ObservableValue<E> src5,
+            PentaFunction<A, B, C, D, E, R> f) {
+        return create(
+                () -> {
+                    if(src1.getValue() != null &&
+                            src2.getValue() != null &&
+                            src3.getValue() != null &&
+                            src4.getValue() != null &&
+                            src5.getValue() != null) {
+                        return f.apply(
+                            src1.getValue(), src2.getValue(), src3.getValue(),
+                            src4.getValue(), src5.getValue());
+                    } else {
+                        return null;
+                    }
+                },
+                src1, src2, src3, src4, src5);
+    }
+
+    static <A, B, C, D, E, F, R> Val<R> combine(
+            ObservableValue<A> src1,
+            ObservableValue<B> src2,
+            ObservableValue<C> src3,
+            ObservableValue<D> src4,
+            ObservableValue<E> src5,
+            ObservableValue<F> src6,
+            HexaFunction<A, B, C, D, E, F, R> f) {
+        return create(
+                () -> {
+                    if(src1.getValue() != null &&
+                            src2.getValue() != null &&
+                            src3.getValue() != null &&
+                            src4.getValue() != null &&
+                            src5.getValue() != null &&
+                            src6.getValue() != null) {
+                        return f.apply(
+                            src1.getValue(), src2.getValue(), src3.getValue(),
+                            src4.getValue(), src5.getValue(), src6.getValue());
+                    } else {
+                        return null;
+                    }
+                },
+                src1, src2, src3, src4, src5, src6);
+    }
 
     static <T> Val<T> create(
             Supplier<? extends T> computeValue,

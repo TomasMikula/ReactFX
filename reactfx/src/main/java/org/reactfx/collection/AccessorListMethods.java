@@ -71,7 +71,12 @@ interface AccessorListMethods<E> extends List<E> {
 
     @Override
     default Object[] toArray() {
-        return toArray(new Object[0]);
+        Object[] res = new Object[size()];
+        int i = 0;
+        for(E elem: this) {
+            res[i++] = elem;
+        }
+        return res;
     }
 
     @Override

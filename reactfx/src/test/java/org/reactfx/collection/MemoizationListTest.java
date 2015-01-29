@@ -12,6 +12,7 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.collections.ObservableList;
 
 import org.junit.Test;
+import org.reactfx.Counter;
 
 public class MemoizationListTest {
 
@@ -89,7 +90,9 @@ public class MemoizationListTest {
         // _ _ _ 3 _ _ _
         assertEquals(Collections.singletonList(3), memoized);
 
+        Counter counter = new Counter();
         memoized.observeChanges(ch -> {
+            counter.inc();
             assertEquals(2, ch.getModificationCount());
             ListModification<?> mod1 = ch.getModifications().get(0);
             ListModification<?> mod2 = ch.getModifications().get(1);
@@ -102,19 +105,64 @@ public class MemoizationListTest {
         });
 
         memoizing.force(1, 6);
+        assertEquals(1, counter.get());
     }
 
     @Test
-    public void testMemoizationOnlyStartsWhenObsesrved() {
+    public void testForget() {
         LiveList<Integer> source = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6);
         MemoizationList<Integer> memoizing = source.memoize();
         LiveList<Integer> memoized = memoizing.memoizedItems();
 
-        memoizing.get(0);
+        memoizing.pin(); // otherwise no memoization takes place
+
+        memoizing.force(0, 7);
+        assertEquals(7, memoized.size());
+
+        memoizing.forget(2, 4);
+        assertEquals(5, memoized.size());
+
+        memoizing.forget(3, 5);
+        assertEquals(4, memoized.size());
+
+        Counter counter = new Counter();
+        memoized.observeQuasiChanges(ch -> {
+            counter.inc();
+            assertEquals(1, ch.getModificationCount());
+            QuasiListModification<?> mod = ch.getModifications().get(0);
+            assertEquals(1, mod.getFrom());
+            assertEquals(Arrays.asList(1, 5), mod.getRemoved());
+            assertEquals(0, mod.getAddedSize());
+        });
+
+        memoizing.forget(1, 6);
+        assertEquals(1, counter.get());
+    }
+
+    @Test
+    public void testMemoizationOnlyStartsWhenObsesrved() {
+        MemoizationList<Integer> list = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6).memoize();
+        LiveList<Integer> memoized = list.memoizedItems();
+
+        list.get(0);
         assertEquals(0, memoized.size());
 
         memoized.pin();
-        memoizing.get(0);
+        list.get(0);
         assertEquals(1, memoized.size());
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testForceIsNotAllowedWhenUnobserved() {
+        MemoizationList<Integer> list = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6).memoize();
+
+        list.force(2, 4);
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void testForgetIsNotAllowedWhenUnobserved() {
+        MemoizationList<Integer> list = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6).memoize();
+
+        list.forget(2, 4);
     }
 }

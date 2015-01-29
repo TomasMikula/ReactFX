@@ -91,9 +91,11 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
             return sparseList.getOrThrow(index);
         } else {
             E elem = source.get(index);
-            sparseList.set(index, elem);
-            memoizedItems.fireElemInsertion(
-                    sparseList.getPresentCountBefore(index));
+            if(isObservingInputs()) { // memoization is on
+                sparseList.set(index, elem);
+                memoizedItems.fireElemInsertion(
+                        sparseList.getPresentCountBefore(index));
+            }
             return elem;
         }
     }

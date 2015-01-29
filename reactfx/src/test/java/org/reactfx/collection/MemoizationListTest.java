@@ -103,4 +103,18 @@ public class MemoizationListTest {
 
         memoizing.force(1, 6);
     }
+
+    @Test
+    public void testMemoizationOnlyStartsWhenObsesrved() {
+        LiveList<Integer> source = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6);
+        MemoizationList<Integer> memoizing = source.memoize();
+        LiveList<Integer> memoized = memoizing.memoizedItems();
+
+        memoizing.get(0);
+        assertEquals(0, memoized.size());
+
+        memoized.pin();
+        memoizing.get(0);
+        assertEquals(1, memoized.size());
+    }
 }

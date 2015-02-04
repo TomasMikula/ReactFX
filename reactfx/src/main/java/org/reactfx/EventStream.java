@@ -276,6 +276,22 @@ public interface EventStream<T> {
     }
 
     /**
+     * Returns an event stream that emits lists of {@code n} latest events
+     * emitted from this stream. For example, in
+     * <pre>
+     * {@code
+     * EventStream<Integer> stream = ...;
+     * EventStream<List<Integer>> latest3 = stream.latestN(3);
+     * }
+     * </pre>
+     * when {@code stream} emits 1, 2, 3, 4, 5, {@code latest3} emits
+     * [1], [1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5].
+     */
+    default EventStream<List<T>> latestN(int n) {
+        return new LatestNStream<>(this, n);
+    }
+
+    /**
      * Returns a new event stream that, when an event arrives from the
      * {@code impulse} stream, emits the most recent event emitted by this
      * stream. Each event is emitted at most once. For example, if events

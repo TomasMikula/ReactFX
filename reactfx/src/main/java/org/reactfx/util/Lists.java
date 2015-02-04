@@ -1,7 +1,6 @@
 package org.reactfx.util;
 
 import java.util.AbstractList;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -192,13 +191,10 @@ public final class Lists {
     }
 
     public static <E> List<E> concatView(List<List<? extends E>> lists) {
-        List<List<? extends E>> lsts = new ArrayList<>(lists);
-        lsts.removeIf(List::isEmpty);
-
-        if(lsts.isEmpty()) {
+        if(lists.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return ListsHelper.concatView(lsts);
+            return ListsHelper.concatView(lists);
         }
     }
 }
@@ -253,6 +249,5 @@ class ListsHelper {
         public int size() {
             return first.size() + second.size();
         }
-
     }
 }

@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleDoubleProperty}.
  */
+@Deprecated
 public class SimpleDoubleProperty
 extends javafx.beans.property.SimpleDoubleProperty
 implements Property<Number> {

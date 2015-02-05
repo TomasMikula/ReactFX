@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyBooleanPropertyBase}.
  */
+@Deprecated
 public abstract class ReadOnlyBooleanPropertyBase
 extends javafx.beans.property.ReadOnlyBooleanPropertyBase
 implements Property<Boolean> {

@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ObjectPropertyBase}.
  */
+@Deprecated
 public abstract class ObjectPropertyBase<T>
 extends javafx.beans.property.ObjectPropertyBase<T>
 implements Property<T> {

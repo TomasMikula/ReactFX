@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleLongProperty}.
  */
+@Deprecated
 public class SimpleLongProperty
 extends javafx.beans.property.SimpleLongProperty
 implements Property<Number> {

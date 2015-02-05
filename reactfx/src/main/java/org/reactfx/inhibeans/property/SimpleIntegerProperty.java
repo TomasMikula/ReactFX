@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleIntegerProperty}.
  */
+@Deprecated
 public class SimpleIntegerProperty
 extends javafx.beans.property.SimpleIntegerProperty
 implements Property<Number> {

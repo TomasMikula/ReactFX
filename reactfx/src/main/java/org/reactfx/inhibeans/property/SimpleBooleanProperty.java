@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleBooleanProperty}.
  */
+@Deprecated
 public class SimpleBooleanProperty
 extends javafx.beans.property.SimpleBooleanProperty
 implements Property<Boolean> {

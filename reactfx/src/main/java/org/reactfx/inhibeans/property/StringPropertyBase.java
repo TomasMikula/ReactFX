@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.StringPropertyBase}.
  */
+@Deprecated
 public abstract class StringPropertyBase
 extends javafx.beans.property.StringPropertyBase
 implements Property<String> {

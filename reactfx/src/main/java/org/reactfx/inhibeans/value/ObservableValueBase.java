@@ -2,6 +2,7 @@ package org.reactfx.inhibeans.value;
 
 import org.reactfx.Guard;
 
+@Deprecated
 public abstract class ObservableValueBase<T>
 extends javafx.beans.value.ObservableValueBase<T>
 implements ObservableValue<T> {

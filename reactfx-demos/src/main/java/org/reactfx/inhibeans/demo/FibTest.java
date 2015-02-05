@@ -2,9 +2,12 @@ package org.reactfx.inhibeans.demo;
 
 import javafx.beans.binding.NumberExpression;
 import javafx.beans.property.LongProperty;
+import javafx.beans.property.Property;
 import javafx.beans.property.SimpleLongProperty;
 
 import org.reactfx.Guard;
+import org.reactfx.value.SuspendableVar;
+import org.reactfx.value.Var;
 
 public class FibTest {
 
@@ -23,13 +26,13 @@ public class FibTest {
         }
     }
 
-    public void setupFor(LongProperty resultHolder) {
+    public void setupFor(Property<Number> resultHolder) {
         resultHolder.bind(fib[N-2].add(fib[N-1]));
 
         // count the invalidations of the result
         resultHolder.addListener(o -> {
             invalidationCount += 1;
-            resultHolder.get(); // force recomputation
+            resultHolder.getValue(); // force recomputation
         });
     }
 
@@ -45,8 +48,7 @@ public class FibTest {
         eagerTest.setupFor(eagerResult);
 
         FibTest lazyTest = new FibTest(n);
-        org.reactfx.inhibeans.property.SimpleLongProperty lazyResult =
-                new org.reactfx.inhibeans.property.SimpleLongProperty();
+        SuspendableVar<Number> lazyResult = Var.suspendable(Var.newSimpleVar(0L));
         lazyTest.setupFor(lazyResult);
 
         long t1 = System.currentTimeMillis();
@@ -55,7 +57,7 @@ public class FibTest {
         double eagerTime = (t2-t1)/1000.0;
 
         t1 = System.currentTimeMillis();
-        Guard g = lazyResult.block();
+        Guard g = lazyResult.suspend();
         lazyTest.run();
         g.close();
         t2 = System.currentTimeMillis();
@@ -67,7 +69,7 @@ public class FibTest {
         System.out.println("    duration: " + eagerTime + " seconds");
         System.out.println();
         System.out.println("LAZY TEST:");
-        System.out.println("    fib_" + n + " = " + lazyResult.get());
+        System.out.println("    fib_" + n + " = " + lazyResult.getValue());
         System.out.println("    result invalidations: " + lazyTest.invalidationCount);
         System.out.println("    duration: " + lazyTime + " seconds");
     }

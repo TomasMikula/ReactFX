@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleFloatProperty}.
  */
+@Deprecated
 public class SimpleFloatProperty
 extends javafx.beans.property.SimpleFloatProperty
 implements Property<Number> {

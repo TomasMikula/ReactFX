@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyIntegerPropertyBase}.
  */
+@Deprecated
 public abstract class ReadOnlyIntegerPropertyBase
 extends javafx.beans.property.ReadOnlyIntegerPropertyBase
 implements Property<Number> {

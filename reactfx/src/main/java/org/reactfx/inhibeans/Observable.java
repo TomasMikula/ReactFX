@@ -4,7 +4,12 @@ import java.util.function.Supplier;
 
 import org.reactfx.Guard;
 import org.reactfx.Guardian;
+import org.reactfx.Suspendable;
 
+/**
+ * @deprecated Superseded by {@link Suspendable}.
+ */
+@Deprecated
 public interface Observable extends javafx.beans.Observable, Guardian {
 
     /**

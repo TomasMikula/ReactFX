@@ -5,16 +5,22 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
 import org.reactfx.Guard;
+import org.reactfx.value.Val;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
 /**
  * Inhibitory version of {@link javafx.beans.binding.IntegerBinding}.
  */
+@Deprecated
 public abstract class IntegerBinding
 extends javafx.beans.binding.IntegerBinding
 implements Binding<Number> {
 
+    /**
+     * @deprecated Use {@link Val#suspendable(javafx.beans.value.ObservableValue)}.
+     */
+    @Deprecated
     public static IntegerBinding wrap(ObservableValue<? extends Number> source) {
         return new IntegerBinding() {
             { bind(source); }

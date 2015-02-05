@@ -5,16 +5,22 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableBooleanValue;
 
 import org.reactfx.Guard;
+import org.reactfx.value.Val;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
 /**
  * Inhibitory version of {@link javafx.beans.binding.BooleanBinding}.
  */
+@Deprecated
 public abstract class BooleanBinding
 extends javafx.beans.binding.BooleanBinding
 implements Binding<Boolean> {
 
+    /**
+     * @deprecated Use {@link Val#suspendable(javafx.beans.value.ObservableValue)}.
+     */
+    @Deprecated
     public static BooleanBinding wrap(ObservableBooleanValue source) {
         return new BooleanBinding() {
             { bind(source); }

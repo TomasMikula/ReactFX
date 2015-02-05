@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyDoubleWrapper}.
  */
+@Deprecated
 public class ReadOnlyDoubleWrapper
 extends javafx.beans.property.ReadOnlyDoubleWrapper
 implements Property<Number> {

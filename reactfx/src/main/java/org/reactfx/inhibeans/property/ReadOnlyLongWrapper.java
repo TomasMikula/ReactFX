@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyLongWrapper}.
  */
+@Deprecated
 public class ReadOnlyLongWrapper
 extends javafx.beans.property.ReadOnlyLongWrapper
 implements Property<Number> {

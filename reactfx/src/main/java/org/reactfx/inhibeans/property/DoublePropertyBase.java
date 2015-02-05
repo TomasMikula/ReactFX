@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.DoublePropertyBase}.
  */
+@Deprecated
 public abstract class DoublePropertyBase
 extends javafx.beans.property.DoublePropertyBase
 implements Property<Number> {

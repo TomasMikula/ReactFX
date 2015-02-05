@@ -3,8 +3,8 @@ package org.reactfx;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.reactfx.inhibeans.value.CountingListener;
-import org.reactfx.inhibeans.value.ObservableValueBase;
+import org.reactfx.value.SuspendableVar;
+import org.reactfx.value.Var;
 
 public class CountedBlockingTest {
 
@@ -22,27 +22,14 @@ public class CountedBlockingTest {
     }
 
     @Test
-    public void testObservableValueBase() {
-        class A extends ObservableValueBase<String> {
-            private String value;
-
-            @Override
-            public String getValue() {
-                return value;
-            }
-
-            public void set(String value) {
-                this.value = value;
-                fireValueChangedEvent();
-            }
-        }
-
-        A a = new A();
-        CountingListener counter = new CountingListener(a);
-        Guard g = a.block();
-        a.set("x");
+    public void testSuspendableVal() {
+        SuspendableVar<String> a = Var.<String>newSimpleVar(null).suspendable();
+        Counter counter = new Counter();
+        a.addListener(obs -> counter.inc());
+        Guard g = a.suspend();
+        a.setValue("x");
         assertEquals(0, counter.get());
-        Guard h = a.block();
+        Guard h = a.suspend();
         g.close();
         assertEquals(0, counter.get());
         g.close();

@@ -75,13 +75,13 @@ implements ReadOnlyLiveListImpl<F> {
 class DynamicallyMappedList<E, F> extends LiveListBase<F>
 implements ReadOnlyLiveListImpl<F> {
     private final ObservableList<? extends E> source;
-    private final ObservableValue<? extends Function<? super E, ? extends F>> mapper;
+    private final Val<? extends Function<? super E, ? extends F>> mapper;
 
     public DynamicallyMappedList(
             ObservableList<? extends E> source,
             ObservableValue<? extends Function<? super E, ? extends F>> mapper) {
         this.source = source;
-        this.mapper = mapper;
+        this.mapper = Val.wrap(mapper);
     }
 
     @Override
@@ -98,14 +98,14 @@ implements ReadOnlyLiveListImpl<F> {
     protected Subscription observeInputs() {
         return Subscription.multi(
                 LiveList.<E>observeQuasiChanges(source, this::sourceChanged),
-                Val.observe(mapper, this::mapperChanged));
+                mapper.observeInvalidations(this::mapperInvalidated));
     }
 
     private void sourceChanged(QuasiListChange<? extends E> change) {
         notifyObservers(MappedList.mappedChangeView(change, mapper.getValue()));
     }
 
-    private void mapperChanged(Function<? super E, ? extends F> oldMapper) {
+    private void mapperInvalidated(Function<? super E, ? extends F> oldMapper) {
         fireContentReplacement(Lists.mappedView(source, oldMapper));
     }
 }

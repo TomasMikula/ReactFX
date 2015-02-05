@@ -14,6 +14,17 @@ public interface Var<T> extends Val<T>, Property<T> {
         return new SimpleVar<>(initialValue);
     }
 
+    static <T> SuspendableVar<T> suspendable(Property<T> p) {
+        if(p instanceof SuspendableVar) {
+            return (SuspendableVar<T>) p;
+        } else {
+            Var<T> var = p instanceof Var
+                    ? (Var<T>) p
+                    : new VarWrapper<>(p);
+            return new SuspendableVarWrapper<>(var);
+        }
+    }
+
     @Override
     default void bindBidirectional(Property<T> other) {
         Bindings.bindBidirectional(this, other);
@@ -32,6 +43,11 @@ public interface Var<T> extends Val<T>, Property<T> {
     @Override
     default String getName() {
         return null;
+    }
+
+    @Override
+    default SuspendableVar<T> suspendable() {
+        return suspendable(this);
     }
 }
 

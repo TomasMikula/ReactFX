@@ -35,7 +35,7 @@ public class SuspendableListTest {
             }
         });
 
-        wrapped.blockWhile(() -> {
+        wrapped.suspendWhile(() -> {
             base.addAll(2, Arrays.asList(12, 11, 13));
             base.remove(7, 9);
             base.subList(8,  10).replaceAll(i -> i + 20);

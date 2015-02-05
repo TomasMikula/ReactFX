@@ -6,6 +6,7 @@ import javafx.beans.value.ObservableValue;
 import org.junit.Test;
 import org.reactfx.Guard;
 
+@Deprecated
 public class PropertyTest {
 
     private void testBooleanProperty(Property<Boolean> tested) {

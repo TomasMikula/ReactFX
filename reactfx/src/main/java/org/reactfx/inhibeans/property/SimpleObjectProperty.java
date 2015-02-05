@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleObjectProperty}.
  */
+@Deprecated
 public class SimpleObjectProperty<T>
 extends javafx.beans.property.SimpleObjectProperty<T>
 implements Property<T> {

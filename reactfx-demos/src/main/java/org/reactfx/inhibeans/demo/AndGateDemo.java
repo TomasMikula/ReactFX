@@ -5,17 +5,19 @@ import java.util.function.Predicate;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ObservableBooleanValue;
+import javafx.beans.value.ObservableValue;
 
 import org.reactfx.Guard;
-import org.reactfx.inhibeans.binding.BooleanBinding;
+import org.reactfx.value.SuspendableVal;
+import org.reactfx.value.Val;
 
 public class AndGateDemo {
 
     interface AndGate {
         void setInputs(boolean a, boolean b);
-        ObservableBooleanValue a();
-        ObservableBooleanValue b();
-        ObservableBooleanValue output();
+        ObservableValue<Boolean> a();
+        ObservableValue<Boolean> b();
+        ObservableValue<Boolean> output();
     }
 
     static void test(AndGate gate) {
@@ -26,10 +28,10 @@ public class AndGateDemo {
         }
 
         Predicate<AndGate> consistent = g ->
-            g.output().get() == (g.a().get() && g.b().get());
+            g.output().getValue() == (g.a().getValue() && g.b().getValue());
 
         gate.setInputs(false, false);
-        assert gate.output().get() == false;
+        assert gate.output().getValue() == false;
 
         Counter na = new Counter();
         Counter nb = new Counter();
@@ -49,7 +51,7 @@ public class AndGateDemo {
         });
 
         gate.setInputs(true, true);
-        assert gate.output().get() == true;
+        assert gate.output().getValue() == true;
 
         assert na.get() == 1;
         assert nb.get() == 1;
@@ -59,11 +61,11 @@ public class AndGateDemo {
     static class AndGateImpl implements AndGate {
         private final BooleanProperty a = new SimpleBooleanProperty();
         private final BooleanProperty b = new SimpleBooleanProperty();
-        private final BooleanBinding output = BooleanBinding.wrap(a.and(b));
+        private final SuspendableVal<Boolean> output = Val.suspendable(a.and(b));
 
         @Override
         public void setInputs(boolean a, boolean b) {
-            Guard guard = output.block();
+            Guard guard = output.suspend();
             this.a.set(a);
             this.b.set(b);
             guard.close();
@@ -71,7 +73,7 @@ public class AndGateDemo {
 
         @Override public ObservableBooleanValue a() { return a; }
         @Override public ObservableBooleanValue b() { return b; }
-        @Override public ObservableBooleanValue output() { return output; }
+        @Override public ObservableValue<Boolean> output() { return output; }
     }
 
     public static void main(String[] args) {

@@ -3,14 +3,14 @@ package org.reactfx;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
-import org.reactfx.inhibeans.value.CountingListener;
 
 public class IndicatorTest {
 
     @Test
     public void test() {
         Indicator indicator = new Indicator();
-        CountingListener counter = new CountingListener(indicator);
+        Counter counter = new Counter();
+        indicator.addListener(obs -> counter.inc());
 
         Guard g = indicator.on();
 

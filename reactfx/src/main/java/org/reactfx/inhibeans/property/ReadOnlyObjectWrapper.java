@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyObjectWrapper}.
  */
+@Deprecated
 public class ReadOnlyObjectWrapper<T>
 extends javafx.beans.property.ReadOnlyObjectWrapper<T>
 implements Property<T> {

@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.SimpleStringProperty}.
  */
+@Deprecated
 public class SimpleStringProperty
 extends javafx.beans.property.SimpleStringProperty
 implements Property<String> {

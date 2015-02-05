@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyFloatWrapper}.
  */
+@Deprecated
 public class ReadOnlyFloatWrapper
 extends javafx.beans.property.ReadOnlyFloatWrapper
 implements Property<Number> {

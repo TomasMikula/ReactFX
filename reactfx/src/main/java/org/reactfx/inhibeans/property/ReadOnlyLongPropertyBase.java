@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyLongPropertyBase}.
  */
+@Deprecated
 public abstract class ReadOnlyLongPropertyBase
 extends javafx.beans.property.ReadOnlyLongPropertyBase
 implements Property<Number> {

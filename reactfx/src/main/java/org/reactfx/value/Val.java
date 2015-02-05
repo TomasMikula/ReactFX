@@ -15,6 +15,8 @@ import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
+import org.reactfx.EventStream;
+import org.reactfx.EventStreamBase;
 import org.reactfx.Subscription;
 import org.reactfx.util.HexaFunction;
 import org.reactfx.util.PentaFunction;
@@ -31,68 +33,42 @@ public interface Val<T> extends ObservableValue<T> {
      * Abstract methods *
      * **************** */
 
-    void addObserver(Consumer<? super T> oldValueObserver);
-    void removeObserver(Consumer<? super T> oldValueObserver);
+    void addInvalidationObserver(Consumer<? super T> oldValueObserver);
+    void removeInvalidationObserver(Consumer<? super T> oldValueObserver);
 
 
     /* *************** *
      * Default methods *
      * *************** */
 
-    default Subscription observe(Consumer<? super T> oldValueObserver) {
-        addObserver(oldValueObserver);
-        return () -> removeObserver(oldValueObserver);
+    default Subscription observeInvalidations(
+            Consumer<? super T> oldValueObserver) {
+        addInvalidationObserver(oldValueObserver);
+        return () -> removeInvalidationObserver(oldValueObserver);
     }
 
     default Subscription pin() {
-        return observe(oldVal -> {});
+        return observeInvalidations(oldVal -> {});
     }
 
     @Override
     default void addListener(InvalidationListener listener) {
-        addObserver(new InvalidationListenerWrapper<>(this, listener));
+        addInvalidationObserver(new InvalidationListenerWrapper<>(this, listener));
     }
 
     @Override
     default void removeListener(InvalidationListener listener) {
-        removeObserver(new InvalidationListenerWrapper<>(this, listener));
+        removeInvalidationObserver(new InvalidationListenerWrapper<>(this, listener));
     }
 
     @Override
     default void addListener(ChangeListener<? super T> listener) {
-        addObserver(new ChangeListenerWrapper<>(this, listener));
+        addInvalidationObserver(new ChangeListenerWrapper<>(this, listener));
     }
 
     @Override
     default void removeListener(ChangeListener<? super T> listener) {
-        removeObserver(new ChangeListenerWrapper<>(this, listener));
-    }
-
-    /**
-     * Adds an invalidation listener and returns a Subscription that can be
-     * used to remove that listener.
-     *
-     * <pre>
-     * {@code
-     * Subscription s = observable.observeInvalidations(obs -> doSomething());
-     *
-     * // later
-     * s.unsubscribe();
-     * }</pre>
-     *
-     * is equivalent to
-     *
-     * <pre>
-     * {@code
-     * InvalidationListener l = obs -> doSomething();
-     * observable.addListener(l);
-     *
-     * // later
-     * observable.removeListener(l);
-     * }</pre>
-     */
-    default Subscription observeInvalidations(InvalidationListener listener) {
-        return observe(new InvalidationListenerWrapper<>(this, listener));
+        removeInvalidationObserver(new ChangeListenerWrapper<>(this, listener));
     }
 
     /**
@@ -101,7 +77,20 @@ public interface Val<T> extends ObservableValue<T> {
      * {@link #observeInvalidations(InvalidationListener)}.
      */
     default Subscription observeChanges(ChangeListener<? super T> listener) {
-        return observe(new ChangeListenerWrapper<>(this, listener));
+        return observeInvalidations(new ChangeListenerWrapper<>(this, listener));
+    }
+
+    /**
+     * Returns a stream of invalidated values, which emits the invalidated value
+     * (i.e. the old value) on each invalidation of this observable value.
+     */
+    default EventStream<T> invalidations() {
+        return new EventStreamBase<T>() {
+            @Override
+            protected Subscription observeInputs() {
+                return observeInvalidations(this::emit);
+            }
+        };
     }
 
     /**
@@ -266,20 +255,44 @@ public interface Val<T> extends ObservableValue<T> {
         return selectVar(this, f, resetToOnUnbind);
     }
 
+    default SuspendableVal<T> suspendable() {
+        return suspendable(this);
+    }
+
 
     /* ************** *
      * Static methods *
      * ************** */
 
-    static Subscription observeInvalidations(
-            ObservableValue<?> obs,
-            InvalidationListener listener) {
-        if(obs instanceof Val) {
-            return ((Val<?>) obs).observeInvalidations(listener);
-        } else {
-            obs.addListener(listener);
-            return () -> obs.removeListener(listener);
-        }
+    /**
+     * Returns a {@linkplain Val} wrapper around {@linkplain ObservableValue}.
+     * Note that one rarely needs to use this method, because most of the time
+     * one can use an appropriate static method directly to get the desired
+     * result. For example, instead of
+     *
+     * <pre>
+     * {@code
+     * Val.wrap(obs).orElse(other)
+     * }
+     * </pre>
+     *
+     * one can write
+     *
+     * <pre>
+     * {@code
+     * Val.orElse(obs, other)
+     * }
+     * </pre>
+     *
+     * However, an explicit wrapper is needed if one needs to access the methods
+     * {@link #observeInvalidations(Consumer)} or {@link #invalidations()}, that
+     * is methods that observe the invalidated value, since there is no way
+     * these can be implemented as static helper methods.
+     */
+    static <T> Val<T> wrap(ObservableValue<T> obs) {
+        return obs instanceof Val
+                ? (Val<T>) obs
+                : new ValWrapper<>(obs);
     }
 
     static <T> Subscription observeChanges(
@@ -293,14 +306,11 @@ public interface Val<T> extends ObservableValue<T> {
         }
     }
 
-    static <T> Subscription observe(
-            ObservableValue<? extends T> obs,
-            Consumer<? super T> oldValueObserver) {
-        if(obs instanceof Val) {
-            return ((Val<? extends T>) obs).observe(oldValueObserver);
-        } else {
-            return observeChanges(obs, (o, oldVal, newVal) -> oldValueObserver.accept(oldVal));
-        }
+    static Subscription observeInvalidations(
+            ObservableValue<?> obs,
+            InvalidationListener listener) {
+        obs.addListener(listener);
+        return () -> obs.removeListener(listener);
     }
 
     static <T> Val<T> orElseConst(ObservableValue<? extends T> src, T other) {
@@ -348,6 +358,17 @@ public interface Val<T> extends ObservableValue<T> {
             Function<? super T, ? extends Property<U>> f,
             U resetToOnUnbind) {
         return new FlatMappedVar<>(src, f, resetToOnUnbind);
+    }
+
+    static <T> SuspendableVal<T> suspendable(ObservableValue<T> obs) {
+        if(obs instanceof SuspendableVal) {
+            return (SuspendableVal<T>) obs;
+        } else {
+            Val<T> val = obs instanceof Val
+                    ? (Val<T>) obs
+                    : new ValWrapper<>(obs);
+            return new SuspendableValWrapper<>(val);
+        }
     }
 
 

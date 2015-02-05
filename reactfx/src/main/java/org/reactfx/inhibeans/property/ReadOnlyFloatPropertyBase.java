@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyFloatPropertyBase}.
  */
+@Deprecated
 public abstract class ReadOnlyFloatPropertyBase
 extends javafx.beans.property.ReadOnlyFloatPropertyBase
 implements Property<Number> {

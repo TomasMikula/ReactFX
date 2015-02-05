@@ -5,16 +5,22 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableStringValue;
 
 import org.reactfx.Guard;
+import org.reactfx.value.Val;
 
 import com.sun.javafx.binding.ExpressionHelper;
 
 /**
  * Inhibitory version of {@link javafx.beans.binding.StringBinding}.
  */
+@Deprecated
 public abstract class StringBinding
 extends javafx.beans.binding.StringBinding
 implements Binding<String> {
 
+    /**
+     * @deprecated Use {@link Val#suspendable(javafx.beans.value.ObservableValue)}.
+     */
+    @Deprecated
     public static StringBinding wrap(ObservableStringValue source) {
         return new StringBinding() {
             { bind(source); }

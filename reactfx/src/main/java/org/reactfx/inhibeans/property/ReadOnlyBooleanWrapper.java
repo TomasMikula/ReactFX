@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyBooleanWrapper}.
  */
+@Deprecated
 public class ReadOnlyBooleanWrapper
 extends javafx.beans.property.ReadOnlyBooleanWrapper
 implements Property<Boolean> {

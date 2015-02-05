@@ -5,6 +5,7 @@ import org.reactfx.Guard;
 /**
  * Inhibitory version of {@link javafx.beans.property.ReadOnlyStringPropertyBase}.
  */
+@Deprecated
 public abstract class ReadOnlyStringPropertyBase
 extends javafx.beans.property.ReadOnlyStringPropertyBase
 implements Property<String> {

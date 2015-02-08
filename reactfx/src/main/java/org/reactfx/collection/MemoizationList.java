@@ -60,7 +60,6 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
 
     MemoizationListImpl(ObservableList<E> source) {
         this.source = source;
-        sparseList.insertVoid(0, source.size());
     }
 
     @Override
@@ -87,12 +86,14 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
 
     @Override
     public E get(int index) {
-        if(sparseList.isPresent(index)) {
+        if(!isObservingInputs()) { // memoization is off
+            return source.get(index);
+        } else if(sparseList.isPresent(index)) {
             return sparseList.getOrThrow(index);
         } else {
-            E elem = source.get(index);
-            if(isObservingInputs()) { // memoization is on
-                sparseList.set(index, elem);
+            E elem = source.get(index); // may cause recursive get(), so we
+                                        // need to check again for absence
+            if(sparseList.setIfAbsent(index, elem)) {
                 memoizedItems.fireElemInsertion(
                         sparseList.getPresentCountBefore(index));
             }
@@ -115,8 +116,9 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
         for(int i = from; i < to; ++i) {
             if(!sparseList.isPresent(i)) {
                 E elem = source.get(i);
-                sparseList.set(i, elem);
-                mods.add(LiveListHelpers.elemInsertion(presentBefore + (i - from)));
+                if(sparseList.setIfAbsent(i, elem)) {
+                    mods.add(LiveListHelpers.elemInsertion(presentBefore + (i - from)));
+                }
             }
         }
         if(!mods.isEmpty()) {
@@ -136,22 +138,31 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
 
     @Override
     public boolean isMemoized(int index) {
-        return sparseList.isPresent(index);
+        return isObservingInputs() && sparseList.isPresent(index);
     }
 
     @Override
     public Optional<E> getIfMemoized(int index) {
-        return sparseList.get(index);
+        Lists.checkIndex(index, size());
+        return isObservingInputs()
+                ? sparseList.get(index)
+                : Optional.empty();
     }
 
     @Override
     public int getMemoizedCountBefore(int position) {
-        return sparseList.getPresentCountBefore(position);
+        Lists.checkPosition(position, size());
+        return isObservingInputs()
+                ? sparseList.getPresentCountBefore(position)
+                : 0;
     }
 
     @Override
     public int getMemoizedCountAfter(int position) {
-        return sparseList.getPresentCountAfter(position);
+        Lists.checkPosition(position, size());
+        return isObservingInputs()
+                ? sparseList.getPresentCountAfter(position)
+                : 0;
     }
 
     @Override

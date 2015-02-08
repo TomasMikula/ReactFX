@@ -348,6 +348,15 @@ public final class SparseList<E> {
         });
     }
 
+    public boolean setIfAbsent(int index, E elem) {
+        if(isPresent(index)) {
+            return false;
+        } else {
+            set(index, elem);
+            return true;
+        }
+    }
+
     public void insert(int position, E elem) {
         insertAll(position, Collections.singleton(elem));
     }

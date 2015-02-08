@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -164,5 +165,28 @@ public class MemoizationListTest {
         MemoizationList<Integer> list = new LiveArrayList<>(0, 1, 2, 3, 4, 5, 6).memoize();
 
         list.forget(2, 4);
+    }
+
+    @Test
+    public void testRecursionWithinForce() {
+        LiveList<Integer> src = new LiveArrayList<>(0, 1, 2);
+        MemoizationList<Integer> memo1 = src.memoize();
+        MemoizationList<Integer> memo2 = memo1.map(Function.identity()).memoize();
+        memo1.memoizedItems().sizeProperty().observeInvalidations(__ -> memo2.force(1, 2));
+
+        List<Integer> memo2Mirror = new ArrayList<>();
+        memo2.memoizedItems().observeModifications(mod -> {
+            memo2Mirror.subList(mod.getFrom(), mod.getFrom() + mod.getRemovedSize()).clear();
+            memo2Mirror.addAll(mod.getFrom(), mod.getAddedSubList());
+        });
+
+        assertEquals(Collections.emptyList(), memo1.memoizedItems());
+        assertEquals(Collections.emptyList(), memo2.memoizedItems());
+        assertEquals(Collections.emptyList(), memo2Mirror);
+
+        memo2.force(1, 2); // causes an immediate change in memo1.memoizedItems(),
+                           // which recursively calls memo2.force(1, 2).
+
+        assertEquals(Arrays.asList(1), memo2Mirror);
     }
 }

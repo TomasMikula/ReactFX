@@ -73,8 +73,7 @@ public interface Val<T> extends ObservableValue<T> {
 
     /**
      * Adds a change listener and returns a Subscription that can be
-     * used to remove that listener. See the example at
-     * {@link #observeInvalidations(InvalidationListener)}.
+     * used to remove that listener.
      */
     default Subscription observeChanges(ChangeListener<? super T> listener) {
         return observeInvalidations(new ChangeListenerWrapper<>(this, listener));

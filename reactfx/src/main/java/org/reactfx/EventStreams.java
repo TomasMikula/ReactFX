@@ -10,6 +10,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import javafx.animation.AnimationTimer;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.value.ChangeListener;
@@ -322,6 +323,28 @@ public class EventStreams {
             @Override
             protected Subscription observeInputs() {
                 timer.restart();
+                return timer::stop;
+            }
+        };
+    }
+
+    /**
+     * Returns an event stream that emits a timestamp of the current frame in
+     * nanoseconds on every frame. The timestamp has the same meaning as the
+     * argument of the {@link AnimationTimer#handle(long)} method.
+     */
+    public static EventStream<Long> animationTicks() {
+        return new EventStreamBase<Long>() {
+            private final AnimationTimer timer = new AnimationTimer() {
+                @Override
+                public void handle(long now) {
+                    emit(now);
+                }
+            };
+
+            @Override
+            protected Subscription observeInputs() {
+                timer.start();
                 return timer::stop;
             }
         };

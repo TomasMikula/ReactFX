@@ -14,6 +14,7 @@ public interface MemoizationList<E> extends LiveList<E> {
     LiveList<E> memoizedItems();
     boolean isMemoized(int index);
     Optional<E> getIfMemoized(int index);
+    int getMemoizedCount();
     int getMemoizedCountBefore(int position);
     int getMemoizedCountAfter(int position);
     void forget(int from, int to);
@@ -163,6 +164,11 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
         return isObservingInputs()
                 ? sparseList.getPresentCountAfter(position)
                 : 0;
+    }
+
+    @Override
+    public int getMemoizedCount() {
+        return memoizedItems.size();
     }
 
     @Override

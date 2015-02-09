@@ -185,7 +185,7 @@ In the above example, an event that is emitted no later than 200ms after the pre
 
 ### and more...
 
-See the [JavaDoc](http://www.reactfx.org/javadoc/org/reactfx/EventStream.html) for more stream combinators.
+See the [JavaDoc](http://www.reactfx.org/javadoc/stable/org/reactfx/EventStream.html) for more stream combinators.
 
 
 Laziness of composite streams

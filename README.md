@@ -419,31 +419,31 @@ libraryDependencies += "org.reactfx" % "reactfx" % "1.4.1"
 
 ### Milestone release
 
-Current milestone release is 2.0-M2.
+Current milestone release is 2.0-M2u1.
 
 #### Maven coordinates
 
 | Group ID    | Artifact ID | Version |
 | :---------: | :---------: | :-----: |
-| org.reactfx | reactfx     | 2.0-M2  |
+| org.reactfx | reactfx     | 2.0-M2u1  |
 
 #### Gradle example
 
 ```groovy
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '2.0-M2'
+    compile group: 'org.reactfx', name: 'reactfx', version: '2.0-M2u1'
 }
 ```
 
 #### Sbt example
 
 ```scala
-libraryDependencies += "org.reactfx" % "reactfx" % "2.0-M2"
+libraryDependencies += "org.reactfx" % "reactfx" % "2.0-M2u1"
 ```
 
 #### Manual download
 
-[Download](https://github.com/TomasMikula/ReactFX/releases/download/v2.0-M2/reactfx-2.0-M2.jar) the JAR file and place it on your classpath.
+[Download](https://github.com/TomasMikula/ReactFX/releases/download/v2.0-M2u1/reactfx-2.0-M2u1.jar) the JAR file and place it on your classpath.
 
 
 ### Snapshot releases

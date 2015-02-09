@@ -486,7 +486,8 @@ libraryDependencies += "org.reactfx" % "reactfx" % "2.0-SNAPSHOT"
 Links
 -----
 
-[API Documentation (Javadoc)](http://www.reactfx.org/javadoc/stable/overview-summary.html)  
+[API 1.4.1 (Javadoc)](http://www.reactfx.org/javadoc/1.4.1/overview-summary.html)  
+[API 2.0-M2 (Javadoc)](http://www.reactfx.org/javadoc/2.0-M2/overview-summary.html)  
 
 
 License

@@ -419,31 +419,31 @@ libraryDependencies += "org.reactfx" % "reactfx" % "1.4.1"
 
 ### Milestone release
 
-Current milestone release is 2.0-M2u1.
+Current milestone release is 2.0-M3.
 
 #### Maven coordinates
 
 | Group ID    | Artifact ID | Version |
 | :---------: | :---------: | :-----: |
-| org.reactfx | reactfx     | 2.0-M2u1  |
+| org.reactfx | reactfx     | 2.0-M3  |
 
 #### Gradle example
 
 ```groovy
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '2.0-M2u1'
+    compile group: 'org.reactfx', name: 'reactfx', version: '2.0-M3'
 }
 ```
 
 #### Sbt example
 
 ```scala
-libraryDependencies += "org.reactfx" % "reactfx" % "2.0-M2u1"
+libraryDependencies += "org.reactfx" % "reactfx" % "2.0-M3"
 ```
 
 #### Manual download
 
-[Download](https://github.com/TomasMikula/ReactFX/releases/download/v2.0-M2u1/reactfx-2.0-M2u1.jar) the JAR file and place it on your classpath.
+[Download](https://github.com/TomasMikula/ReactFX/releases/download/v2.0-M3/reactfx-2.0-M3.jar) the JAR file and place it on your classpath.
 
 
 ### Snapshot releases
@@ -487,7 +487,7 @@ Links
 -----
 
 [API 1.4.1 (Javadoc)](http://www.reactfx.org/javadoc/1.4.1/overview-summary.html)  
-[API 2.0-M2 (Javadoc)](http://www.reactfx.org/javadoc/2.0-M2/overview-summary.html)  
+[API 2.0-M3 (Javadoc)](http://www.reactfx.org/javadoc/2.0-M3/overview-summary.html)  
 
 
 License

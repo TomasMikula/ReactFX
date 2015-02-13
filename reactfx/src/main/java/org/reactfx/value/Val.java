@@ -1,5 +1,6 @@
 package org.reactfx.value;
 
+import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -19,6 +20,7 @@ import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
 import org.reactfx.Subscription;
 import org.reactfx.util.HexaFunction;
+import org.reactfx.util.Interpolator;
 import org.reactfx.util.PentaFunction;
 import org.reactfx.util.TetraFunction;
 import org.reactfx.util.TriFunction;
@@ -258,6 +260,49 @@ public interface Val<T> extends ObservableValue<T> {
         return suspendable(this);
     }
 
+    /**
+     * Returns a new {@linkplain Val} that gradually transitions to the value
+     * of this {@linkplain Val} every time this {@linkplain Val} changes.
+     *
+     * <p>When the returned {@linkplain Val} has no observer, there is no
+     * gradual transition taking place. This means that there is no animation
+     * running in the background that would consume system resources. This also
+     * means that in that case {@link #getValue()} always returns the target
+     * value (i.e. the current value of this {@linkplain Val}), instead of any
+     * intermediate interpolated value.
+     *
+     * @param duration function that calculates the desired duration of the
+     * transition for two boundary values.
+     * @param interpolator calculates the interpolated value between two
+     * boundary values, given a fraction.
+     */
+    default Val<T> animate(
+            BiFunction<? super T, ? super T, Duration> duration,
+            Interpolator<T> interpolator) {
+        return animate(this, duration, interpolator);
+    }
+
+    /**
+     * Returns a new {@linkplain Val} that gradually transitions to the value
+     * of this {@linkplain Val} every time this {@linkplain Val} changes.
+     *
+     * <p>When the returned {@linkplain Val} has no observer, there is no
+     * gradual transition taking place. This means that there is no animation
+     * running in the background that would consume system resources. This also
+     * means that in that case {@link #getValue()} always returns the target
+     * value (i.e. the current value of this {@linkplain Val}), instead of any
+     * intermediate interpolated value.
+     *
+     * @param duration the desired duration of the transition
+     * @param interpolator calculates the interpolated value between two
+     * boundary values, given a fraction.
+     */
+    default Val<T> animate(
+            Duration duration,
+            Interpolator<T> interpolator) {
+        return animate(this, duration, interpolator);
+    }
+
 
     /* ************** *
      * Static methods *
@@ -368,6 +413,55 @@ public interface Val<T> extends ObservableValue<T> {
                     : new ValWrapper<>(obs);
             return new SuspendableValWrapper<>(val);
         }
+    }
+
+    /**
+     * Creates a new {@linkplain Val} that gradually transitions to the value
+     * of the given {@linkplain ObservableValue} {@code obs} every time
+     * {@code obs} changes.
+     *
+     * <p>When the returned {@linkplain Val} has no observer, there is no
+     * gradual transition taking place. This means that there is no animation
+     * running in the background that would consume system resources. This also
+     * means that in that case {@link #getValue()} always returns the target
+     * value (i.e. the current value of {@code obs}), instead of any intermediate
+     * interpolated value.
+     *
+     * @param obs observable value to animate
+     * @param duration function that calculates the desired duration of the
+     * transition for two boundary values.
+     * @param interpolator calculates the interpolated value between two
+     * boundary values, given a fraction.
+     */
+    static <T> Val<T> animate(
+            ObservableValue<T> obs,
+            BiFunction<? super T, ? super T, Duration> duration,
+            Interpolator<T> interpolator) {
+        return new AnimatedVal<>(obs, duration, interpolator);
+    }
+
+    /**
+     * Creates a new {@linkplain Val} that gradually transitions to the value
+     * of the given {@linkplain ObservableValue} {@code obs} every time
+     * {@code obs} changes.
+     *
+     * <p>When the returned {@linkplain Val} has no observer, there is no
+     * gradual transition taking place. This means that there is no animation
+     * running in the background that would consume system resources. This also
+     * means that in that case {@link #getValue()} always returns the target
+     * value (i.e. the current value of {@code obs}), instead of any intermediate
+     * interpolated value.
+     *
+     * @param obs observable value to animate
+     * @param duration the desired duration of the transition
+     * @param interpolator calculates the interpolated value between two
+     * boundary values, given a fraction.
+     */
+    static <T> Val<T> animate(
+            ObservableValue<T> obs,
+            Duration duration,
+            Interpolator<T> interpolator) {
+        return animate(obs, (a, b) -> duration, interpolator);
     }
 
 

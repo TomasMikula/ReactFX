@@ -19,7 +19,7 @@ import org.reactfx.util.NotificationAccumulator;
  * @param <O> type of the observer
  * @param <T> type of produced values
  */
-public abstract class ObservableBase<O, T> implements ObservableHelpers<O, T> {
+public abstract class ObservableBase<O, T> implements ProperObservable<O, T> {
     private ListHelper<O> observers = null;
     private Subscription inputSubscription = null;
     private final NotificationAccumulator<O, T, ?> pendingNotifications;

@@ -14,7 +14,7 @@ import org.reactfx.util.NotificationAccumulator;
 
 final class SuspendableListWrapper<E>
 extends SuspendableBase<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>>
-implements SuspendableList<E>, LiveListHelpers<E> {
+implements SuspendableList<E>, ProperLiveList<E> {
     private final ObservableList<E> delegate;
 
     SuspendableListWrapper(ObservableList<E> source) {

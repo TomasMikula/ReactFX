@@ -4,36 +4,16 @@ import java.util.Collections;
 import java.util.List;
 
 import org.reactfx.ObservableBase;
-import org.reactfx.ObservableHelpers;
+import org.reactfx.ProperObservable;
 import org.reactfx.util.Lists;
 
 /**
  * Trait to be mixed into {@link ObservableBase} to obtain default
  * implementation of some {@link LiveList} methods and get additional
- * helper methods.
+ * helper methods for implementations of <em>proper</em> {@linkplain LiveList}.
  */
-public interface LiveListHelpers<E>
-extends LiveList<E>, ObservableHelpers<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
-
-    @Override
-    default void addQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
-        addObserver(observer);
-    }
-
-    @Override
-    default void removeQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
-        removeObserver(observer);
-    }
-
-    @Override
-    default void addQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
-        addObserver(observer);
-    }
-
-    @Override
-    default void removeQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
-        removeObserver(observer);
-    }
+public interface ProperLiveList<E>
+extends LiveListHelper<E>, ProperObservable<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
 
     default void fireModification(QuasiListModification<? extends E> mod) {
         notifyObservers(mod.asListChange());

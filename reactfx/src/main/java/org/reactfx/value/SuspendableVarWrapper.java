@@ -2,7 +2,6 @@ package org.reactfx.value;
 
 import javafx.beans.value.ObservableValue;
 
-
 class SuspendableVarWrapper<T>
 extends SuspendableValWrapper<T>
 implements SuspendableVar<T> {

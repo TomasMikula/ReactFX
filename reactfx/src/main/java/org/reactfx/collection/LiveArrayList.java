@@ -118,7 +118,7 @@ public final class LiveArrayList<E> extends LiveListBase<E> {
             int i = list.indexOf(o);
             if(i != -1) {
                 E removed = list.remove(i);
-                acc.add(LiveListHelpers.elemRemoval(i, removed));
+                acc.add(ProperLiveList.elemRemoval(i, removed));
             }
         }
         if(acc.isEmpty()) {
@@ -142,7 +142,7 @@ public final class LiveArrayList<E> extends LiveListBase<E> {
             E elem = list.get(i);
             if(!c.contains(elem)) {
                 list.remove(i);
-                acc.add(LiveListHelpers.elemRemoval(i, elem));
+                acc.add(ProperLiveList.elemRemoval(i, elem));
             }
         }
         if(acc.isEmpty()) {

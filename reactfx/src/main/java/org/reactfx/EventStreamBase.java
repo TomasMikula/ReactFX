@@ -12,7 +12,7 @@ import org.reactfx.util.NotificationAccumulator;
  */
 public abstract class EventStreamBase<T>
 extends ObservableBase<Consumer<? super T>, T>
-implements EventStreamHelpers<T> {
+implements ProperEventStream<T> {
 
     public EventStreamBase() {
         this(NotificationAccumulator.nonAccumulativeStreamNotifications());

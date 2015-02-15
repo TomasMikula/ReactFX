@@ -8,7 +8,7 @@ import org.reactfx.util.NotificationAccumulator;
 
 public abstract class ValBase<T>
 extends ObservableBase<Consumer<? super T>, T>
-implements ValHelpers<T> {
+implements Val<T> {
     private boolean valid = false; // irrelevant when not isObservingInputs()
     private T value = null;
 

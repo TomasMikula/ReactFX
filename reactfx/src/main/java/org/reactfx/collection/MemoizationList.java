@@ -118,7 +118,7 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
             if(!sparseList.isPresent(i)) {
                 E elem = source.get(i);
                 if(sparseList.setIfAbsent(i, elem)) {
-                    mods.add(LiveListHelpers.elemInsertion(presentBefore + (i - from)));
+                    mods.add(ProperLiveList.elemInsertion(presentBefore + (i - from)));
                 }
             }
         }

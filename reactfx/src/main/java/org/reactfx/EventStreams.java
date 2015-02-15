@@ -40,13 +40,11 @@ import org.reactfx.util.Tuple6;
 
 public class EventStreams {
 
-    private static final EventStream<?> NEVER = new EventStream<Object>() {
+    private static final class Never<T>
+    extends RigidObservable<Consumer<? super T>>
+    implements EventStreamHelper<T> {}
 
-        @Override
-        public Subscription subscribe(Consumer<? super Object> subscriber) {
-            return Subscription.EMPTY;
-        }
-    };
+    private static final EventStream<?> NEVER = new Never<Object>();
 
     /**
      * Returns an event stream that never emits any value.

@@ -12,13 +12,13 @@ import java.util.function.Supplier;
 
 import javafx.animation.Interpolatable;
 import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
+import org.reactfx.Observable;
 import org.reactfx.Subscription;
 import org.reactfx.util.HexaFunction;
 import org.reactfx.util.Interpolator;
@@ -29,25 +29,30 @@ import org.reactfx.util.WrapperBase;
 
 /**
  * Adds more operations to {@link ObservableValue}.
+ *
+ * <p>Canonical observer of {@code Val<T>} is an <em>invalidation observer</em>
+ * of type {@code Consumer<? super T>}, which accepts the _invalidated_ value.
+ * This is different from {@linkplain InvalidationListener}, which does not
+ * accept the invalidated value.
  */
-public interface Val<T> extends ObservableValue<T> {
-
-    /* **************** *
-     * Abstract methods *
-     * **************** */
-
-    void addInvalidationObserver(Consumer<? super T> oldValueObserver);
-    void removeInvalidationObserver(Consumer<? super T> oldValueObserver);
-
+public interface Val<T>
+extends ObservableValue<T>, Observable<Consumer<? super T>> {
 
     /* *************** *
      * Default methods *
      * *************** */
 
+    default void addInvalidationObserver(Consumer<? super T> observer) {
+        addObserver(observer);
+    }
+
+    default void removeInvalidationObserver(Consumer<? super T> observer) {
+        removeObserver(observer);
+    }
+
     default Subscription observeInvalidations(
             Consumer<? super T> oldValueObserver) {
-        addInvalidationObserver(oldValueObserver);
-        return () -> removeInvalidationObserver(oldValueObserver);
+        return observe(oldValueObserver);
     }
 
     default Subscription pin() {
@@ -596,18 +601,18 @@ public interface Val<T> extends ObservableValue<T> {
 
     static <T> Val<T> create(
             Supplier<? extends T> computeValue,
-            Observable... dependencies) {
+            javafx.beans.Observable... dependencies) {
         return new ValBase<T>() {
 
             @Override
             protected Subscription connect() {
                 InvalidationListener listener = obs -> invalidate();
-                for(Observable dep: dependencies) {
+                for(javafx.beans.Observable dep: dependencies) {
                     dep.addListener(listener);
                 }
 
                 return () -> {
-                    for(Observable dep: dependencies) {
+                    for(javafx.beans.Observable dep: dependencies) {
                         dep.removeListener(listener);
                     }
                 };

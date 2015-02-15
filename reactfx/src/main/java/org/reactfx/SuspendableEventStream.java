@@ -31,7 +31,7 @@ public interface SuspendableEventStream<T> extends EventStream<T>, Suspendable {
 
 abstract class SuspendableEventStreamBase<T, A>
 extends SuspendableBase<Consumer<? super T>, T, A>
-implements EventStreamHelpers<T>, SuspendableEventStream<T> {
+implements ProperEventStream<T>, SuspendableEventStream<T> {
 
     protected SuspendableEventStreamBase(
             EventStream<T> source,

@@ -624,6 +624,14 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
             }
         };
     }
+
+    /**
+     * Returns a constant {@linkplain Val} that holds the given value.
+     * The value never changes and no notifications are ever produced.
+     */
+    static <T> Val<T> constant(T value) {
+        return new ConstVal<>(value);
+    }
 }
 
 

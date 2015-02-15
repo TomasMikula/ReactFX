@@ -10,6 +10,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import javafx.animation.Interpolatable;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.property.Property;
@@ -462,6 +463,28 @@ public interface Val<T> extends ObservableValue<T> {
             Duration duration,
             Interpolator<T> interpolator) {
         return animate(obs, (a, b) -> duration, interpolator);
+    }
+
+    /**
+     * Like {@link #animate(ObservableValue, BiFunction, Interpolator)}, but
+     * uses the interpolation defined by the {@linkplain Interpolatable} type
+     * {@code T}.
+     */
+    static <T extends Interpolatable<T>> Val<T> animate(
+            ObservableValue<T> obs,
+            BiFunction<? super T, ? super T, Duration> duration) {
+        return animate(obs, duration, Interpolator.get());
+    }
+
+    /**
+     * Like {@link #animate(ObservableValue, Duration, Interpolator)}, but
+     * uses the interpolation defined by the {@linkplain Interpolatable} type
+     * {@code T}.
+     */
+    static <T extends Interpolatable<T>> Val<T> animate(
+            ObservableValue<T> obs,
+            Duration duration) {
+        return animate(obs, duration, Interpolator.get());
     }
 
 

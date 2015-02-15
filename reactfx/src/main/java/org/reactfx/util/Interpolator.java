@@ -1,6 +1,7 @@
 package org.reactfx.util;
 
 import static javafx.animation.Interpolator.*;
+import javafx.animation.Interpolatable;
 
 /**
  * Interpolates values between two boundary values.
@@ -52,4 +53,8 @@ public interface Interpolator<T> {
 
     static final Interpolator<Long> EASE_OUT_LONG =
             (a, b, frac) -> EASE_OUT.interpolate(a.longValue(), b.longValue(), frac);
+
+    static <T extends Interpolatable<T>> Interpolator<T> get() {
+        return (a, b, frac) -> a.interpolate(b, frac);
+    }
 }

@@ -491,7 +491,7 @@ public interface Val<T> extends ObservableValue<T> {
     static <A, B, R> Val<R> combine(
             ObservableValue<A> src1,
             ObservableValue<B> src2,
-            BiFunction<A, B, R> f) {
+            BiFunction<? super A, ? super B, ? extends R> f) {
         return create(
                 () -> {
                     if(src1.getValue() != null && src2.getValue() != null) {
@@ -507,7 +507,7 @@ public interface Val<T> extends ObservableValue<T> {
             ObservableValue<A> src1,
             ObservableValue<B> src2,
             ObservableValue<C> src3,
-            TriFunction<A, B, C, R> f) {
+            TriFunction<? super A, ? super B, ? super C,  ? extends R> f) {
         return create(
                 () -> {
                     if(src1.getValue() != null &&
@@ -527,7 +527,7 @@ public interface Val<T> extends ObservableValue<T> {
             ObservableValue<B> src2,
             ObservableValue<C> src3,
             ObservableValue<D> src4,
-            TetraFunction<A, B, C, D, R> f) {
+            TetraFunction<? super A, ? super B, ? super C, ? super D,  ? extends R> f) {
         return create(
                 () -> {
                     if(src1.getValue() != null &&
@@ -550,7 +550,7 @@ public interface Val<T> extends ObservableValue<T> {
             ObservableValue<C> src3,
             ObservableValue<D> src4,
             ObservableValue<E> src5,
-            PentaFunction<A, B, C, D, E, R> f) {
+            PentaFunction<? super A, ? super B, ? super C, ? super D, ? super E,  ? extends R> f) {
         return create(
                 () -> {
                     if(src1.getValue() != null &&
@@ -575,7 +575,7 @@ public interface Val<T> extends ObservableValue<T> {
             ObservableValue<D> src4,
             ObservableValue<E> src5,
             ObservableValue<F> src6,
-            HexaFunction<A, B, C, D, E, F, R> f) {
+            HexaFunction<? super A, ? super B, ? super C, ? super D, ? super E, ? super F,  ? extends R> f) {
         return create(
                 () -> {
                     if(src1.getValue() != null &&

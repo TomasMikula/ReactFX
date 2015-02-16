@@ -10,15 +10,15 @@ public class CountedBlockingTest {
 
     @Test
     public void testIndicator() {
-        Indicator a = new Indicator();
-        Guard g = a.on();
-        Guard h = a.on();
+        SuspendableNo a = new SuspendableNo();
+        Guard g = a.suspend();
+        Guard h = a.suspend();
         g.close();
-        assertTrue(a.isOn());
+        assertTrue(a.get());
         g.close();
-        assertTrue(a.isOn());
+        assertTrue(a.get());
         h.close();
-        assertFalse(a.isOn());
+        assertFalse(a.get());
     }
 
     @Test

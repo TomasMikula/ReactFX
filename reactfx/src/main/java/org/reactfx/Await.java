@@ -47,7 +47,7 @@ class Await<T, F> extends EventStreamBase<Try<T>> implements AwaitingEventStream
     }
 
     private final EventStream<F> source;
-    private final Indicator pending = new Indicator();
+    private final SuspendableNo pending = new SuspendableNo();
     private final BiConsumer<F, TriConsumer<T, Throwable, Boolean>> addCompletionHandler;
 
     private Await(
@@ -64,13 +64,13 @@ class Await<T, F> extends EventStreamBase<Try<T>> implements AwaitingEventStream
 
     @Override
     public final boolean isPending() {
-        return pending.isOn();
+        return pending.get();
     }
 
     @Override
     protected final Subscription observeInputs() {
         return source.subscribe(future -> {
-            Guard g = pending.on();
+            Guard g = pending.suspend();
             addCompletionHandler.accept(future, (result, error, cancelled) -> {
                 if(!cancelled) {
                     emit(error == null ? Try.success(result) : Try.failure(error));

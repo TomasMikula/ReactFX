@@ -237,17 +237,17 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     }
 
     /**
-     * Similar to {@link #flatMap(Function)}, except the returned Binding is
-     * also a Property. This means you can call {@code setValue()} and
-     * {@code bind()} methods on the returned value, which delegate to the
-     * currently selected Property.
+     * Similar to {@link #flatMap(Function)}, except the returned Val is also
+     * a Var. This means you can call {@code setValue()} and {@code bind()}
+     * methods on the returned value, which delegate to the currently selected
+     * Property.
      *
      * <p>As the value of this {@linkplain Val} changes, so does the selected
-     * Property. When the Property returned from this method is bound, as the
-     * selected Property changes, the previously selected property is unbound
-     * and the newly selected property is bound.
+     * Property. When the Var returned from this method is bound, as the
+     * selected Property changes, the previously selected Property is unbound
+     * and the newly selected Property is bound.
      *
-     * <p>Note that if the currently selected property is {@code null}, then
+     * <p>Note that if the currently selected Property is {@code null}, then
      * calling {@code getValue()} on the returned value will return {@code null}
      * regardless of any prior call to {@code setValue()} or {@code bind()}.
      */
@@ -309,6 +309,16 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         return animate(this, duration, interpolator);
     }
 
+    /**
+     * Let's this {@linkplain Val} be viewed as a {@linkplain Var}, with the
+     * given {@code setValue} function serving the purpose of
+     * {@link Var#setValue(Object)}.
+     * @see Var#fromVal(ObservableValue, Consumer)
+     */
+    default Var<T> asVar(Consumer<T> setValue) {
+        return new VarFromVal<>(this, setValue);
+    }
+
 
     /* ************** *
      * Static methods *
@@ -317,7 +327,7 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     /**
      * Returns a {@linkplain Val} wrapper around {@linkplain ObservableValue}.
      * Note that one rarely needs to use this method, because most of the time
-     * one can use an appropriate static method directly to get the desired
+     * one can use the appropriate static method directly to get the desired
      * result. For example, instead of
      *
      * <pre>
@@ -334,10 +344,9 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
      * }
      * </pre>
      *
-     * However, an explicit wrapper is needed if one needs to access the methods
-     * {@link #observeInvalidations(Consumer)} or {@link #invalidations()}, that
-     * is methods that observe the invalidated value, since there is no way
-     * these can be implemented as static helper methods.
+     * However, an explicit wrapper is necessary if access to
+     * {@link #observeInvalidations(Consumer)}, or {@link #invalidations()}
+     * is needed, since there is no direct static method equivalent for them.
      */
     static <T> Val<T> wrap(ObservableValue<T> obs) {
         return obs instanceof Val

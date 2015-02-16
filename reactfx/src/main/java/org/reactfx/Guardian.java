@@ -5,7 +5,9 @@ import java.util.function.Supplier;
 
 /**
  * Interface for objects usable to guard execution (in some sense).
+ * @deprecated superseded by {@link Suspendable}.
  */
+@Deprecated
 @FunctionalInterface
 public interface Guardian {
     Guard guard();

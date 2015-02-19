@@ -13,7 +13,7 @@ import org.reactfx.util.Lists;
  * helper methods for implementations of <em>proper</em> {@linkplain LiveList}.
  */
 public interface ProperLiveList<E>
-extends LiveListHelper<E>, ProperObservable<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
+extends LiveList<E>, ProperObservable<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
 
     default void fireModification(QuasiListModification<? extends E> mod) {
         notifyObservers(mod.asListChange());

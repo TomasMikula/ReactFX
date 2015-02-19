@@ -13,6 +13,7 @@ import javafx.collections.ObservableList;
 
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
+import org.reactfx.Observable;
 import org.reactfx.Subscription;
 import org.reactfx.collection.LiveList.QuasiChangeObserver;
 import org.reactfx.collection.LiveList.QuasiModificationObserver;
@@ -25,7 +26,8 @@ import org.reactfx.value.Val;
  *
  * @param <E> type of list elements
  */
-public interface LiveList<E> extends ObservableList<E> {
+public interface LiveList<E>
+extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
 
     /* ************ *
      * Nested Types *
@@ -85,22 +87,25 @@ public interface LiveList<E> extends ObservableList<E> {
         }
     }
 
-    /* **************** *
-     * Abstract Methods *
-     * **************** */
-
-    void addQuasiChangeObserver(QuasiChangeObserver<? super E> observer);
-    void removeQuasiChangeObserver(QuasiChangeObserver<? super E> observer);
-    void addQuasiModificationObserver(QuasiModificationObserver<? super E> observer);
-    void removeQuasiModificationObserver(QuasiModificationObserver<? super E> observer);
-
 
     /* *************** *
      * Default Methods *
      * *************** */
 
-    default Subscription pin() {
-        return observeQuasiChanges(qc -> {});
+    default void addQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
+        addObserver(observer);
+    }
+
+    default void removeQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
+        removeObserver(observer);
+    }
+
+    default void addQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
+        addObserver(observer);
+    }
+
+    default void removeQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
+        removeObserver(observer);
     }
 
     default void addChangeObserver(Consumer<? super ListChange<? extends E>> observer) {
@@ -157,6 +162,10 @@ public interface LiveList<E> extends ObservableList<E> {
     @Override
     default void removeListener(InvalidationListener listener) {
         removeQuasiChangeObserver(new InvalidationListenerWrapper<>(this, listener));
+    }
+
+    default Subscription pin() {
+        return observeQuasiChanges(qc -> {});
     }
 
     default Val<Integer> sizeProperty() {

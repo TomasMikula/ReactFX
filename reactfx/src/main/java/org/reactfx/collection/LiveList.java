@@ -303,6 +303,16 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
             ObservableList<E> list, BinaryOperator<E> reduction) {
         return new ListReduction<>(list, reduction);
     }
+
+    /**
+     * Returns a {@linkplain LiveList} view of the given
+     * {@linkplain ObservableValue} {@code obs}. The returned list will have
+     * size 1 when the given observable value is not {@code null} and size 0
+     * otherwise.
+     */
+    static <E> LiveList<E> wrapVal(ObservableValue<E> obs) {
+        return new ValAsList<>(obs);
+    }
 }
 
 

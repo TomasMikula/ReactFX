@@ -20,6 +20,7 @@ import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
 import org.reactfx.Observable;
 import org.reactfx.Subscription;
+import org.reactfx.collection.LiveList;
 import org.reactfx.util.HexaFunction;
 import org.reactfx.util.Interpolator;
 import org.reactfx.util.PentaFunction;
@@ -317,6 +318,15 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
      */
     default Var<T> asVar(Consumer<T> setValue) {
         return new VarFromVal<>(this, setValue);
+    }
+
+    /**
+     * Returns a {@linkplain LiveList} view of this {@linkplain Val}. The
+     * returned list will have size 1 when this {@linkplain Val} is present
+     * (i.e. not {@code null}) and size 0 otherwise.
+     */
+    default LiveList<T> asList() {
+        return LiveList.wrapVal(this);
     }
 
 

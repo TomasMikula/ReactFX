@@ -18,6 +18,7 @@ import javafx.beans.value.ObservableValue;
 
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
+import org.reactfx.EventStreams;
 import org.reactfx.Observable;
 import org.reactfx.Subscription;
 import org.reactfx.collection.LiveList;
@@ -99,6 +100,15 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 return observeInvalidations(this::emit);
             }
         };
+    }
+
+    /**
+     * Returns a stream of values of this {@linkplain Val}. The returned stream
+     * emits the current value of this {@linkplain Val} for each new subscriber
+     * and then the new value whenever the value changes.
+     */
+    default EventStream<T> values() {
+        return EventStreams.valuesOf(this);
     }
 
     /**

@@ -349,6 +349,18 @@ public class EventStreams {
     }
 
     /**
+     * Returns a stream that, on each animation frame, emits the duration
+     * elapsed since the previous animation frame, in nanoseconds.
+     */
+    public static EventStream<Long> animationFrames() {
+        return animationTicks()
+                .accumulate(t(0L, -1L), (state, now) -> state.map((d, last) -> {
+                        return t(last == -1L ? 0L : now - last, now);
+                }))
+                .map(t -> t._1);
+    }
+
+    /**
      * Returns an event stream that emits all the events emitted from any of
      * the {@code inputs}. The event type of the returned stream is the nearest
      * common super-type of all the {@code inputs}.

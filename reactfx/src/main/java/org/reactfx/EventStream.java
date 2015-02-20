@@ -104,17 +104,16 @@ public interface EventStream<T> {
 
     /**
      * Returns an event stream that emits the same<sup>(*)</sup> events as this
-     * stream, but before emitting each event performs the given side effect.
-     * This is useful for debugging. The side effect is not allowed to cause
-     * recursive event emission from this stream. If it does, the returned
-     * stream reports an error and does not emit the event whose side effect
-     * caused the recursion.
+     * stream, but <em>before</em> emitting each event performs the given side
+     * effect. This is useful for debugging. The side effect is not allowed to
+     * cause recursive event emission from this stream: if it does,
+     * {@linkplain IllegalStateException} will be thrown.
      *
      * <p>(*) The returned stream is lazily bound, so it only emits events and
      * performs side effects when it has at least one subscriber.
      */
     default EventStream<T> hook(Consumer<? super T> sideEffect) {
-        return new SideEffectStream<>(this, sideEffect);
+        return new HookStream<>(this, sideEffect);
     }
 
     /**

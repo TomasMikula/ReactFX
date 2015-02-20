@@ -1,10 +1,11 @@
 package org.reactfx;
 
-class GuardedStream<T> extends EventStreamBase<T> {
+class SuspenderStreamImpl<T, S extends Suspendable>
+extends EventStreamBase<T> implements Suspender<S>, SuspenderStream<T, S> {
     private final EventStream<T> source;
-    private final Suspendable suspendable;
+    private final S suspendable;
 
-    public GuardedStream(EventStream<T> source, Suspendable suspendable) {
+    public SuspenderStreamImpl(EventStream<T> source, S suspendable) {
         this.source = source;
         this.suspendable = suspendable;
     }
@@ -16,5 +17,10 @@ class GuardedStream<T> extends EventStreamBase<T> {
                 emit(evt);
             }
         });
+    }
+
+    @Override
+    public S getSuspendable() {
+        return suspendable;
     }
 }

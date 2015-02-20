@@ -1314,21 +1314,19 @@ public interface EventStream<T> {
      * guardians: before the emission, guards are acquired in the given order;
      * after the emission, previously acquired guards are released in reverse
      * order.
-     * @deprecated Use {@link #suspendDuringEmission(Suspendable...)} instead.
+     * @deprecated Use {@link #suspenderOf(Suspendable)} instead.
      */
     @Deprecated
     default EventStream<T> guardedBy(Guardian... guardians) {
-        return suspendDuringEmission(Guardian.combine(guardians)::guard);
+        return suspenderOf(Guardian.combine(guardians)::guard);
     }
 
     /**
      * Returns an event stream that emits the same events as this event stream,
-     * but before each emission suspends all the given {@linkplain Suspendable}s
-     * and unsuspends them after the emission has finished.
-     * {@linkplain Suspendable}s are suspended in the given order and released
-     * in reverse order.
+     * but before each emission, suspends the given {@linkplain Suspendable}
+     * and unsuspends it after the emission has completed.
      */
-    default EventStream<T> suspendDuringEmission(Suspendable... suspendables) {
-        return new GuardedStream<>(this, Suspendable.combine(suspendables));
+    default <S extends Suspendable> SuspenderStream<T, S> suspenderOf(S suspendable) {
+        return new SuspenderStreamImpl<>(this, suspendable);
     }
 }

@@ -10,7 +10,7 @@ import java.util.function.Consumer;
  * {@linkplain ProperObservable} methods.
  */
 public interface ProperEventStream<T>
-extends EventStreamHelper<T>, ProperObservable<Consumer<? super T>, T> {
+extends EventStream<T>, ProperObservable<Consumer<? super T>, T> {
 
     default void emit(T value) {
         notifyObservers(value);

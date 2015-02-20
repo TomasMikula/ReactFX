@@ -42,7 +42,7 @@ public class EventStreams {
 
     private static final class Never<T>
     extends RigidObservable<Consumer<? super T>>
-    implements EventStreamHelper<T> {}
+    implements EventStream<T> {}
 
     private static final EventStream<?> NEVER = new Never<Object>();
 

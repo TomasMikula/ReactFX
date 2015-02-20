@@ -31,12 +31,9 @@ import org.reactfx.util.Tuple2;
 /**
  * Stream of values (events).
  *
- * It is an analog of rxJava's {@code Observable}, but "Observable"
- * already has a different meaning in JavaFX.
- *
- * @param <T> type of values this source emits.
+ * @param <T> type of values emitted by this stream.
  */
-public interface EventStream<T> {
+public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Get notified every time this event stream emits a value.
@@ -44,7 +41,9 @@ public interface EventStream<T> {
      * @return subscription that can be used to stop observing this event
      * stream.
      */
-    Subscription subscribe(Consumer<? super T> subscriber);
+    default Subscription subscribe(Consumer<? super T> subscriber) {
+        return observe(subscriber);
+    }
 
     /**
      * Subscribes to this event stream for at most {@code n} events.

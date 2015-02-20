@@ -23,6 +23,7 @@ import javafx.concurrent.Task;
 
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.Either;
+import org.reactfx.util.Experimental;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.NotificationAccumulator;
 import org.reactfx.util.Timer;
@@ -1323,7 +1324,14 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns an event stream that emits the same events as this event stream,
      * but before each emission, suspends the given {@linkplain Suspendable}
      * and unsuspends it after the emission has completed.
+     *
+     * <p><strong>Experimental.</strong> The method itself is not experimental,
+     * but the return type {@linkplain SuspenderStream} is. You may want to
+     * assign the result to a variable of type {@code EventStream<T>} to remain
+     * source compatible if the experimenal {@linkplain SuspenderStream} is
+     * removed in the future.
      */
+    @Experimental
     default <S extends Suspendable> SuspenderStream<T, S> suspenderOf(S suspendable) {
         return new SuspenderStreamImpl<>(this, suspendable);
     }

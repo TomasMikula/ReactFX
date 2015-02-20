@@ -1,5 +1,8 @@
 package org.reactfx;
 
+import org.reactfx.util.Experimental;
+
+@Experimental
 public abstract class SuspenderBase<O, T, S extends Suspendable>
 extends ObservableBase<O, T> implements Suspender<S> {
     private final S suspendable;

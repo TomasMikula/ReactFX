@@ -4,17 +4,12 @@ import java.util.function.Consumer;
 
 import org.reactfx.ObservableBase;
 import org.reactfx.Subscription;
-import org.reactfx.util.NotificationAccumulator;
 
 public abstract class ValBase<T>
 extends ObservableBase<Consumer<? super T>, T>
-implements Val<T> {
+implements ProperVal<T> {
     private boolean valid = false; // irrelevant when not isObservingInputs()
     private T value = null;
-
-    protected ValBase() {
-        super(NotificationAccumulator.retainOldestValNotifications());
-    }
 
     @Override
     public final T getValue() {

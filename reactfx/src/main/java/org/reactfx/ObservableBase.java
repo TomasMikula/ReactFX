@@ -28,6 +28,10 @@ public abstract class ObservableBase<O, T> implements ProperObservable<O, T> {
         this.pendingNotifications = pendingNotificationsImpl;
     }
 
+    protected ObservableBase() {
+        this.pendingNotifications = defaultNotificationAccumulator();
+    }
+
     /**
      * Starts observing this observable's input(s), if any.
      * This method is called when the number of observers goes from 0 to 1.

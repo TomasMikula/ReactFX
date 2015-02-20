@@ -6,6 +6,7 @@ import java.util.List;
 import org.reactfx.ObservableBase;
 import org.reactfx.ProperObservable;
 import org.reactfx.util.Lists;
+import org.reactfx.util.NotificationAccumulator;
 
 /**
  * Trait to be mixed into {@link ObservableBase} to obtain default
@@ -14,6 +15,11 @@ import org.reactfx.util.Lists;
  */
 public interface ProperLiveList<E>
 extends LiveList<E>, ProperObservable<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>> {
+
+    @Override
+    default NotificationAccumulator<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>, ?> defaultNotificationAccumulator() {
+        return NotificationAccumulator.listNotifications();
+    }
 
     default void fireModification(QuasiListModification<? extends E> mod) {
         notifyObservers(mod.asListChange());

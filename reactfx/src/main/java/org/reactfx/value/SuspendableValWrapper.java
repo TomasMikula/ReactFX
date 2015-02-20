@@ -8,7 +8,7 @@ import org.reactfx.util.NotificationAccumulator;
 
 class SuspendableValWrapper<T>
 extends SuspendableBase<Consumer<? super T>, T, T>
-implements SuspendableVal<T> {
+implements SuspendableVal<T>, ProperVal<T> {
     private final Val<T> delegate;
 
     protected SuspendableValWrapper(Val<T> obs) {

@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import org.reactfx.util.NotificationAccumulator;
+
 /**
  * An {@linkplain Observable} that maintains a collection of registered
  * observers and notifies them when a change occurs. This is unlike
@@ -11,6 +13,7 @@ package org.reactfx;
  */
 public interface ProperObservable<O, T> extends Observable<O> {
     void notifyObservers(T event);
+    NotificationAccumulator<O, T, ?> defaultNotificationAccumulator();
 
     default int defaultHashCode() { return System.identityHashCode(this); }
     default boolean defaultEquals(Object o) { return this == o; }

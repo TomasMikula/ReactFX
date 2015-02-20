@@ -15,7 +15,7 @@ extends ObservableBase<Consumer<? super T>, T>
 implements ProperEventStream<T> {
 
     public EventStreamBase() {
-        this(NotificationAccumulator.nonAccumulativeStreamNotifications());
+        super();
     }
 
     EventStreamBase(NotificationAccumulator<Consumer<? super T>, T, ?> pn) {

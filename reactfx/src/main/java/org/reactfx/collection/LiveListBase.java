@@ -2,6 +2,6 @@ package org.reactfx.collection;
 
 import org.reactfx.ObservableBase;
 
-abstract class LiveListBase<E>
+public abstract class LiveListBase<E>
 extends ObservableBase<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>>
 implements ProperLiveList<E>, AccessorListMethods<E> {}

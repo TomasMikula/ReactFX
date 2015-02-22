@@ -1,5 +1,6 @@
 package org.reactfx.collection;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.BinaryOperator;
@@ -201,6 +202,17 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return reduceRange(this, range, reduction);
     }
 
+    @Experimental
+    default <T> Val<T> collapse(Function<? super List<E>, ? extends T> f) {
+        return collapse(this, f);
+    }
+
+    @Experimental
+    default <T> Val<T> collapseDynamic(
+            ObservableValue<? extends Function<? super List<E>, ? extends T>> f) {
+        return collapseDynamic(this, f);
+    }
+
     default EventStream<QuasiListChange<? extends E>> quasiChanges() {
         return new EventStreamBase<QuasiListChange<? extends E>>() {
             @Override
@@ -318,6 +330,22 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
             ObservableValue<IndexRange> range,
             BinaryOperator<E> reduction) {
         return new ListRangeReduction<>(list, range, reduction);
+    }
+
+    @Experimental
+    static <E, T> Val<T> collapse(
+            ObservableList<? extends E> list,
+            Function<? super List<E>, ? extends T> f) {
+        return Val.create(() -> f.apply(Collections.unmodifiableList(list)), list);
+    }
+
+    @Experimental
+    static <E, T> Val<T> collapseDynamic(
+            ObservableList<? extends E> list,
+            ObservableValue<? extends Function<? super List<E>, ? extends T>> f) {
+        return Val.create(
+                () -> f.getValue().apply(Collections.unmodifiableList(list)),
+                list, f);
     }
 
     /**

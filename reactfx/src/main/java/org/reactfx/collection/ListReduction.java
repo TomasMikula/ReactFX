@@ -60,23 +60,26 @@ class ListReduction<T> extends ValBase<T> {
         .and(() -> tree = null);
     }
 
-    protected final T computeReduction(int from, int to) {
-        if(isObservingInputs()) {
-            assert tree != null;
-            return tree.getStatsBetween(from, to);
-        } else {
-            assert tree == null;
-            return input.subList(from, to).stream().reduce(reduction).orElse(null);
-        }
+    protected int getFrom(int max) {
+        return 0;
+    }
+
+    protected int getTo(int max) {
+        return max;
     }
 
     @Override
-    protected T computeValue() {
-        return computeReduction(0, input.size());
-    }
-
-    protected final int listSize() {
-        return input.size();
+    protected final T computeValue() {
+        if(isObservingInputs()) {
+            assert tree != null;
+            int max = tree.getLeafCount();
+            return tree.getStatsBetween(getFrom(max), getTo(max));
+        } else {
+            assert tree == null;
+            int max = input.size();
+            return input.subList(getFrom(max), getTo(max))
+                    .stream().reduce(reduction).orElse(null);
+        }
     }
 }
 
@@ -99,9 +102,12 @@ class ListRangeReduction<T> extends ListReduction<T> {
     }
 
     @Override
-    protected T computeValue() {
-        int from = Math.min(range.getValue().getStart(), listSize());
-        int to = Math.min(range.getValue().getEnd(), listSize());
-        return computeReduction(from, to);
+    protected int getFrom(int max) {
+        return Math.min(range.getValue().getStart(), max);
+    }
+
+    @Override
+    protected int getTo(int max) {
+        return Math.min(range.getValue().getEnd(), max);
     }
 }

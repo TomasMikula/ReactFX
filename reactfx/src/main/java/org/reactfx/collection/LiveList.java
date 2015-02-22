@@ -10,6 +10,7 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.scene.control.IndexRange;
 
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
@@ -18,6 +19,7 @@ import org.reactfx.Subscription;
 import org.reactfx.collection.LiveList.QuasiChangeObserver;
 import org.reactfx.collection.LiveList.QuasiModificationObserver;
 import org.reactfx.util.AccumulatorSize;
+import org.reactfx.util.Experimental;
 import org.reactfx.util.WrapperBase;
 import org.reactfx.value.Val;
 
@@ -193,6 +195,12 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return reduce(this, reduction);
     }
 
+    @Experimental
+    default Val<E> reduceRange(
+            ObservableValue<IndexRange> range, BinaryOperator<E> reduction) {
+        return reduceRange(this, range, reduction);
+    }
+
     default EventStream<QuasiListChange<? extends E>> quasiChanges() {
         return new EventStreamBase<QuasiListChange<? extends E>>() {
             @Override
@@ -302,6 +310,14 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
     static <E> Val<E> reduce(
             ObservableList<E> list, BinaryOperator<E> reduction) {
         return new ListReduction<>(list, reduction);
+    }
+
+    @Experimental
+    static <E> Val<E> reduceRange(
+            ObservableList<E> list,
+            ObservableValue<IndexRange> range,
+            BinaryOperator<E> reduction) {
+        return new ListRangeReduction<>(list, range, reduction);
     }
 
     /**

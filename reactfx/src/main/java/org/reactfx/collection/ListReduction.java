@@ -2,11 +2,15 @@ package org.reactfx.collection;
 
 import java.util.function.BinaryOperator;
 
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
+import javafx.scene.control.IndexRange;
 
 import org.reactfx.Subscription;
+import org.reactfx.util.Experimental;
 import org.reactfx.util.FingerTree;
 import org.reactfx.util.MapToMonoid;
+import org.reactfx.value.Val;
 import org.reactfx.value.ValBase;
 
 class ListReduction<T> extends ValBase<T> {
@@ -56,14 +60,48 @@ class ListReduction<T> extends ValBase<T> {
         .and(() -> tree = null);
     }
 
-    @Override
-    protected T computeValue() {
+    protected final T computeReduction(int from, int to) {
         if(isObservingInputs()) {
             assert tree != null;
-            return tree.getStats();
+            return tree.getStatsBetween(from, to);
         } else {
             assert tree == null;
-            return input.stream().reduce(reduction).orElse(null);
+            return input.subList(from, to).stream().reduce(reduction).orElse(null);
         }
+    }
+
+    @Override
+    protected T computeValue() {
+        return computeReduction(0, input.size());
+    }
+
+    protected final int listSize() {
+        return input.size();
+    }
+}
+
+
+@Experimental
+class ListRangeReduction<T> extends ListReduction<T> {
+    private final ObservableValue<IndexRange> range;
+
+    ListRangeReduction(
+            ObservableList<T> input,
+            ObservableValue<IndexRange> range,
+            BinaryOperator<T> reduction) {
+        super(input, reduction);
+        this.range = range;
+    }
+
+    @Override
+    protected Subscription connect() {
+        return super.connect().and(Val.observeInvalidations(range, obs -> invalidate()));
+    }
+
+    @Override
+    protected T computeValue() {
+        int from = Math.min(range.getValue().getStart(), listSize());
+        int to = Math.min(range.getValue().getEnd(), listSize());
+        return computeReduction(from, to);
     }
 }

@@ -50,6 +50,10 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
             enqueueNotifications(change);
         }
 
+        private void prepareNotifications(QuasiListModification<? extends E> mod) {
+            enqueueNotifications(mod.asListChange());
+        }
+
         private void publishNotifications() {
             notifyObservers();
         }
@@ -112,19 +116,16 @@ implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
         }
 
         Lists.checkRange(from, to, size());
-        int presentBefore = sparseList.getPresentCountBefore(from);
-        ListChangeAccumulator<E> mods = new ListChangeAccumulator<>();
         for(int i = from; i < to; ++i) {
             if(!sparseList.isPresent(i)) {
                 E elem = source.get(i);
                 if(sparseList.setIfAbsent(i, elem)) {
-                    mods.add(ProperLiveList.elemInsertion(presentBefore + (i - from)));
+                    int presentBefore = sparseList.getPresentCountBefore(i);
+                    memoizedItems.prepareNotifications(ProperLiveList.elemInsertion(presentBefore));
                 }
             }
         }
-        if(!mods.isEmpty()) {
-            memoizedItems.notifyObservers(mods.fetch());
-        }
+        memoizedItems.publishNotifications();
     }
 
     @Override

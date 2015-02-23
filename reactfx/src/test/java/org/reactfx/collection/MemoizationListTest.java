@@ -14,6 +14,7 @@ import javafx.collections.ObservableList;
 
 import org.junit.Test;
 import org.reactfx.Counter;
+import org.reactfx.value.Val;
 
 public class MemoizationListTest {
 
@@ -188,5 +189,24 @@ public class MemoizationListTest {
                            // which recursively calls memo2.force(1, 2).
 
         assertEquals(Arrays.asList(1), memo2Mirror);
+    }
+
+    @Test
+    public void testMemoizedItemsChangeWithinForce() {
+        LiveList<Integer> src = new LiveArrayList<>(1, 2, 4, 8, 16, 32);
+        MemoizationList<Integer> memo1 = src.memoize();
+        MemoizationList<Integer> memo2 = memo1.map(Function.identity()).memoize();
+        Val<Integer> memo1Sum = memo1.memoizedItems().reduce((a, b) -> a + b).orElseConst(0);
+        memo1Sum.addListener((obs, oldVal, newVal) -> memo2.forget(0, memo2.size()));
+
+        List<Integer> memo2Mirror = new ArrayList<>();
+        memo2.memoizedItems().observeModifications(mod -> {
+            memo2Mirror.subList(mod.getFrom(), mod.getFrom() + mod.getRemovedSize()).clear();
+            memo2Mirror.addAll(mod.getFrom(), mod.getAddedSubList());
+            // the main part of this test is that it does not throw IndexOutOfBoundsException
+        });
+        memo2.force(3, 6);
+
+        assertEquals(Arrays.asList(32), memo2Mirror);
     }
 }

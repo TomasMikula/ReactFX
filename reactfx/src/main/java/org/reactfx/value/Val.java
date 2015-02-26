@@ -405,7 +405,7 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     static <T> Val<T> filter(
             ObservableValue<T> src,
             Predicate<? super T> p) {
-        return new FilteredVal<>(src, p);
+        return map(src, t -> p.test(t) ? t : null);
     }
 
     static <T, U> Val<U> map(

@@ -417,7 +417,9 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     static <T, U> Val<U> mapDynamic(
             ObservableValue<T> src,
             ObservableValue<? extends Function<? super T, ? extends U>> f) {
-        return new DynamicallyMappedVal<T, U>(src, f);
+        return combine(
+                src, f,
+                (t, fn) -> t == null || fn == null ? null : fn.apply(t));
     }
 
     static <T, U> Val<U> flatMap(

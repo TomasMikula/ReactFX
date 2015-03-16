@@ -15,6 +15,9 @@ import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.stage.Window;
 
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
@@ -273,6 +276,33 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         return selectVar(this, f, resetToOnUnbind);
     }
 
+    /**
+     * Returns a new {@linkplain Val} that only observes this {@linkplain Val}
+     * when {@code condition} is {@code true}. More precisely, the returned
+     * {@linkplain Val} observes {@code condition} whenever it itself has at
+     * least one observer and observes {@code this} {@linkplain Val} whenever
+     * it itself has at least one observer <em>and</em> the value of
+     * {@code condition} is {@code true}. When {@code condition} is
+     * {@code true}, the returned {@linkplain Val} has the same value as this
+     * {@linkplain Val}. When {@code condition} is {@code false}, the returned
+     * {@linkplain Val} has the value that was held by this {@linkplain Val} at
+     * the time when {@code condition} changed to {@code false}.
+     */
+    default Val<T> conditionOn(ObservableValue<Boolean> condition) {
+        return conditionOn(this, condition);
+    }
+
+    /**
+     * Equivalent to {@link #conditionOn(ObservableValue)} where the condition
+     * is that {@code node} is <em>showing</em>: it is part of a scene graph
+     * ({@link Node#sceneProperty()} is not {@code null}), its scene is part of
+     * a window ({@link Scene#windowProperty()} is not {@code null}) and the
+     * window is showing ({@link Window#showingProperty()} is {@code true}).
+     */
+    default Val<T> conditionOnShowing(Node node) {
+        return conditionOnShowing(this, node);
+    }
+
     default SuspendableVal<T> suspendable() {
         return suspendable(this);
     }
@@ -439,6 +469,16 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
             Function<? super T, ? extends Property<U>> f,
             U resetToOnUnbind) {
         return new FlatMappedVar<>(src, f, resetToOnUnbind);
+    }
+
+    static <T> Val<T> conditionOn(
+            ObservableValue<T> obs,
+            ObservableValue<Boolean> condition) {
+        return flatMap(condition, con -> con ? obs : constant(obs.getValue()));
+    }
+
+    static <T> Val<T> conditionOnShowing(ObservableValue<T> obs, Node node) {
+        return conditionOn(obs, showingProperty(node));
     }
 
     static <T> SuspendableVal<T> suspendable(ObservableValue<T> obs) {
@@ -662,6 +702,20 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
      */
     static <T> Val<T> constant(T value) {
         return new ConstVal<>(value);
+    }
+
+    /**
+     * Returns a {@linkplain Val} whose value is {@code true} when {@code node}
+     * is <em>showing</em>:  it is part of a scene graph
+     * ({@link Node#sceneProperty()} is not {@code null}), its scene is part of
+     * a window ({@link Scene#windowProperty()} is not {@code null}) and the
+     * window is showing ({@link Window#showingProperty()} is {@code true}).
+     */
+    static Val<Boolean> showingProperty(Node node) {
+        return Val
+                .flatMap(node.sceneProperty(), Scene::windowProperty)
+                .flatMap(Window::showingProperty)
+                .orElseConst(false);
     }
 }
 

@@ -1,5 +1,6 @@
 package org.reactfx;
 
+import static org.reactfx.EventStreams.*;
 import static org.reactfx.util.Tuples.*;
 
 import java.time.Duration;
@@ -22,6 +23,9 @@ import javafx.beans.binding.Binding;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
 import javafx.concurrent.Task;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.stage.Window;
 
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.Either;
@@ -30,6 +34,7 @@ import org.reactfx.util.FxTimer;
 import org.reactfx.util.NotificationAccumulator;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Tuple2;
+import org.reactfx.value.Val;
 
 /**
  * Stream of values (events).
@@ -262,6 +267,33 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      */
     default <U> EventStream<U> flatMap(Function<? super T, ? extends EventStream<U>> f) {
         return new FlatMapStream<>(this, f);
+    }
+
+    /**
+     * Returns a new {@linkplain EventStream} that only observes this
+     * {@linkplain EventStream} when {@code condition} is {@code true}.
+     * More precisely, the returned {@linkplain EventStream} observes
+     * {@code condition} whenever it itself has at least one subscriber and
+     * observes {@code this} {@linkplain EventStream} whenever it itself has
+     * at least one subscriber <em>and</em> the value of {@code condition} is
+     * {@code true}. When {@code condition} is {@code true}, the returned
+     * {@linkplain EventStream} emits the same events as this
+     * {@linkplain EventStream}. When {@code condition} is {@code false}, the
+     * returned {@linkplain EventStream} emits no events.
+     */
+    default EventStream<T> conditionOn(ObservableValue<Boolean> condition) {
+        return valuesOf(condition).flatMap(c -> c ? this : never());
+    }
+
+    /**
+     * Equivalent to {@link #conditionOn(ObservableValue)} where the condition
+     * is that {@code node} is <em>showing</em>: it is part of a scene graph
+     * ({@link Node#sceneProperty()} is not {@code null}), its scene is part of
+     * a window ({@link Scene#windowProperty()} is not {@code null}) and the
+     * window is showing ({@link Window#showingProperty()} is {@code true}).
+     */
+    default EventStream<T> conditionOnShowing(Node node) {
+        return conditionOn(Val.showingProperty(node));
     }
 
     /**

@@ -30,6 +30,7 @@ import javafx.scene.control.MenuItem;
 
 import org.reactfx.collection.ListModification;
 import org.reactfx.collection.LiveList;
+import org.reactfx.util.Either;
 import org.reactfx.util.FxTimer;
 import org.reactfx.util.Timer;
 import org.reactfx.util.Tuple2;
@@ -412,6 +413,13 @@ public class EventStreams {
                         t -> f.apply(t).subscribe(this::emit));
             }
         };
+    }
+
+    public static <L, R> Tuple2<EventStream<L>, EventStream<R>> fork(
+            EventStream<? extends Either<L, R>> stream) {
+        return t(
+                stream.filterMap(Either::asLeft),
+                stream.filterMap(Either::asRight));
     }
 
     public static <A, B> EventStream<Tuple2<A, B>> zip(EventStream<A> srcA, EventStream<B> srcB) {

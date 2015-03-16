@@ -1,5 +1,7 @@
 package org.reactfx;
 
+import static org.reactfx.util.Tuples.*;
+
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -199,6 +201,15 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      */
     default EventStream<Either<T, T>> splitBy(Predicate<? super T> test) {
         return map(t -> test.test(t) ? Either.left(t) : Either.right(t));
+    }
+
+    /**
+     * Returns two event streams, the first one emitting events of this stream
+     * that satisfy the given {@code test} and the second one emitting events
+     * of this stream that do not satisfy the test.
+     */
+    default Tuple2<EventStream<T>, EventStream<T>> fork(Predicate<? super T> test) {
+        return t(filter(test), filter(test.negate()));
     }
 
     /**

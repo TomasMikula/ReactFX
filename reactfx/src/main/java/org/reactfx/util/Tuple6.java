@@ -21,6 +21,13 @@ public class Tuple6<A, B, C, D, E, F> {
         _6 = f;
     }
 
+    public A get1() { return _1; }
+    public B get2() { return _2; }
+    public C get3() { return _3; }
+    public D get4() { return _4; }
+    public E get5() { return _5; }
+    public F get6() { return _6; }
+
     public Tuple6<A, B, C, D, E, F> update1(A a) {
         return t(a, _2, _3, _4, _5, _6);
     }

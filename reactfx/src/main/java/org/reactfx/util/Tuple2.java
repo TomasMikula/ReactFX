@@ -16,6 +16,9 @@ public class Tuple2<A, B> {
         _2 = b;
     }
 
+    public A get1() { return _1; }
+    public B get2() { return _2; }
+
     public Tuple2<A, B> update1(A a) {
         return t(a, _2);
     }

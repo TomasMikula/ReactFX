@@ -17,6 +17,11 @@ public class Tuple4<A, B, C, D> {
         _4 = d;
     }
 
+    public A get1() { return _1; }
+    public B get2() { return _2; }
+    public C get3() { return _3; }
+    public D get4() { return _4; }
+
     public Tuple4<A, B, C, D> update1(A a) {
         return t(a, _2, _3, _4);
     }

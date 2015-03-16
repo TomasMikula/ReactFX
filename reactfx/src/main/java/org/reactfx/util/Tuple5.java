@@ -19,6 +19,12 @@ public class Tuple5<A, B, C, D, E> {
         _5 = e;
     }
 
+    public A get1() { return _1; }
+    public B get2() { return _2; }
+    public C get3() { return _3; }
+    public D get4() { return _4; }
+    public E get5() { return _5; }
+
     public Tuple5<A, B, C, D, E> update1(A a) {
         return t(a, _2, _3, _4, _5);
     }

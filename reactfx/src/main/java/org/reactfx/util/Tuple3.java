@@ -15,6 +15,10 @@ public class Tuple3<A, B, C> {
         _3 = c;
     }
 
+    public A get1() { return _1; }
+    public B get2() { return _2; }
+    public C get3() { return _3; }
+
     public Tuple3<A, B, C> update1(A a) {
         return t(a, _2, _3);
     }

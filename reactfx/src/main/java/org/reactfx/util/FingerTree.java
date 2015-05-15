@@ -750,7 +750,7 @@ public abstract class FingerTree<T, S> {
     public <E> E get(
             ToIntFunction<? super S> metric,
             int index,
-            BiFunction<? super T, Integer, E> leafAccessor) {
+            BiFunction<? super T, Integer, ? extends E> leafAccessor) {
         return locateProgressively(metric, index)
                 .map((major, minor) -> leafAccessor.apply(getLeaf(major), minor));
     }

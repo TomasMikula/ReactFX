@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Function;
 
 public final class Lists {
@@ -190,18 +191,41 @@ public final class Lists {
         return concatView(Arrays.asList(lists));
     }
 
+    /**
+     * Returns a list that is a concatenation of the given lists. The returned
+     * list is a view of the underlying lists, without copying the elements.
+     * The returned list is unmodifiable. Modifications to underlying lists
+     * will be visible through the concatenation view.
+     */
     public static <E> List<E> concatView(List<List<? extends E>> lists) {
         if(lists.isEmpty()) {
             return Collections.emptyList();
         } else {
-            return ListsHelper.concatView(lists);
+            return ConcatView.create(lists);
         }
+    }
+
+    @SafeVarargs
+    public static <E> List<E> concat(List<? extends E>... lists) {
+        return concat(Arrays.asList(lists));
+    }
+
+    /**
+     * Returns a list that is a concatenation of the given lists. The returned
+     * list is a view of the underlying lists, without copying the elements.
+     * As opposed to {@link #concatView(List)}, the underlying lists must not
+     * be modified while the returned concatenation view is in use. On the other
+     * hand, this method guarantees balanced nesting if some of the underlying
+     * lists are already concatenations created by this method.
+     */
+    public static <E> List<E> concat(List<List<? extends E>> lists) {
+        return ListConcatenation.create(lists);
     }
 }
 
-class ListsHelper {
+class ConcatView<E> extends AbstractList<E> {
 
-    static <E> List<E> concatView(List<List<? extends E>> lists) {
+    static <E> List<E> create(List<List<? extends E>> lists) {
         return concatView(lists, true);
     }
 
@@ -221,33 +245,114 @@ class ListsHelper {
             }
         } else {
             int mid = len / 2;
-            return new ConcatListView<>(
+            return new ConcatView<>(
                     concatView(lists.subList(0, mid), false),
                     concatView(lists.subList(mid, len), false));
         }
     }
 
-    private static class ConcatListView<E> extends AbstractList<E> {
-        private final List<? extends E> first;
-        private final List<? extends E> second;
+    private final List<? extends E> first;
+    private final List<? extends E> second;
 
-        ConcatListView(List<? extends E> first, List<? extends E> second) {
-            this.first = first;
-            this.second = second;
-        }
+    ConcatView(List<? extends E> first, List<? extends E> second) {
+        this.first = first;
+        this.second = second;
+    }
 
-        @Override
-        public E get(int index) {
-            if(index < first.size()) {
-                return first.get(index);
-            } else {
-                return second.get(index - first.size());
-            }
+    @Override
+    public E get(int index) {
+        if(index < first.size()) {
+            return first.get(index);
+        } else {
+            return second.get(index - first.size());
         }
+    }
 
-        @Override
-        public int size() {
-            return first.size() + second.size();
-        }
+    @Override
+    public int size() {
+        return first.size() + second.size();
+    }
+}
+
+class ListConcatenation<E> extends AbstractList<E> {
+
+    private static final MapToMonoid<List<?>, Integer> LIST_SIZE_MONOID =
+            new MapToMonoid<List<?>, Integer>() {
+
+                @Override
+                public Integer apply(List<?> t) {
+                    return t.size();
+                }
+
+                @Override
+                public Integer unit() {
+                    return 0;
+                }
+
+                @Override
+                public Integer reduce(Integer left, Integer right) {
+                    return left + right;
+                }
+
+            };
+
+    static <E> List<E> create(List<List<? extends E>> lists) {
+        return lists.stream()
+            .filter(l -> !l.isEmpty())
+            .map(l -> {
+                @SuppressWarnings("unchecked") // cast safe because l is unmodifiable
+                List<E> lst = (List<E>) l;
+                return lst instanceof ListConcatenation
+                    ? ((ListConcatenation<E>) lst).ft
+                    : FingerTree.mkTree(Collections.singletonList(lst), LIST_SIZE_MONOID);
+            })
+            .reduce(FingerTree::join)
+            .<List<E>>map(ListConcatenation<E>::new)
+            .orElse(Collections.emptyList());
+    }
+
+    private final FingerTree<List<E>, Integer> ft;
+
+    ListConcatenation(FingerTree<List<E>, Integer> ft) {
+        this.ft = ft;
+    }
+
+    @Override
+    public E get(int index) {
+        return ft.get(Integer::intValue, index, List::get);
+    }
+
+    @Override
+    public int size() {
+        return ft.getStats();
+    }
+
+    @Override
+    public List<E> subList(int from, int to) {
+        Tuple3<
+            FingerTree<List<E>, Integer>,
+            Optional<Tuple2<List<E>, Integer>>,
+            FingerTree<List<E>, Integer>
+        > lmr;
+        final FingerTree<List<E>, Integer> l;
+        Optional<Tuple2<List<E>, Integer>> m;
+        final FingerTree<List<E>, Integer> r;
+        FingerTree<List<E>, Integer> t;
+
+        lmr = ft.split(Integer::intValue, from);
+        m = lmr._2;
+        r = lmr._3;
+
+        t = m.<FingerTree<List<E>, Integer>>map(t2 -> t2.map(
+                (lst, i) -> r.prepend(lst.subList(i, lst.size())))).orElse(r);
+
+        lmr = t.split(Integer::intValue, to - from);
+        l = lmr._1;
+        m = lmr._2;
+
+        t = m.<FingerTree<List<E>, Integer>>map(t2 -> t2.map(
+                (lst, i) -> l.append(lst.subList(0, i)))).orElse(l);
+
+        return new ListConcatenation<>(t);
     }
 }

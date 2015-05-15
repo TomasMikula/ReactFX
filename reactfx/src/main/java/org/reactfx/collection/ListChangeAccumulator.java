@@ -129,7 +129,7 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
             removedLists.add(m.getRemoved());
             prev = m;
         }
-        List<E> removed = Lists.concatView(removedLists);
+        List<E> removed = Lists.concat(removedLists);
         return new QuasiListModificationImpl<>(from, removed, prev.getTo() - from);
     }
 
@@ -144,20 +144,20 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
             return new QuasiListModificationImpl<>(former.getFrom(), removed, addedSize);
         } else if(latter.getFrom() <= former.getFrom() && latter.getFrom() + latter.getRemovedSize() >= former.getTo()) {
             // former is within latter
-            List<E> removed = Lists.concatView(
+            List<E> removed = Lists.concat(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
             return new QuasiListModificationImpl<>(latter.getFrom(), removed, latter.getAddedSize());
         } else if(latter.getFrom() >= former.getFrom()) {
             // latter overlaps to the right
-            List<E> removed = Lists.concatView(
+            List<E> removed = Lists.concat(
                     former.getRemoved(),
                     latter.getRemoved().subList(former.getTo() - latter.getFrom(), latter.getRemovedSize()));
             return new QuasiListModificationImpl<>(former.getFrom(), removed, latter.getTo() - former.getFrom());
         } else {
             // latter overlaps to the left
-            List<E> removed = Lists.concatView(
+            List<E> removed = Lists.concat(
                     latter.getRemoved().subList(0, former.getFrom() - latter.getFrom()),
                     former.getRemoved());
             int addedSize = former.getTo() - latter.getRemovedSize() + latter.getAddedSize() - latter.getFrom();

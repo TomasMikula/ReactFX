@@ -1,6 +1,15 @@
+# gradle files.
 .gradle/
 build/
 gradle.properties
+
+# eclipse files.
+.settings/
 .classpath
 .project
-.settings/
+
+# intellij files.
+.idea/
+*.iml
+*.ipr
+*.iws

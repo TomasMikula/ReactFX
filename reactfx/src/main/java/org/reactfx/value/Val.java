@@ -19,6 +19,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Window;
 
+import org.reactfx.Change;
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
 import org.reactfx.EventStreams;
@@ -103,6 +104,14 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 return observeInvalidations(this::emit);
             }
         };
+    }
+
+    /**
+     * Returns a stream of changed values, which emits the changed value
+     * (i.e. the old and the new value) on each change of this observable value.
+     */
+    default EventStream<Change<T>> changes() {
+        return EventStreams.changesOf(this);
     }
 
     /**

@@ -2,7 +2,6 @@ package org.reactfx.collection;
 
 import java.util.SortedSet;
 
-import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 
 /**
@@ -14,10 +13,10 @@ import javafx.collections.ObservableSet;
  */
 public interface ObservableSortedSet<E> extends ObservableSet<E>, SortedSet<E> {
     /**
-     * A read-only {@link ObservableList} view of this
+     * A read-only {@link LiveList} view of this
      * {@link ObservableSortedSet}'s contents. It will issue events whenever
      * items are added to or removed from this {@code ObservableSortedSet},
      * and when their sort order changes.
      */
-    ObservableList<E> listView();
+    LiveList<E> listView();
 }

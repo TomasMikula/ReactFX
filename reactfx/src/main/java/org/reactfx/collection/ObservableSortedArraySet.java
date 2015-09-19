@@ -2,8 +2,6 @@ package org.reactfx.collection;
 
 import static java.util.Collections.binarySearch;
 import static java.util.Collections.emptySortedSet;
-import static javafx.collections.FXCollections.observableArrayList;
-import static javafx.collections.FXCollections.unmodifiableObservableList;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -14,26 +12,43 @@ import java.util.stream.Stream;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakInvalidationListener;
-import javafx.collections.ObservableList;
 import javafx.collections.SetChangeListener;
 
 import com.google.common.collect.Sets;
+import org.reactfx.Subscription;
 
 /**
  * Implementation of {@link ObservableSortedSet} based on {@link ArrayList}.
  */
 public final class ObservableSortedArraySet<E> extends AbstractSet<E> implements ObservableSortedSet<E> {
-    private final ObservableList<E> backing = observableArrayList();
+    private final LiveList<E> backing = new LiveArrayList<>();
     private final Map<E, Observable[]> observables = new IdentityHashMap<>();
     private final Collection<SetChangeListener<? super E>> observers = new CopyOnWriteArrayList<>();
     private final Collection<InvalidationListener> invalidationListeners = new CopyOnWriteArrayList<>();
     private final Comparator<? super E> comparator;
     private final Function<? super E, ? extends Collection<? extends Observable>> resortListenFunction;
     private final InvalidationListener resortListener, resortListenerWeak;
-    private final ObservableList<E> listView = unmodifiableObservableList(backing);
+    private final LiveList<E> listView = new ListView();
+
+    private final class ListView extends LiveListBase<E> implements ReadOnlyLiveListImpl<E> {
+        @Override
+        public int size() {
+            return backing.size();
+        }
+
+        @Override
+        public E get(int index) {
+            return backing.get(index);
+        }
+
+        @Override
+        protected Subscription observeInputs() {
+            return LiveList.<E>observeQuasiChanges(backing, this::notifyObservers);
+        }
+    }
 
     @Override
-    public ObservableList<E> listView() {
+    public LiveList<E> listView() {
         return listView;
     }
 
@@ -51,9 +66,6 @@ public final class ObservableSortedArraySet<E> extends AbstractSet<E> implements
      * @param resortListenFunction triggers for re-sorting, as above
      */
     public ObservableSortedArraySet(Comparator<? super E> comparator, Function<? super E, ? extends Collection<? extends Observable>> resortListenFunction) {
-        assert backing instanceof RandomAccess
-            : "FXCollections.observableArrayList returned an ObservableList that doesn't implement RandomAccess.";
-
         this.comparator = comparator;
         this.resortListenFunction = resortListenFunction;
 

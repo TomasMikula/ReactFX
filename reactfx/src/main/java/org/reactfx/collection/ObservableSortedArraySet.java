@@ -66,28 +66,6 @@ public final class ObservableSortedArraySet<E> extends AbstractSet<E> implements
     }
 
     private void onAdded(E o) {
-        fire(new SetChangeListener.Change<E>(this) {
-            @Override
-            public boolean wasAdded() {
-                return true;
-            }
-
-            @Override
-            public boolean wasRemoved() {
-                return false;
-            }
-
-            @Override
-            public E getElementAdded() {
-                return o;
-            }
-
-            @Override
-            public E getElementRemoved() {
-                return null;
-            }
-        });
-
         Observable[] os = observables.computeIfAbsent(o, oo -> {
             Collection<? extends Observable> osc = resortListenFunction.apply(oo);
             return osc.toArray(new Observable[osc.size()]);
@@ -96,9 +74,35 @@ public final class ObservableSortedArraySet<E> extends AbstractSet<E> implements
         for (Observable oo : os) {
             oo.addListener(resortListenerWeak);
         }
+
+        fire(new SetChangeListener.Change<E>(this) {
+            @Override
+            public boolean wasAdded() {
+                return true;
+            }
+
+            @Override
+            public boolean wasRemoved() {
+                return false;
+            }
+
+            @Override
+            public E getElementAdded() {
+                return o;
+            }
+
+            @Override
+            public E getElementRemoved() {
+                return null;
+            }
+        });
     }
 
     private void onRemoved(E o) {
+        for (Observable oo : observables.remove(o)) {
+            oo.removeListener(resortListenerWeak);
+        }
+
         fire(new SetChangeListener.Change<E>(this) {
             @Override
             public boolean wasAdded() {
@@ -120,10 +124,6 @@ public final class ObservableSortedArraySet<E> extends AbstractSet<E> implements
                 return o;
             }
         });
-
-        for (Observable oo : observables.remove(o)) {
-            oo.removeListener(resortListenerWeak);
-        }
     }
 
     private void fire(SetChangeListener.Change<E> evt) {
@@ -217,13 +217,15 @@ public final class ObservableSortedArraySet<E> extends AbstractSet<E> implements
         return backing.size();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void clear() {
-        for (E o : backing) {
-            onRemoved(o);
-        }
-
+        Object[] os = backing.toArray();
         backing.clear();
+
+        for (Object o : os) {
+            onRemoved((E) o);
+        }
     }
 
     @Override

@@ -138,17 +138,17 @@ class ListIteratorImpl<E> implements ListIterator<E> {
 
     @Override
     public void remove() {
-        throw new UnsupportedOperationException();
+        list.remove(position--);
     }
 
     @Override
     public void set(E e) {
-        throw new UnsupportedOperationException();
+        list.set(position - 1, e);
     }
 
     @Override
     public void add(E e) {
-        throw new UnsupportedOperationException();
+        list.add(position++, e);
     }
 }
 

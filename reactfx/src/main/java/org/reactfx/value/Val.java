@@ -604,7 +604,7 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                         return null;
                     }
                 },
-                src1, src3, src3);
+                src1, src2, src3);
     }
 
     static <A, B, C, D, R> Val<R> combine(

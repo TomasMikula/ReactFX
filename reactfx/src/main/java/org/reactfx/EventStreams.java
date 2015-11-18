@@ -1,6 +1,20 @@
 package org.reactfx;
 
-import static org.reactfx.util.Tuples.*;
+import javafx.animation.AnimationTimer;
+import javafx.beans.InvalidationListener;
+import javafx.beans.Observable;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.*;
+import javafx.event.Event;
+import javafx.event.EventHandler;
+import javafx.event.EventType;
+import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.control.MenuItem;
+import org.reactfx.collection.ListModification;
+import org.reactfx.collection.LiveList;
+import org.reactfx.util.*;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -10,34 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-import javafx.animation.AnimationTimer;
-import javafx.beans.InvalidationListener;
-import javafx.beans.Observable;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
-import javafx.collections.MapChangeListener;
-import javafx.collections.ObservableList;
-import javafx.collections.ObservableMap;
-import javafx.collections.ObservableSet;
-import javafx.collections.SetChangeListener;
-import javafx.event.Event;
-import javafx.event.EventHandler;
-import javafx.event.EventType;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.MenuItem;
-
-import org.reactfx.collection.ListModification;
-import org.reactfx.collection.LiveList;
-import org.reactfx.util.Either;
-import org.reactfx.util.FxTimer;
-import org.reactfx.util.Timer;
-import org.reactfx.util.Tuple2;
-import org.reactfx.util.Tuple3;
-import org.reactfx.util.Tuple4;
-import org.reactfx.util.Tuple5;
-import org.reactfx.util.Tuple6;
+import static org.reactfx.util.Tuples.t;
 
 public class EventStreams {
 
@@ -277,8 +264,9 @@ public class EventStreams {
     }
 
     /**
-     * Returns an event stream that emits periodic <i>ticks</i>. The returned
-     * stream may only be used on the JavaFX application thread.
+     * Returns an event stream that emits periodic <i>ticks</i>. The first tick
+     * is emitted after {@code interval} amount of time has passed.
+     * The returned stream may only be used on the JavaFX application thread.
      *
      * <p>As with all lazily bound streams, ticks are emitted only when there
      * is at least one subscriber to the returned stream. This means that to
@@ -288,6 +276,29 @@ public class EventStreams {
     public static EventStream<?> ticks(Duration interval) {
         return new EventStreamBase<Void>() {
             private final Timer timer = FxTimer.createPeriodic(
+                    interval, () -> emit(null));
+
+            @Override
+            protected Subscription observeInputs() {
+                timer.restart();
+                return timer::stop;
+            }
+        };
+    }
+
+    /**
+     * Returns an event stream that emits periodic <i>ticks</i>. The first tick
+     * is emitted at time 0.
+     * The returned stream may only be used on the JavaFX application thread.
+     *
+     * <p>As with all lazily bound streams, ticks are emitted only when there
+     * is at least one subscriber to the returned stream. This means that to
+     * release associated resources, it suffices to unsubscribe from the
+     * returned stream.
+     */
+    public static EventStream<?> ticks0(Duration interval) {
+        return new EventStreamBase<Void>() {
+            private final Timer timer = FxTimer.createPeriodic0(
                     interval, () -> emit(null));
 
             @Override

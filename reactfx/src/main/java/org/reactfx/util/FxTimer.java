@@ -45,22 +45,6 @@ public class FxTimer implements Timer {
     }
 
     /**
-     * Prepares a (stopped) timer that lasts for {@code delay} and whose action runs when timer <em>begins</em>.
-     */
-    public static Timer create0(java.time.Duration delay, Runnable action) {
-        return new FxTimer(java.time.Duration.ZERO, delay, action, 1);
-    }
-
-    /**
-     * Equivalent to {@code create0(delay, action).restart()}.
-     */
-    public static Timer runLater0(java.time.Duration delay, Runnable action) {
-        Timer timer = create0(delay, action);
-        timer.restart();
-        return timer;
-    }
-
-    /**
      * Prepares a (stopped) timer that lasts for {@code interval} and that executes the given action periodically
      * when the timer <emb>starts</emb>.
      */

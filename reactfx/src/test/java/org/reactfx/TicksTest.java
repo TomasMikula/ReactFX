@@ -48,7 +48,7 @@ public class TicksTest {
             // 000 (tick 1) -> 100 (tick 2) -> 200 (tick 3) -> 300 (tick 4) -> 350 (interrupted) = 4 ticks
             FxTimer.runLater(Duration.ofMillis(350), sub0::unsubscribe); // stop after 4 ticks
             // wait a little more to test that no more than 4 ticks arrive anyway
-            FxTimer.runLater(Duration.ofMillis(550), () -> nTicks0.complete(counter.get()));
+            FxTimer.runLater(Duration.ofMillis(550), () -> nTicks0.complete(counter0.get()));
         });
         assertEquals(3, nTicks.get().intValue());
         assertEquals(4, nTicks0.get().intValue());

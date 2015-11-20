@@ -277,8 +277,9 @@ public class EventStreams {
     }
 
     /**
-     * Returns an event stream that emits periodic <i>ticks</i>. The returned
-     * stream may only be used on the JavaFX application thread.
+     * Returns an event stream that emits periodic <i>ticks</i>. The first tick
+     * is emitted after {@code interval} amount of time has passed.
+     * The returned stream may only be used on the JavaFX application thread.
      *
      * <p>As with all lazily bound streams, ticks are emitted only when there
      * is at least one subscriber to the returned stream. This means that to
@@ -288,6 +289,29 @@ public class EventStreams {
     public static EventStream<?> ticks(Duration interval) {
         return new EventStreamBase<Void>() {
             private final Timer timer = FxTimer.createPeriodic(
+                    interval, () -> emit(null));
+
+            @Override
+            protected Subscription observeInputs() {
+                timer.restart();
+                return timer::stop;
+            }
+        };
+    }
+
+    /**
+     * Returns an event stream that emits periodic <i>ticks</i>. The first tick
+     * is emitted at time 0.
+     * The returned stream may only be used on the JavaFX application thread.
+     *
+     * <p>As with all lazily bound streams, ticks are emitted only when there
+     * is at least one subscriber to the returned stream. This means that to
+     * release associated resources, it suffices to unsubscribe from the
+     * returned stream.
+     */
+    public static EventStream<?> ticks0(Duration interval) {
+        return new EventStreamBase<Void>() {
+            private final Timer timer = FxTimer.createPeriodic0(
                     interval, () -> emit(null));
 
             @Override

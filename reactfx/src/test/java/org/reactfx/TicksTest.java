@@ -33,7 +33,7 @@ public class TicksTest {
     }
 
     @Test
-    public void fxTest() throws InterruptedException, ExecutionException {
+    public void fxTicksTest() throws InterruptedException, ExecutionException {
         CompletableFuture<Integer> nTicks = new CompletableFuture<>();
         Platform.runLater(() -> {
             EventCounter counter = new EventCounter();
@@ -43,6 +43,20 @@ public class TicksTest {
             FxTimer.runLater(Duration.ofMillis(550), () -> nTicks.complete(counter.get()));
         });
         assertEquals(3, nTicks.get().intValue());
+    }
+
+    @Test
+    public void fxTicks0Test() throws InterruptedException, ExecutionException {
+        CompletableFuture<Integer> nTicks = new CompletableFuture<>();
+        Platform.runLater(() -> {
+	        EventCounter counter = new EventCounter();
+	        Subscription sub = EventStreams.ticks0(Duration.ofMillis(100)).subscribe(counter::accept);
+	        // 000 (tick 1) -> 100 (tick 2) -> 200 (tick 3) -> 300 (tick 4) -> 350 (interrupted) = 4 ticks
+	        FxTimer.runLater(Duration.ofMillis(350), sub::unsubscribe); // stop after 4 ticks
+	        // wait a little more to test that no more than 4 ticks arrive anyway
+	        FxTimer.runLater(Duration.ofMillis(550), () -> nTicks.complete(counter.get()));
+        });
+        assertEquals(4, nTicks.get().intValue());
     }
 
     @Test

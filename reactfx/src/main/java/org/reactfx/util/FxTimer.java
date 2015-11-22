@@ -29,7 +29,7 @@ public class FxTimer implements Timer {
 
     /**
      * Prepares a (stopped) timer that lasts for {@code interval} and that executes the given action periodically
-     * when the timer <emb>ends</emb>.
+     * when the timer <em>ends</em>.
      */
     public static Timer createPeriodic(java.time.Duration interval, Runnable action) {
         return new FxTimer(interval, interval, action, Animation.INDEFINITE);
@@ -46,7 +46,7 @@ public class FxTimer implements Timer {
 
     /**
      * Prepares a (stopped) timer that lasts for {@code interval} and that executes the given action periodically
-     * when the timer <emb>starts</emb>.
+     * when the timer <em>starts</em>.
      */
     public static Timer createPeriodic0(java.time.Duration interval, Runnable action) {
         return new FxTimer(java.time.Duration.ZERO, interval, action, Animation.INDEFINITE);

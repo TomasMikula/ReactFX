@@ -350,6 +350,50 @@ public class EventStreams {
             }
         };
     }
+    /**
+     * Returns a {@link #ticks(Duration)} EventStream whose timer restarts whenever
+     * impulse emits an event.
+     * @param interval - the amount of time that passes until this stream emits its next tick
+     * @param impulse - the EventStream that resets this EventStream's internal timer
+     */
+    public static EventStream<?> restartableTicks(Duration interval, EventStream<?> impulse) {
+        return new EventStreamBase<Void>() {
+            private final Timer timer = FxTimer.createPeriodic(
+                    interval, () -> emit(null));
+
+            @Override
+            protected Subscription observeInputs() {
+                timer.restart();
+                return Subscription.multi(
+                        impulse.subscribe(x -> timer.restart()),
+                        timer::stop
+                );
+            }
+        };
+    }
+
+    /**
+     * Returns a {@link #ticks0(Duration)} EventStream whose timer restarts whenever
+     * impulse emits an event. Note: since {@link #ticks0(Duration)} is used, restarting
+     * the timer will make the returned EventStream immediately emit a new tick.
+     * @param interval - the amount of time that passes until this stream emits its next tick
+     * @param impulse - the EventStream that resets this EventStream's internal timer
+     */
+    public static EventStream<?> restartableTicks0(Duration interval, EventStream<?> impulse) {
+        return new EventStreamBase<Void>() {
+            private final Timer timer = FxTimer.createPeriodic0(
+                    interval, () -> emit(null));
+
+            @Override
+            protected Subscription observeInputs() {
+                timer.restart();
+                return Subscription.multi(
+                        impulse.subscribe(x -> timer.restart()),
+                        timer::stop
+                );
+            }
+        };
+    }
 
     /**
      * Returns an event stream that emits a timestamp of the current frame in

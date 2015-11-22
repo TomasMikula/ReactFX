@@ -60,6 +60,53 @@ public class TicksTest {
     }
 
     @Test
+    public void fxRestartableTicksTest() throws InterruptedException, ExecutionException {
+        CompletableFuture<Integer> nTicks = new CompletableFuture<>();
+        Platform.runLater(() -> {
+            EventCounter counter = new EventCounter();
+            EventSource<?> impulse = new EventSource<Void>();
+            Subscription sub = EventStreams.restartableTicks(Duration.ofMillis(100), impulse)
+                    .subscribe(counter::accept);
+            FxTimer.runLater(Duration.ofMillis(400), sub::unsubscribe);
+            FxTimer.runLater(Duration.ofMillis(80),() -> impulse.push(null));
+            FxTimer.runLater(Duration.ofMillis(260),() -> impulse.push(null));
+            // 000: Start -> 80 (restart)
+            // 080: Start
+            // 180: End (tick)
+            // 180: Start -> 80 (restart)
+            // 260: Start
+            // 360: End (tick)
+            // 400: unsubscribed: 2 ticks
+            // wait a little more to test that no more ticks arrive anyway
+            FxTimer.runLater(Duration.ofMillis(550), () -> nTicks.complete(counter.get()));
+        });
+        assertEquals(2, nTicks.get().intValue());
+    }
+
+    @Test
+    public void fxRestartableTicks0Test() throws InterruptedException, ExecutionException {
+        CompletableFuture<Integer> nTicks = new CompletableFuture<>();
+        Platform.runLater(() -> {
+            EventCounter counter = new EventCounter();
+            EventSource<?> impulse = new EventSource<Void>();
+            Subscription sub = EventStreams.restartableTicks0(Duration.ofMillis(100), impulse)
+                    .subscribe(counter::accept);
+            FxTimer.runLater(Duration.ofMillis(400), sub::unsubscribe);
+            FxTimer.runLater(Duration.ofMillis(80), () -> impulse.push(null));
+            FxTimer.runLater(Duration.ofMillis(260), () -> impulse.push(null));
+            // 000: 0 (tick) -> 80 (restart)
+            // 080: 0 (tick)
+            // 180: 0 (tick) -> 80 (restart)
+            // 260: 0 (tick)
+            // 360: 0 (tick)
+            // 400: unsubscribed: 5 ticks
+            // wait a little more to test that no more ticks arrive anyway
+            FxTimer.runLater(Duration.ofMillis(550), () -> nTicks.complete(counter.get()));
+        });
+        assertEquals(5, nTicks.get().intValue());
+    }
+
+    @Test
     public void executorTest() throws InterruptedException, ExecutionException {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 

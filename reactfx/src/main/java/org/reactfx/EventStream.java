@@ -111,10 +111,10 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns an event stream that emits an initial event when something
-     * subscribes to it and it has no event to emit. Useful when this
-     * stream will only emit a event when an JavaFX {@code InputEvent}
-     * occurs and it is being combined with other EventStreams whose
-     * combined EventStream needs to work immediately upon program start.
+     * subscribes to it and it has no event to emit. Useful when one
+     * doesn't know whether an EventStream will emit its event immediately
+     * but needs it to emit an initial event immediately. Such a case can
+     * arise as shown in the following example:
      * <pre>
      * {@code
      * EventStream<Boolean> controlPresses = EventStreams

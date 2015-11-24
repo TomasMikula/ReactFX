@@ -110,6 +110,37 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
+     * Returns an event stream that emits an initial event when something
+     * subscribes to it and it has no event to emit. Useful when this
+     * stream will only emit a event when an JavaFX {@code InputEvent}
+     * occurs and it is being combined with other EventStreams whose
+     * combined EventStream needs to work immediately upon program start.
+     * <pre>
+     * {@code
+     * EventStream<Boolean> controlPresses = EventStreams
+     *     .eventsOf(scene, KeyEvent.KEY_PRESSED)
+     *     .filter(key -> key.getCode().is(KeyCode.CONTROL))
+     *     .map(key -> key.isControlDown());
+     *
+     * EventSource<?> other;
+     * EventStream<Tuple2<Boolean, ?>> combo = EventStreams.combine(controlPresses, other);
+     *
+     * // This will not run until user presses the control key at least once.
+     * combo.subscribe(tuple2 -> System.out.println("Combo emitted an event."));
+     *
+     * EventStream<Boolean> controlDown = controlPresses.prepend(false);
+     * EventStream<Tuple2<Boolean, ?>> betterCombo = EventStreams.combine(controlDown, other);
+     * betterCombo.subscribe(tuple2 -> System.out.println("Better Combo emitted an event immediately upon program start."));
+     * }
+     * </pre>
+     *
+     * @param initial the event this event stream will emit if something subscribes to this stream and this stream does not have an event.
+     */
+    default EventStream<T> prepend(T initial) {
+        return new PrependEventStream<>(this, initial);
+    }
+
+    /**
      * Returns an event stream that emits the same<sup>(*)</sup> events as this
      * stream, but <em>before</em> emitting each event performs the given side
      * effect. This is useful for debugging. The side effect is not allowed to

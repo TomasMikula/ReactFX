@@ -2,8 +2,12 @@ package org.reactfx;
 
 import static org.junit.Assert.*;
 
-import org.junit.Before;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Test;
+import org.reactfx.value.Var;
 
 
 public class PrependEventStreamTest {
@@ -22,5 +26,14 @@ public class PrependEventStreamTest {
 
         assertEquals("Counts Twice failed", 2, countsTwice.get());
         assertEquals("Counts Once failed", 1, countsOnce.get());
+    }
+
+    @Test
+    public void testAutoEmittingStream() {
+        List<Integer> emitted = new ArrayList<>();
+        Var<Integer> source = Var.newSimpleVar(1);
+        EventStream<Integer> stream = source.values().prepend(0);
+        stream.subscribe(emitted::add);
+        assertEquals(Arrays.asList(0, 1), emitted);
     }
 }

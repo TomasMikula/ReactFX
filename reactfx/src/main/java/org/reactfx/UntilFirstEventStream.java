@@ -2,14 +2,15 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-public class PrependEventStream<T> extends EventStreamBase<T> {
+public class UntilFirstEventStream<T> extends EventStreamBase<T> {
     private final EventStream<T> input;
     private final T initial;
 
     private T latestEvent = null;
     private boolean firstObserver = true;
+    private boolean emitted = false;
 
-    public PrependEventStream(
+    public UntilFirstEventStream(
             EventStream<T> input,
             T initial) {
         this.input = input;
@@ -20,6 +21,9 @@ public class PrependEventStream<T> extends EventStreamBase<T> {
     protected void newObserver(Consumer<? super T> observer) {
         if(firstObserver) {
             firstObserver = false;
+            if(!emitted) {
+                observer.accept(initial);
+            }
         } else {
             observer.accept(latestEvent);
         }
@@ -28,10 +32,11 @@ public class PrependEventStream<T> extends EventStreamBase<T> {
     @Override
     protected final Subscription observeInputs() {
         firstObserver = true;
+        emitted = false;
         latestEvent = initial;
-        emit(initial); // emit for the first observer
         return input.subscribe(x -> {
             latestEvent = x;
+            emitted = true;
             emit(x);
         });
     }

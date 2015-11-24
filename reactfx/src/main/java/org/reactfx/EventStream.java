@@ -128,7 +128,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * // This will not run until user presses the control key at least once.
      * combo.subscribe(tuple2 -> System.out.println("Combo emitted an event."));
      *
-     * EventStream<Boolean> controlDown = controlPresses.prepend(false);
+     * EventStream<Boolean> controlDown = controlPresses.untilFirstEvent(false);
      * EventStream<Tuple2<Boolean, ?>> betterCombo = EventStreams.combine(controlDown, other);
      * betterCombo.subscribe(tuple2 -> System.out.println("Better Combo emitted an event immediately upon program start."));
      * }
@@ -136,8 +136,8 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *
      * @param initial the event this event stream will emit if something subscribes to this stream and this stream does not have an event.
      */
-    default EventStream<T> prepend(T initial) {
-        return new PrependEventStream<>(this, initial);
+    default EventStream<T> untilFirstEvent(T initial) {
+        return new UntilFirstEventStream<>(this, initial);
     }
 
     /**

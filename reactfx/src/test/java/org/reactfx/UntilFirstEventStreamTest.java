@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.reactfx.value.Var;
 
 
-public class PrependEventStreamTest {
+public class UntilFirstEventStreamTest {
 
     @Test
     public void test() {
@@ -18,7 +18,7 @@ public class PrependEventStreamTest {
         EventCounter countsOnce = new EventCounter();
 
         EventSource<Boolean> source = new EventSource<>();
-        EventStream<Boolean> stream = source.prepend(true);
+        EventStream<Boolean> stream = source.untilFirstEvent(true);
 
         stream.subscribe(countsTwice::accept);
         source.push(false);
@@ -30,21 +30,17 @@ public class PrependEventStreamTest {
 
     @Test
     public void testAutoEmittingStream() {
-        List<Integer> emitted1 = new ArrayList<>();
-        List<Integer> emitted2 = new ArrayList<>();
+        List<Integer> emitted = new ArrayList<>();
 
         Var<Integer> source = Var.newSimpleVar(1);
-        EventStream<Integer> stream = source.values().prepend(0);
+        EventStream<Integer> stream = source.values().untilFirstEvent(0);
 
-        stream.subscribe(emitted1::add);
-        stream.subscribe(emitted2::add);
+        stream.subscribe(emitted::add);
 
-        assertEquals(Arrays.asList(0, 1), emitted1);
-        assertEquals(Arrays.asList(1), emitted2);
+        assertEquals(Arrays.asList(1), emitted);
 
         source.setValue(2);
 
-        assertEquals(Arrays.asList(0, 1, 2), emitted1);
-        assertEquals(Arrays.asList(1, 2), emitted2);
+        assertEquals(Arrays.asList(1, 2), emitted);
     }
 }

@@ -30,10 +30,21 @@ public class PrependEventStreamTest {
 
     @Test
     public void testAutoEmittingStream() {
-        List<Integer> emitted = new ArrayList<>();
+        List<Integer> emitted1 = new ArrayList<>();
+        List<Integer> emitted2 = new ArrayList<>();
+
         Var<Integer> source = Var.newSimpleVar(1);
         EventStream<Integer> stream = source.values().prepend(0);
-        stream.subscribe(emitted::add);
-        assertEquals(Arrays.asList(0, 1), emitted);
+
+        stream.subscribe(emitted1::add);
+        stream.subscribe(emitted2::add);
+
+        assertEquals(Arrays.asList(0, 1), emitted1);
+        assertEquals(Arrays.asList(1), emitted2);
+
+        source.setValue(2);
+
+        assertEquals(Arrays.asList(0, 1, 2), emitted1);
+        assertEquals(Arrays.asList(1, 2), emitted2);
     }
 }

@@ -17,7 +17,9 @@ public class PrependEventStream<T> extends EventStreamBase<T> {
 
     @Override
     protected void newObserver(Consumer<? super T> observer) {
-        if (latestEvent == null) { latestEvent = initial; }
+        if (latestEvent == null) {
+            latestEvent = initial;
+        }
         observer.accept(latestEvent);
     }
 

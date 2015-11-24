@@ -33,16 +33,7 @@ public class PrependEventStreamTest {
                     .prepend(false);
             controlPressed.subscribe(counter::accept);
 
-            // simulate a control key being pressed
-            KeyEvent event = new KeyEvent(
-                    rectangle, rectangle, KeyEvent.KEY_PRESSED,
-                    "", "", KeyCode.CONTROL,
-                    // shift, control, alt, meta
-                    false, true, false, false
-            );
-            Event.fireEvent(rectangle, event);
-
-            assertEquals(2, counter.get());
+            assertEquals(1, counter.get());
         });
     }
 }

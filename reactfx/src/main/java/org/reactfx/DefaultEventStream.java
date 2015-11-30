@@ -2,7 +2,7 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-public class UntilFirstEventStream<T> extends EventStreamBase<T> {
+public class DefaultEventStream<T> extends EventStreamBase<T> {
     private final EventStream<T> input;
     private final T initial;
 
@@ -10,7 +10,7 @@ public class UntilFirstEventStream<T> extends EventStreamBase<T> {
     private boolean firstObserver = true;
     private boolean emitted = false;
 
-    public UntilFirstEventStream(
+    public DefaultEventStream(
             EventStream<T> input,
             T initial) {
         this.input = input;

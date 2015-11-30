@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.reactfx.value.Var;
 
 
-public class UntilFirstEventStreamTest {
+public class DefaultEventStreamTest {
 
     @Test
     public void test() {
@@ -18,7 +18,7 @@ public class UntilFirstEventStreamTest {
         EventCounter countsOnce = new EventCounter();
 
         EventSource<Boolean> source = new EventSource<>();
-        EventStream<Boolean> stream = source.untilFirstEvent(true);
+        EventStream<Boolean> stream = source.withDefaultEvent(true);
 
         stream.subscribe(countsTwice::accept);
         source.push(false);
@@ -33,7 +33,7 @@ public class UntilFirstEventStreamTest {
         List<Integer> emitted = new ArrayList<>();
 
         Var<Integer> source = Var.newSimpleVar(1);
-        EventStream<Integer> stream = source.values().untilFirstEvent(0);
+        EventStream<Integer> stream = source.values().withDefaultEvent(0);
 
         stream.subscribe(emitted::add);
 

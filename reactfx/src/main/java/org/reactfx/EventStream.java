@@ -110,11 +110,13 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Returns an event stream that emits an initial event when something
-     * subscribes to it and it has no event to emit. Useful when one
-     * doesn't know whether an EventStream will emit its event immediately
-     * but needs it to emit an initial event immediately. Such a case can
-     * arise as shown in the following example:
+     * Returns an event stream that immediately emits its event when something
+     * subscribes to it. If the stream has no event to emit, it defaults to
+     * emitting the default event. Once this stream emits an event, the returned
+     * stream will emit this stream's most recent event. Useful when one doesn't
+     * know whether an EventStream will emit its event immediately but needs it
+     * to emit an event immediately. Such a case can arise as shown in the
+     * following example:
      * <pre>
      * {@code
      * EventStream<Boolean> controlPresses = EventStreams
@@ -128,16 +130,16 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * // This will not run until user presses the control key at least once.
      * combo.subscribe(tuple2 -> System.out.println("Combo emitted an event."));
      *
-     * EventStream<Boolean> controlDown = controlPresses.untilFirstEvent(false);
+     * EventStream<Boolean> controlDown = controlPresses.withDefaultEvent(false);
      * EventStream<Tuple2<Boolean, ?>> betterCombo = EventStreams.combine(controlDown, other);
      * betterCombo.subscribe(tuple2 -> System.out.println("Better Combo emitted an event immediately upon program start."));
      * }
      * </pre>
      *
-     * @param initial the event this event stream will emit if something subscribes to this stream and this stream does not have an event.
+     * @param defaultEvent the event this event stream will emit if something subscribes to this stream and this stream does not have an event.
      */
-    default EventStream<T> untilFirstEvent(T initial) {
-        return new UntilFirstEventStream<>(this, initial);
+    default EventStream<T> withDefaultEvent(T defaultEvent) {
+        return new DefaultEventStream<>(this, defaultEvent);
     }
 
     /**

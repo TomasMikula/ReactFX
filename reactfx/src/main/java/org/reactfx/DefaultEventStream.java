@@ -2,7 +2,7 @@ package org.reactfx;
 
 import java.util.function.Consumer;
 
-public class DefaultEventStream<T> extends EventStreamBase<T> {
+class DefaultEventStream<T> extends EventStreamBase<T> {
     private final EventStream<T> input;
     private final T initial;
 

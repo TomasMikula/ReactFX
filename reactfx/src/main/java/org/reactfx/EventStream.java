@@ -110,6 +110,39 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
+     * Returns an event stream that immediately emits its event when something
+     * subscribes to it. If the stream has no event to emit, it defaults to
+     * emitting the default event. Once this stream emits an event, the returned
+     * stream will emit this stream's most recent event. Useful when one doesn't
+     * know whether an EventStream will emit its event immediately but needs it
+     * to emit an event immediately. Such a case can arise as shown in the
+     * following example:
+     * <pre>
+     * {@code
+     * EventStream<Boolean> controlPresses = EventStreams
+     *     .eventsOf(scene, KeyEvent.KEY_PRESSED)
+     *     .filter(key -> key.getCode().is(KeyCode.CONTROL))
+     *     .map(key -> key.isControlDown());
+     *
+     * EventSource<?> other;
+     * EventStream<Tuple2<Boolean, ?>> combo = EventStreams.combine(controlPresses, other);
+     *
+     * // This will not run until user presses the control key at least once.
+     * combo.subscribe(tuple2 -> System.out.println("Combo emitted an event."));
+     *
+     * EventStream<Boolean> controlDown = controlPresses.withDefaultEvent(false);
+     * EventStream<Tuple2<Boolean, ?>> betterCombo = EventStreams.combine(controlDown, other);
+     * betterCombo.subscribe(tuple2 -> System.out.println("Better Combo emitted an event immediately upon program start."));
+     * }
+     * </pre>
+     *
+     * @param defaultEvent the event this event stream will emit if something subscribes to this stream and this stream does not have an event.
+     */
+    default EventStream<T> withDefaultEvent(T defaultEvent) {
+        return new DefaultEventStream<>(this, defaultEvent);
+    }
+
+    /**
      * Returns an event stream that emits the same<sup>(*)</sup> events as this
      * stream, but <em>before</em> emitting each event performs the given side
      * effect. This is useful for debugging. The side effect is not allowed to

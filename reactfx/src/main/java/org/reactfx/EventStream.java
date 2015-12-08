@@ -555,6 +555,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     {@code
      *     EventStream<?> A = ...;
      *     EventStream<?> B = A.pausable();
+     *     }
      * </pre>
      * <p>Returns B. When A emits an event and B is not suspended, B also emits that event.
      * When B is suspended and A emits events, those events are stored in B. Once
@@ -585,6 +586,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     {@code
      *     EventStream<?> A = ...;
      *     EventStream<?> B = A.forgetful();
+     *     }
      * </pre>
      * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
      * When B is suspended and A emits an event, B does not emit that event, nor does
@@ -620,6 +622,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *             ? mostRecent_A_EventEmitted
      *             : lastStored_A_Event;
      *     });
+     *     }
      * </pre>
      * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
      * When B is suspended and A emits events (En) where {@code n} is the number of the event,
@@ -637,7 +640,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     <li>b = 5 [reduction(4, 1) == 1]</li>
      *     <li>c = 3 [reduction(1, 5) == 5]</li>
      *     <li>d = 3 [reduction(5, 7) == 5]</li>
-     * <ul>
+     * </ul>
      *
      * <p>Note that {@link #forgetful()} is equivalent to
      * {@code reducible((a, b) -> b)}.

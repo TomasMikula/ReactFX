@@ -126,7 +126,9 @@ abstract class AbstractReducibleEventStream<T> extends SuspendableEventStreamBas
     }
 }
 
-
+/**
+ * See {@link EventStream#reducible(BinaryOperator)}
+ */
 final class ReducibleEventStream<T> extends AbstractReducibleEventStream<T> {
 
     public ReducibleEventStream(

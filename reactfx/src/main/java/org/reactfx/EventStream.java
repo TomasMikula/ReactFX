@@ -544,9 +544,9 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     EventStream<?> A = ...;
      *     EventStream<?> B = A.pausable();
      * </pre>
-     * <p>Returns B. When A emits an event and B is not paused, B also emits that event.
-     * When B is paused and A emits events, those events are stored in B. Once
-     * B is unpaused, B emits those events.
+     * <p>Returns B. When A emits an event and B is not suspended, B also emits that event.
+     * When B is suspended and A emits events, those events are stored in B. Once
+     * B is unsuspended, B emits those events.
      * <pre>
      *     Time ---&gt;
      *     A :-a--b----c---d-----e------------f-------&gt;

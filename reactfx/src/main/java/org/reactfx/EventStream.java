@@ -422,7 +422,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     {@code
      *     EventStream<?> A = ...;
      *     EventStream<?> B = ...;
-     *     EventStream<?> C = A.emitOnEach(B);}
+     *     EventStream<?> C = A.emitBothOnEach(B);}
      * </pre>
      * <p>Returns C. When B emits an event, C emits A and B's most recent events..
      * Only emits an event when both A and B have emitted at least one new event.

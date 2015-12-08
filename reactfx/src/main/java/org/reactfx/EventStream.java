@@ -568,6 +568,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a suspendable event stream that, when suspended, forgets all but
      * the latest event emitted by this event stream. The remembered event, if
      * any, is emitted from the returned stream upon resume.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = A.forgetful();
+     * </pre>
+     * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
+     * When B is suspended and A emits an event, B does not emit that event, nor does
+     * it store that event for later emission. Those events are "forgotten."
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a--b----c---d-----e------------f-------&gt;
+     *     B :-a--b--|---Suspended----|-------f-------&gt;
+     * </pre>
      */
     default SuspendableEventStream<T> forgetful() {
         return new ForgetfulEventStream<>(this);

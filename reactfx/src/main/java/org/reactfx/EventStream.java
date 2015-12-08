@@ -611,6 +611,34 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * events by the given {@code reduction} function into one. The reduced
      * event is emitted from the returned stream upon resume.
      *
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.reducible(lastStored_A_Event, mostRecent_A_EventEmitted -> {
+     *         lastStored_A_Event <= 4
+     *             ? mostRecent_A_EventEmitted
+     *             : lastStored_A_Event;
+     *     });
+     * </pre>
+     * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
+     * When B is suspended and A emits events (En) where {@code n} is the number of the event,
+     * B applies reduction(En-1, En). When B is no longer suspended, it emits {@code result}
+     * </p>
+     * <pre>
+     *     Time ---&gt;
+     *     A      :-1--2----4--1--5-----7------------6-------&gt;
+     *     B      :-1--2--|---Suspended---|5---------6-------&gt;
+     *     result :-------|-a--b--c-----d-|------------------&gt;
+     * </pre>
+     * then result's values are:
+     * <ul>
+     *     <li>a = 4 [reduction(2, 4) == 4]</li>
+     *     <li>b = 5 [reduction(4, 1) == 1]</li>
+     *     <li>c = 3 [reduction(1, 5) == 5]</li>
+     *     <li>d = 3 [reduction(5, 7) == 5]</li>
+     * <ul>
+     *
      * <p>Note that {@link #forgetful()} is equivalent to
      * {@code reducible((a, b) -> b)}.
      */

@@ -441,6 +441,21 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a new event stream that emits all the events emitted from this
      * stream and in addition to that re-emits the most recent event on every
      * event emitted from {@code impulse}.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.repeatOn(B);}
+     * </pre>
+     * <p>Returns C. When A emits an event, C also emits that event. When B
+     * emits an event, C emits that most recent event that A emitted.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a-------b---c------------------d-------&gt;
+     *     B :----i-----------i-----i-----i-----------&gt;
+     *     C :-a--a----b---c--c-----c-----c---d-------&gt;
+     * </pre>
      */
     default EventStream<T> repeatOn(EventStream<?> impulse) {
         return new RepeatOnStream<>(this, impulse);

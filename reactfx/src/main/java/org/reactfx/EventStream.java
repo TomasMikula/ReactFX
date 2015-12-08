@@ -538,6 +538,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a suspendable event stream that, when suspended, stores the
      * events emitted by this event stream and emits them when the returned
      * stream's emission is resumed.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = A.pausable();
+     * </pre>
+     * <p>Returns B. When A emits an event and B is not paused, B also emits that event.
+     * When B is paused and A emits events, those events are stored in B. Once
+     * B is unpaused, B emits those events.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a--b----c---d-----e------------f-------&gt;
+     *     B :-a--b--|---Suspended----|cde----f-------&gt;
+     * </pre>
      */
     default SuspendableEventStream<T> pausable() {
         return new PausableEventStream<>(this);

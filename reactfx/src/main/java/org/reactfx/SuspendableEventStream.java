@@ -75,7 +75,9 @@ final class AccumulativeEventStream<T, A> extends SuspendableEventStreamBase<T, 
     }
 }
 
-
+/**
+ * See {@link EventStream#pausable()}
+ */
 final class PausableEventStream<T> extends SuspendableEventStreamBase<T, Deque<T>> {
 
     PausableEventStream(EventStream<T> source) {

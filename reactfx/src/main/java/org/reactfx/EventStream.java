@@ -352,15 +352,27 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns an event stream that emits lists of {@code n} latest events
-     * emitted from this stream. For example, in
+     * emitted from this stream.
+     * For example, given
      * <pre>
      * {@code
      * EventStream<Integer> stream = ...;
      * EventStream<List<Integer>> latest3 = stream.latestN(3);
      * }
+     *
+     *     Time ---&gt;
+     *     stream  :--1--2-----3--4--5-----6---&gt;
+     *     latest3 :--a--b-----c--d--e-----f---&gt;
      * </pre>
-     * when {@code stream} emits 1, 2, 3, 4, 5, {@code latest3} emits
-     * [1], [1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5].
+     * then lastest3's values are
+     * <ul>
+     *     <li>a = [1]</li>
+     *     <li>b = [1,2]</li>
+     *     <li>c = [1,2,3]</li>
+     *     <li>d = [2,3,4]</li>
+     *     <li>e = [3,4,5]</li>
+     *     <li>f = [4,5,6]</li>
+     * </ul>
      */
     default EventStream<List<T>> latestN(int n) {
         return new LatestNStream<>(this, n);

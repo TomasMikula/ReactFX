@@ -378,6 +378,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     EventStream<?> C = A.emitOn(B);}
      * </pre>
      * <p>Returns C. When B emits an event, C emits A's most recent event.
+     * No, does not emit the most recent event multiple times.
      * <pre>
      *     Time ---&gt;
      *     A :-a-------b-----c----------d-------&gt;
@@ -401,6 +402,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     EventStream<?> C = A.emitOnEach(B);}
      * </pre>
      * <p>Returns C. When B emits an event, C emits A's most recent event.
+     * Yes, does emit the most recent event multiple times.
      * <pre>
      *     Time ---&gt;
      *     A :-a-------b-----c----------d-------&gt;

@@ -352,15 +352,27 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns an event stream that emits lists of {@code n} latest events
-     * emitted from this stream. For example, in
+     * emitted from this stream.
+     * For example, given
      * <pre>
      * {@code
      * EventStream<Integer> stream = ...;
      * EventStream<List<Integer>> latest3 = stream.latestN(3);
      * }
+     *
+     *     Time ---&gt;
+     *     stream  :--1--2-----3--4--5-----6---&gt;
+     *     latest3 :--a--b-----c--d--e-----f---&gt;
      * </pre>
-     * when {@code stream} emits 1, 2, 3, 4, 5, {@code latest3} emits
-     * [1], [1, 2], [1, 2, 3], [2, 3, 4], [3, 4, 5].
+     * then lastest3's values are
+     * <ul>
+     *     <li>a = [1]</li>
+     *     <li>b = [1,2]</li>
+     *     <li>c = [1,2,3]</li>
+     *     <li>d = [2,3,4]</li>
+     *     <li>e = [3,4,5]</li>
+     *     <li>f = [4,5,6]</li>
+     * </ul>
      */
     default EventStream<List<T>> latestN(int n) {
         return new LatestNStream<>(this, n);
@@ -369,10 +381,38 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns a new event stream that, when an event arrives from the
      * {@code impulse} stream, emits the most recent event emitted by this
-     * stream. Each event is emitted at most once. For example, if events
-     * are emitted in this order, [<i>i, a, i, b, c, i, i, d</i>], where <i>
-     * a, b, c, d</i> come from this stream and <i>i</i>s come from the
-     * {@code impulse} stream, then the returned stream emits [<i>a, c</i>].
+     * stream. Each event is emitted at most once.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.emitOn(B);}
+     * </pre>
+     * <p>Returns C. When B emits an event, C emits A's most recent event.
+     * No, does not emit the most recent event multiple times.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a-------b-----c----------d-------&gt;
+     *     B :----i------------i--i--i-----i----&gt;
+     *     C :----a------------c-----------d----&gt;
+     * </pre>
+     *
+     * <h2>Relationship to other EventStreams:</h2>
+     * <ul>
+     *     <li>
+     *         This stream does NOT emit A's most recent event multiple
+     *         times whereas {@link #emitOnEach(EventStream)} does.
+     *     </li>
+     *     <li>
+     *         This stream ONLY emits A's events whereas {@link #emitBothOnEach(EventStream)}
+     *         emits both A and B's events as an event (a {@link Tuple2})
+     *     </li>
+     *     <li>
+     *         This stream does NOT emit A's event when A emits an event
+     *         whereas {@link #repeatOn(EventStream)} does.
+     *     </li>
+     * </ul>
      */
     default EventStream<T> emitOn(EventStream<?> impulse) {
         return new EmitOnStream<>(this, impulse);
@@ -381,10 +421,38 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns a new event stream that, when an event arrives from the
      * {@code impulse} stream, emits the most recent event emitted by this
-     * stream. The same event may be emitted more than once. For example, if
-     * events are emitted in this order, [<i>i, a, i, b, c, i, i, d</i>], where
-     * <i>a, b, c, d</i> come from this stream and <i>i</i>s come from the
-     * {@code impulse} stream, then the returned stream emits [<i>a, c, c</i>].
+     * stream. The same event may be emitted more than once.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.emitOnEach(B);}
+     * </pre>
+     * <p>Returns C. When B emits an event, C emits A's most recent event.
+     * Yes, does emit the most recent event multiple times.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a-------b-----c----------d-------&gt;
+     *     B :----i------------i--i--i-----i----&gt;
+     *     C :----a------------c--c--c-----d----&gt;
+     * </pre>
+     *
+     * <h2>Relationship to other EventStreams:</h2>
+     * <ul>
+     *     <li>
+     *         This stream DOES emit A's most recent event multiple
+     *         times whereas {@link #emitOn(EventStream)} does not.
+     *     </li>
+     *     <li>
+     *         This stream ONLY emits A's events whereas {@link #emitBothOnEach(EventStream)}
+     *         emits both A and B's events as an event.
+     *     </li>
+     *     <li>
+     *         This stream does not emit A's events when A emits an event
+     *         whereas {@link #repeatOn(EventStream)} does.
+     *     </li>
+     * </ul>
      */
     default EventStream<T> emitOnEach(EventStream<?> impulse) {
         return new EmitOnEachStream<>(this, impulse);
@@ -392,10 +460,31 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Similar to {@link #emitOnEach(EventStream)}, but also includes the
-     * impulse in the emitted value. For example, if events are emitted in this
-     * order, [<i>i1, a, i2, b, c, i3, i4, d</i>], where <i>a, b, c, d</i> come
-     * from this stream and <i>i</i>s come from the {@code impulse} stream, then
-     * the returned stream emits [<i>(a, i2), (c, i3), (c, i4)</i>].
+     * impulse in the emitted value.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.emitBothOnEach(B);}
+     * </pre>
+     * <p>Returns C. When B emits an event, C emits A and B's most recent events..
+     * Only emits an event when both A and B have emitted at least one new event.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a-------b---c------------------d-------&gt;
+     *     B :----1-----------2-----3-----4-----------&gt;
+     *     C :---[a,1]------[c,2]-----------[d,4]-----&gt;
+     * </pre>
+     *
+     * <h2>Relationship to other EventStreams:</h2>
+     * <ul>
+     *     <li>
+     *         This stream emits both A and B's events whereas {@link #emitOn(EventStream)},
+     *         {@link #emitOnEach(EventStream)}, and {@link #repeatOn(EventStream)}
+     *         only emit A's event under specific circumstances.
+     *     </li>
+     * </ul>
      */
     default <I> EventStream<Tuple2<T, I>> emitBothOnEach(EventStream<I> impulse) {
         return new EmitBothOnEachStream<>(this, impulse);
@@ -405,6 +494,38 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a new event stream that emits all the events emitted from this
      * stream and in addition to that re-emits the most recent event on every
      * event emitted from {@code impulse}.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.repeatOn(B);}
+     * </pre>
+     * <p>Returns C. When A emits an event, C also emits that event. When B
+     * emits an event, C emits that most recent event that A emitted.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a-------b---c------------------d-------&gt;
+     *     B :----i-----------i-----i-----i-----------&gt;
+     *     C :-a--a----b---c--c-----c-----c---d-------&gt;
+     * </pre>
+     *
+     * <h2>Relationship to other EventStreams:</h2>
+     * <ul>
+     *     <li>
+     *         This stream emits A's events when A emits an event and
+     *         it emits A's most recent event multiple times whereas
+     *         {@link #emitOn(EventStream)} doesn't.
+     *     </li>
+     *     <li>
+     *         This stream also emits A's most recent event whereas
+     *         {@link #emitOnEach(EventStream)} doesn't.
+     *     </li>
+     *     <li>
+     *         This stream only emits A's events whereas {@link #emitBothOnEach(EventStream)}
+     *         emits both A and B's events as an event.
+     *     </li>
+     * </ul>
      */
     default EventStream<T> repeatOn(EventStream<?> impulse) {
         return new RepeatOnStream<>(this, impulse);
@@ -429,6 +550,21 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a suspendable event stream that, when suspended, stores the
      * events emitted by this event stream and emits them when the returned
      * stream's emission is resumed.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = A.pausable();
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event and B is not suspended, B also emits that event.
+     * When B is suspended and A emits events, those events are stored in B. Once
+     * B is unsuspended, B emits those events.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a--b----c---d-----e------------f-------&gt;
+     *     B :-a--b--|---Suspended----|cde----f-------&gt;
+     * </pre>
      */
     default SuspendableEventStream<T> pausable() {
         return new PausableEventStream<>(this);
@@ -445,6 +581,21 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a suspendable event stream that, when suspended, forgets all but
      * the latest event emitted by this event stream. The remembered event, if
      * any, is emitted from the returned stream upon resume.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = A.forgetful();
+     *     }
+     * </pre>
+     * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
+     * When B is suspended and A emits an event, B does not emit that event, nor does
+     * it store that event for later emission. Those events are "forgotten."
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a--b----c---d-----e------------f-------&gt;
+     *     B :-a--b--|---Suspended----|-------f-------&gt;
+     * </pre>
      */
     default SuspendableEventStream<T> forgetful() {
         return new ForgetfulEventStream<>(this);
@@ -461,6 +612,35 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a suspendable event stream that, when suspended, reduces incoming
      * events by the given {@code reduction} function into one. The reduced
      * event is emitted from the returned stream upon resume.
+     *
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.reducible(lastStored_A_Event, mostRecent_A_EventEmitted -> {
+     *         lastStored_A_Event <= 4
+     *             ? mostRecent_A_EventEmitted
+     *             : lastStored_A_Event;
+     *     });
+     *     }
+     * </pre>
+     * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
+     * When B is suspended and A emits events (En) where {@code n} is the number of the event,
+     * B applies reduction(En-1, En). When B is no longer suspended, it emits {@code result}
+     * </p>
+     * <pre>
+     *     Time ---&gt;
+     *     A      :-1--2----4--1--5-----7------------6-------&gt;
+     *     B      :-1--2--|---Suspended---|5---------6-------&gt;
+     *     result :-------|-a--b--c-----d-|------------------&gt;
+     * </pre>
+     * then result's values are:
+     * <ul>
+     *     <li>a = 4 [reduction(2, 4) == 4]</li>
+     *     <li>b = 5 [reduction(4, 1) == 1]</li>
+     *     <li>c = 3 [reduction(1, 5) == 5]</li>
+     *     <li>d = 3 [reduction(5, 7) == 5]</li>
+     * </ul>
      *
      * <p>Note that {@link #forgetful()} is equivalent to
      * {@code reducible((a, b) -> b)}.

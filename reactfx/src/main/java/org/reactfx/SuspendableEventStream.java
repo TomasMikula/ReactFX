@@ -75,7 +75,9 @@ final class AccumulativeEventStream<T, A> extends SuspendableEventStreamBase<T, 
     }
 }
 
-
+/**
+ * See {@link EventStream#pausable()}
+ */
 final class PausableEventStream<T> extends SuspendableEventStreamBase<T, Deque<T>> {
 
     PausableEventStream(EventStream<T> source) {
@@ -124,7 +126,9 @@ abstract class AbstractReducibleEventStream<T> extends SuspendableEventStreamBas
     }
 }
 
-
+/**
+ * See {@link EventStream#reducible(BinaryOperator)}
+ */
 final class ReducibleEventStream<T> extends AbstractReducibleEventStream<T> {
 
     public ReducibleEventStream(
@@ -134,7 +138,9 @@ final class ReducibleEventStream<T> extends AbstractReducibleEventStream<T> {
     }
 }
 
-
+/**
+ * See {@link EventStream#forgetful()}
+ */
 final class ForgetfulEventStream<T> extends AbstractReducibleEventStream<T> {
 
     ForgetfulEventStream(EventStream<T> source) {

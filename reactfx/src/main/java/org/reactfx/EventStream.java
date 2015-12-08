@@ -416,10 +416,22 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Similar to {@link #emitOnEach(EventStream)}, but also includes the
-     * impulse in the emitted value. For example, if events are emitted in this
-     * order, [<i>i1, a, i2, b, c, i3, i4, d</i>], where <i>a, b, c, d</i> come
-     * from this stream and <i>i</i>s come from the {@code impulse} stream, then
-     * the returned stream emits [<i>(a, i2), (c, i3), (c, i4)</i>].
+     * impulse in the emitted value.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.emitOnEach(B);}
+     * </pre>
+     * <p>Returns C. When B emits an event, C emits A and B's most recent events..
+     * Only emits an event when both A and B have emitted at least one new event.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-a-------b---c------------------d-------&gt;
+     *     B :----1-----------2-----3-----4-----------&gt;
+     *     C :---[a,1]------[c,2]-----------[d,4]-----&gt;
+     * </pre>
      */
     default <I> EventStream<Tuple2<T, I>> emitBothOnEach(EventStream<I> impulse) {
         return new EmitBothOnEachStream<>(this, impulse);

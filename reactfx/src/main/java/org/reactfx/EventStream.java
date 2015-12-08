@@ -399,7 +399,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * </pre>
      *
      * <h2>Relationship to other EventStreams:</h2>
-     * <ol>
+     * <ul>
      *     <li>
      *         This stream does NOT emit A's most recent event multiple
      *         times whereas {@link #emitOnEach(EventStream)} does.
@@ -412,7 +412,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *         This stream does NOT emit A's event when A emits an event
      *         whereas {@link #repeatOn(EventStream)} does.
      *     </li>
-     * </ol>
+     * </ul>
      */
     default EventStream<T> emitOn(EventStream<?> impulse) {
         return new EmitOnStream<>(this, impulse);
@@ -439,7 +439,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * </pre>
      *
      * <h2>Relationship to other EventStreams:</h2>
-     * <ol>
+     * <ul>
      *     <li>
      *         This stream DOES emit A's most recent event multiple
      *         times whereas {@link #emitOn(EventStream)} does not.
@@ -452,7 +452,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *         This stream does not emit A's events when A emits an event
      *         whereas {@link #repeatOn(EventStream)} does.
      *     </li>
-     * </ol>
+     * </ul>
      */
     default EventStream<T> emitOnEach(EventStream<?> impulse) {
         return new EmitOnEachStream<>(this, impulse);
@@ -478,13 +478,13 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * </pre>
      *
      * <h2>Relationship to other EventStreams:</h2>
-     * <ol>
+     * <ul>
      *     <li>
      *         This stream emits both A and B's events whereas {@link #emitOn(EventStream)},
      *         {@link #emitOnEach(EventStream)}, and {@link #repeatOn(EventStream)}
      *         only emit A's event under specific circumstances.
      *     </li>
-     * </ol>
+     * </ul>
      */
     default <I> EventStream<Tuple2<T, I>> emitBothOnEach(EventStream<I> impulse) {
         return new EmitBothOnEachStream<>(this, impulse);
@@ -511,7 +511,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * </pre>
      *
      * <h2>Relationship to other EventStreams:</h2>
-     * <ol>
+     * <ul>
      *     <li>
      *         This stream emits A's events when A emits an event and
      *         it emits A's most recent event multiple times whereas
@@ -525,7 +525,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *         This stream only emits A's events whereas {@link #emitBothOnEach(EventStream)}
      *         emits both A and B's events as an event.
      *     </li>
-     * </ol>
+     * </ul>
      */
     default EventStream<T> repeatOn(EventStream<?> impulse) {
         return new RepeatOnStream<>(this, impulse);

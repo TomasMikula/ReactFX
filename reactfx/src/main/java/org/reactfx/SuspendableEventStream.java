@@ -136,7 +136,9 @@ final class ReducibleEventStream<T> extends AbstractReducibleEventStream<T> {
     }
 }
 
-
+/**
+ * See {@link EventStream#forgetful()}
+ */
 final class ForgetfulEventStream<T> extends AbstractReducibleEventStream<T> {
 
     ForgetfulEventStream(EventStream<T> source) {

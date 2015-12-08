@@ -1,6 +1,8 @@
 package org.reactfx;
 
-
+/**
+ * See {@link EventStream#emitOnEach(EventStream)}
+ */
 class EmitOnEachStream<T> extends EventStreamBase<T> {
     private final EventStream<T> source;
     private final EventStream<?> impulse;

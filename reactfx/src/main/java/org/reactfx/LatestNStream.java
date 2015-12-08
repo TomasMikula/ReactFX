@@ -6,6 +6,9 @@ import java.util.List;
 
 import org.reactfx.util.Lists;
 
+/**
+ * See {@link EventStream#latestN(int)}
+ */
 class LatestNStream<T> extends EventStreamBase<List<T>> {
     private final EventStream<T> source;
     private final int n;

@@ -297,6 +297,30 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a new event stream that, for each event <i>x</i> emitted from
      * this stream, obtains the event stream <i>f(x)</i> and keeps emitting its
      * events until the next event is emitted from this stream.
+     * For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = ...;
+     *     EventStream<Integer> C = ...;
+     *     EventStream<Integer> D = A.flatMap(intValue -> {
+     *         intValue < 4
+     *             ? B
+     *             : C
+     *     })
+     *     }
+     * </pre>
+     * <p>Returns D. When A emits an event that is less than 4, D will emit B's events.
+     * Otherwise, D will emit C's events. When A emits a new event, the stream whose events
+     * D will emit is re-determined.
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3---1--4--5--2--0---3--5---------&gt;
+     *        B :--4-7---8--7----4-----34---5--56--&gt;
+     *        C :----6---6----5---8----9---2---5---&gt;
+     *   Stream :-BBBBBBBCCCCCCBBBBBBBBBBCCCCCCCCC-&gt;
+     *        D :--4-7---6----5--4-----34--2---5---&gt;
+     * </pre>
      */
     default <U> EventStream<U> flatMap(Function<? super T, ? extends EventStream<U>> f) {
         return new FlatMapStream<>(this, f);

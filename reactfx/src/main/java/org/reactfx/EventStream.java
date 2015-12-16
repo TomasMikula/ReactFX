@@ -1143,7 +1143,39 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns an event stream that accumulates events emitted from this event
      * stream and emits the accumulated value every time this stream emits a
-     * value.
+     * value.For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<String> A = ...;
+     *     EventStream<String> B = A.accumulate(
+     *          // Unit
+     *          "Cheese",
+     *          // reduction
+     *          (lastStored_A_Event, mostRecent_A_EventEmitted) -> {
+     *             lastStored_A_Event.length() > mostRecent_A_EventEmitted
+     *                ? lastStored_A_Event.subString(0, mostRecent_A_EventEmitted.length())
+     *                : mostRecent_A_EventEmitted
+     *          }
+     *     );
+     *     }
+     * </pre>
+     * Returns B. The first time A emits an event, B emits the result of
+     * applying the reduction function: reduction(unit, mostRecent_A_EventEmitted).
+     * For every event emitted after that, B emits the result of applying the
+     * reduction function on those events.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-"Cake"--"Sugar"--"Oil"--"French Toast"---"Cookie"-----&gt;
+     *     B :--1---------2--------3------4--------------5------------&gt;
+     * </pre>
+     * where "#" is:
+     * <ul>
+     *     <li>1 = "Chee" ("Cheese" (6) > "Cake" (4) == true; "Cheese".subString(0, 4) == "Chee")</li>
+     *     <li>2 = "Sugar" ("Chee" (4) > "Sugar" (5) == false; "Sugar")</li>
+     *     <li>3 = "Sug" ("Sugar" (5) > "Oil" (3) == true); "Sugar".subString(0, 3) == "Sug")</li>
+     *     <li>4 = "French Toast" ("Sug" (3) > "French Toast" (12) == false; "French Toast")</li>
+     *     <li>5 = "French" ("French Toast" (12) > "Cookies" (6) == true; "French Toast".subString(0, 6) == "French")</li>
+     * </ul>
      * @param unit initial value of the accumulated value.
      * @param reduction function to add an event to the accumulated value.
      */

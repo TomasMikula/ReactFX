@@ -195,7 +195,19 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns an event stream that emits the given constant value every time
-     * this stream emits a value.
+     * this stream emits a value. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.supple(5);
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, B emits that the supplied value.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3--0--6--4-1--1---5-4-5--8--2-&gt;
+     *        B :-5--5--5--5-5--5---5-5-5--5--5-&gt;
+     * </pre>
      */
     default <U> EventStream<U> supply(U value) {
         return map(x -> value);

@@ -174,7 +174,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Returns a new event stream that emits repetitive events only once.
+     * Returns a new event stream that emits repetitive events only once. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.distinct();
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, B only emits that event if it's different from
+     * the previous event emitted by A.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3--3---3-4---4---4---5-4-5--5--5-&gt;
+     *        B :-3--------4-----------5-4-5-------&gt;
+     * </pre>
      */
     default EventStream<T> distinct() {
         return new DistinctStream<>(this);

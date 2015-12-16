@@ -2,7 +2,9 @@ package org.reactfx;
 
 import java.util.Objects;
 
-
+/**
+ * See {@link EventStream#distinct()}
+ */
 class DistinctStream<T> extends EventStreamBase<T> {
     static final Object NONE = new Object();
     private final EventStream<T> input;

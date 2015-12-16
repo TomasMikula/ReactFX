@@ -1159,10 +1159,9 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     );
      *     }
      * </pre>
-     * Returns B. The first time A emits an event, B emits the result of
-     * applying the reduction function: reduction(unit, mostRecent_A_EventEmitted).
-     * For every event emitted after that, B emits the result of applying the
-     * reduction function on those events.
+     * Returns B. When A emits an event, B emits the result of
+     * applying the reduction function on those events. When A emits its first
+     * event, B supplies Unit as the 'lastStored_A_Event'.
      * <pre>
      *     Time ---&gt;
      *     A :-"Cake"--"Sugar"--"Oil"--"French Toast"---"Cookie"-----&gt;

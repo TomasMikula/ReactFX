@@ -1156,7 +1156,47 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns an event stream that accumulates events emitted from this event
      * stream and emits the accumulated value every time this stream emits a
-     * value.
+     * value. For example, given
+     * <pre>
+     *     {@code
+     *     // assumes that A only emits String events that are 1 char long.
+     *     EventStream<String> A = ...;
+     *     EventStream<String> B = A.accumulate(
+     *          // reduction
+     *          (lastStored_A_Event, mostRecent_A_EventEmitted) -> {
+     *             mostRecent_A_EventEmitted.isVowel()
+     *                ? lastStored_A_Event + mostRecent_A_EventEmitted
+     *                : mostRecent_A_EventEmitted
+     *          },
+     *          // initial transformation
+     *          first_A_EvenEmitted ->
+     *             first_A_EventEmitted.isConsonant()
+     *                ? first_A_EventEmitted
+     *                : "M"
+     *     );
+     *     }
+     * </pre>
+     * Returns B. The first time A emits an event, B emits the result of
+     * applying the initial transformation function to that event. For every
+     * event emitted after that, B emits the result of applying the reduction
+     * function on those events.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-D--O---E---L---K---I--U---T-----&gt;
+     *     B :-1--2---3---4---5---6--7---8-----&gt;
+     * </pre>
+     * where "#" is:
+     * <ul>
+     *     <li>1 = "D" ("D" is a consonant)</li>
+     *     <li>2 = "DO" ("O" is a vowel)</li>
+     *     <li>3 = "DOE" ("E" is a vowel)</li>
+     *     <li>4 = "DOE" ("L" is a consonant)</li>
+     *     <li>5 = "DOE" ("K" is a consonant)</li>
+     *     <li>6 = "DOEI" ("I" is a vowel)</li>
+     *     <li>7 = "DOEIU" ("U" is a vowle)</li>
+     *     <li>8 = "DOEIU" ("T" is a consonant)</li>
+     * </ul>
+     *
      * @param reduction function to add an event to the accumulated value.
      * @param initialTransformation function to transform the first event from
      * this stream to an event that can be emitted from the returned stream.

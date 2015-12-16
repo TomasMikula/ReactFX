@@ -216,7 +216,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns a new event stream that applies the given function to every
-     * value emitted from this stream and emits the result.
+     * value emitted from this stream and emits the result. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.map(intValue -> intValue * 2);
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, the event is mapped by the function (in this case, it multiples
+     * A's emitted value by two) and B emits this mapped event.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3---1--4--5--2--0---3--7---&gt;
+     *        B :-6---2--8--10-4--0---6--14--&gt;
+     * </pre>
      */
     default <U> EventStream<U> map(Function<? super T, ? extends U> f) {
         return new MappedStream<>(this, f);

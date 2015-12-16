@@ -1143,7 +1143,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns an event stream that accumulates events emitted from this event
      * stream and emits the accumulated value every time this stream emits a
-     * value.For example, given
+     * value. For example, given
      * <pre>
      *     {@code
      *     EventStream<String> A = ...;
@@ -1170,11 +1170,11 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * </pre>
      * where "#" is:
      * <ul>
-     *     <li>1 = "Chee" ("Cheese" (6) > "Cake" (4) == true; "Cheese".subString(0, 4) == "Chee")</li>
-     *     <li>2 = "Sugar" ("Chee" (4) > "Sugar" (5) == false; "Sugar")</li>
-     *     <li>3 = "Sug" ("Sugar" (5) > "Oil" (3) == true); "Sugar".subString(0, 3) == "Sug")</li>
-     *     <li>4 = "French Toast" ("Sug" (3) > "French Toast" (12) == false; "French Toast")</li>
-     *     <li>5 = "French" ("French Toast" (12) > "Cookies" (6) == true; "French Toast".subString(0, 6) == "French")</li>
+     *     <li>1 = "Chee" ("Cheese" (6) &gt; "Cake" (4) == true; "Cheese".subString(0, 4) == "Chee")</li>
+     *     <li>2 = "Sugar" ("Chee" (4) &gt; "Sugar" (5) == false; "Sugar")</li>
+     *     <li>3 = "Sug" ("Sugar" (5) &gt; "Oil" (3) == true); "Sugar".subString(0, 3) == "Sug")</li>
+     *     <li>4 = "French Toast" ("Sug" (3) &gt; "French Toast" (12) == false; "French Toast")</li>
+     *     <li>5 = "French" ("French Toast" (12) &gt; "Cookies" (6) == true; "French Toast".subString(0, 6) == "French")</li>
      * </ul>
      * @param unit initial value of the accumulated value.
      * @param reduction function to add an event to the accumulated value.

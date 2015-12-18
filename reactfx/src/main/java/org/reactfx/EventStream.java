@@ -174,7 +174,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Returns a new event stream that emits repetitive events only once.
+     * Returns a new event stream that emits repetitive events only once. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.distinct();
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, B only emits that event if it's different from
+     * the previous event emitted by A.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3--3---3-4---4---4---5-4-5--5--5-&gt;
+     *        B :-3--------4-----------5-4-5-------&gt;
+     * </pre>
      */
     default EventStream<T> distinct() {
         return new DistinctStream<>(this);
@@ -182,7 +195,19 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns an event stream that emits the given constant value every time
-     * this stream emits a value.
+     * this stream emits a value. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.supple(5);
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, B emits that the supplied value.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3--0--6--4-1--1---5-4-5--8--2-&gt;
+     *        B :-5--5--5--5-5--5---5-5-5--5--5-&gt;
+     * </pre>
      */
     default <U> EventStream<U> supply(U value) {
         return map(x -> value);
@@ -216,7 +241,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
 
     /**
      * Returns a new event stream that applies the given function to every
-     * value emitted from this stream and emits the result.
+     * value emitted from this stream and emits the result. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = A.map(intValue -> intValue * 2);
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, the event is mapped by the function (in this case, it multiples
+     * A's emitted value by two) and B emits this mapped event.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3---1--4--5--2--0---3--7---&gt;
+     *        B :-6---2--8--10-4--0---6--14--&gt;
+     * </pre>
      */
     default <U> EventStream<U> map(Function<? super T, ? extends U> f) {
         return new MappedStream<>(this, f);
@@ -297,6 +335,30 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * Returns a new event stream that, for each event <i>x</i> emitted from
      * this stream, obtains the event stream <i>f(x)</i> and keeps emitting its
      * events until the next event is emitted from this stream.
+     * For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<Integer> A = ...;
+     *     EventStream<Integer> B = ...;
+     *     EventStream<Integer> C = ...;
+     *     EventStream<Integer> D = A.flatMap(intValue -> {
+     *         intValue < 4
+     *             ? B
+     *             : C
+     *     })
+     *     }
+     * </pre>
+     * <p>Returns D. When A emits an event that is less than 4, D will emit B's events.
+     * Otherwise, D will emit C's events. When A emits a new event, the stream whose events
+     * D will emit is re-determined.
+     * <pre>
+     *        Time ---&gt;
+     *        A :-3---1--4--5--2--0---3--5---------&gt;
+     *        B :--4-7---8--7----4-----34---5--56--&gt;
+     *        C :----6---6----5---8----9---2---5---&gt;
+     *   Stream :-BBBBBBBCCCCCCBBBBBBBBBBCCCCCCCCC-&gt;
+     *        D :--4-7---6----5--4-----34--2---5---&gt;
+     * </pre>
      */
     default <U> EventStream<U> flatMap(Function<? super T, ? extends EventStream<U>> f) {
         return new FlatMapStream<>(this, f);
@@ -1081,7 +1143,38 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns an event stream that accumulates events emitted from this event
      * stream and emits the accumulated value every time this stream emits a
-     * value.
+     * value. For example, given
+     * <pre>
+     *     {@code
+     *     EventStream<String> A = ...;
+     *     EventStream<String> B = A.accumulate(
+     *          // Unit
+     *          "Cheese",
+     *          // reduction
+     *          (lastStored_A_Event, mostRecent_A_EventEmitted) -> {
+     *             lastStored_A_Event.length() > mostRecent_A_EventEmitted
+     *                ? lastStored_A_Event.subString(0, mostRecent_A_EventEmitted.length())
+     *                : mostRecent_A_EventEmitted
+     *          }
+     *     );
+     *     }
+     * </pre>
+     * Returns B. When A emits an event, B emits the result of
+     * applying the reduction function on those events. When A emits its first
+     * event, B supplies Unit as the 'lastStored_A_Event'.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-"Cake"--"Sugar"--"Oil"--"French Toast"---"Cookie"-----&gt;
+     *     B :--1---------2--------3------4--------------5------------&gt;
+     * </pre>
+     * where "#" is:
+     * <ul>
+     *     <li>1 = "Chee" ("Cheese" (6) &gt; "Cake" (4) == true; "Cheese".subString(0, 4) == "Chee")</li>
+     *     <li>2 = "Sugar" ("Chee" (4) &gt; "Sugar" (5) == false; "Sugar")</li>
+     *     <li>3 = "Sug" ("Sugar" (5) &gt; "Oil" (3) == true); "Sugar".subString(0, 3) == "Sug")</li>
+     *     <li>4 = "French Toast" ("Sug" (3) &gt; "French Toast" (12) == false; "French Toast")</li>
+     *     <li>5 = "French" ("French Toast" (12) &gt; "Cookies" (6) == true; "French Toast".subString(0, 6) == "French")</li>
+     * </ul>
      * @param unit initial value of the accumulated value.
      * @param reduction function to add an event to the accumulated value.
      */
@@ -1094,7 +1187,47 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns an event stream that accumulates events emitted from this event
      * stream and emits the accumulated value every time this stream emits a
-     * value.
+     * value. For example, given
+     * <pre>
+     *     {@code
+     *     // assumes that A only emits String events that are 1 char long.
+     *     EventStream<String> A = ...;
+     *     EventStream<String> B = A.accumulate(
+     *          // reduction
+     *          (lastStored_A_Event, mostRecent_A_EventEmitted) -> {
+     *             mostRecent_A_EventEmitted.isVowel()
+     *                ? lastStored_A_Event + mostRecent_A_EventEmitted
+     *                : mostRecent_A_EventEmitted
+     *          },
+     *          // initial transformation
+     *          first_A_EvenEmitted ->
+     *             first_A_EventEmitted.isConsonant()
+     *                ? first_A_EventEmitted
+     *                : "M"
+     *     );
+     *     }
+     * </pre>
+     * Returns B. The first time A emits an event, B emits the result of
+     * applying the initial transformation function to that event. For every
+     * event emitted after that, B emits the result of applying the reduction
+     * function on those events.
+     * <pre>
+     *     Time ---&gt;
+     *     A :-D--O---E---L---K---I--U---T-----&gt;
+     *     B :-1--2---3---4---5---6--7---8-----&gt;
+     * </pre>
+     * where "#" is:
+     * <ul>
+     *     <li>1 = "D" ("D" is a consonant)</li>
+     *     <li>2 = "DO" ("O" is a vowel)</li>
+     *     <li>3 = "DOE" ("E" is a vowel)</li>
+     *     <li>4 = "DOE" ("L" is a consonant)</li>
+     *     <li>5 = "DOE" ("K" is a consonant)</li>
+     *     <li>6 = "DOEI" ("I" is a vowel)</li>
+     *     <li>7 = "DOEIU" ("U" is a vowle)</li>
+     *     <li>8 = "DOEIU" ("T" is a consonant)</li>
+     * </ul>
+     *
      * @param reduction function to add an event to the accumulated value.
      * @param initialTransformation function to transform the first event from
      * this stream to an event that can be emitted from the returned stream.

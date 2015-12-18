@@ -5,6 +5,9 @@ import java.util.function.Function;
 
 import javafx.concurrent.Task;
 
+/**
+ * See {@link EventStream#map(Function)}
+ */
 class MappedStream<T, U> extends EventStreamBase<U> {
     private final EventStream<T> input;
     private final Function<? super T, ? extends U> f;

@@ -202,7 +202,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     EventStream<Integer> B = A.supple(5);
      *     }
      * </pre>
-     * <p>Returns B. When A emits an event, B emits that the supplied value.</p>
+     * <p>Returns B. When A emits an event, B emits the supplied value.</p>
      * <pre>
      *        Time ---&gt;
      *        A :-3--0--6--4-1--1---5-4-5--8--2-&gt;
@@ -700,8 +700,8 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * <ul>
      *     <li>a = 4 [reduction(2, 4) == 4]</li>
      *     <li>b = 5 [reduction(4, 1) == 1]</li>
-     *     <li>c = 3 [reduction(1, 5) == 5]</li>
-     *     <li>d = 3 [reduction(5, 7) == 5]</li>
+     *     <li>c = 5 [reduction(1, 5) == 5]</li>
+     *     <li>d = 5 [reduction(5, 7) == 5]</li>
      * </ul>
      *
      * <p>Note that {@link #forgetful()} is equivalent to

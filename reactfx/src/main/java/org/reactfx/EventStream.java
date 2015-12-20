@@ -202,7 +202,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     EventStream<Integer> B = A.supple(5);
      *     }
      * </pre>
-     * <p>Returns B. When A emits an event, B emits that the supplied value.</p>
+     * <p>Returns B. When A emits an event, B emits the supplied value.</p>
      * <pre>
      *        Time ---&gt;
      *        A :-3--0--6--4-1--1---5-4-5--8--2-&gt;

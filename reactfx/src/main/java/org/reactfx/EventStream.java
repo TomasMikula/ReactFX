@@ -199,7 +199,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * <pre>
      *     {@code
      *     EventStream<Integer> A = ...;
-     *     EventStream<Integer> B = A.supple(5);
+     *     EventStream<Integer> B = A.supply(5);
      *     }
      * </pre>
      * <p>Returns B. When A emits an event, B emits the supplied value.</p>

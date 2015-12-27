@@ -2,13 +2,13 @@ package org.reactfx;
 
 import javafx.beans.value.ObservableValue;
 
-class SuspendWhenStream<T> extends EventStreamBase<T> {
+class SuspendedWhenStream<T> extends EventStreamBase<T> {
     private final SuspendableEventStream<T> source;
     private final ObservableValue<Boolean> condition;
 
     private Guard suspensionGuard = null;
 
-    public SuspendWhenStream(
+    public SuspendedWhenStream(
             SuspendableEventStream<T> source,
             ObservableValue<Boolean> condition) {
         this.source = source;

@@ -602,10 +602,10 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Shortcut for {@code suppressible().suspendWhen(condition)}.
+     * Shortcut for {@code suppressible().suspendedWhen(condition)}.
      */
     default EventStream<T> suppressWhen(ObservableValue<Boolean> condition) {
-        return suppressible().suspendWhen(condition);
+        return suppressible().suspendedWhen(condition);
     }
 
     /**
@@ -633,10 +633,10 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Shortcut for {@code pausable().suspendWhen(condition)}.
+     * Shortcut for {@code pausable().suspendedWhen(condition)}.
      */
     default EventStream<T> pauseWhen(ObservableValue<Boolean> condition) {
-        return pausable().suspendWhen(condition);
+        return pausable().suspendedWhen(condition);
     }
 
     /**
@@ -664,10 +664,10 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Shortcut for {@code forgetful().suspendWhen(condition)}.
+     * Shortcut for {@code forgetful().suspendedWhen(condition)}.
      */
     default EventStream<T> retainLatestWhen(ObservableValue<Boolean> condition) {
-        return forgetful().suspendWhen(condition);
+        return forgetful().suspendedWhen(condition);
     }
 
     /**
@@ -712,12 +712,12 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
-     * Shortcut for {@code reducible(reduction).suspendWhen(condition)}.
+     * Shortcut for {@code reducible(reduction).suspendedWhen(condition)}.
      */
     default EventStream<T> reduceWhen(
             ObservableValue<Boolean> condition,
             BinaryOperator<T> reduction) {
-        return reducible(reduction).suspendWhen(condition);
+        return reducible(reduction).suspendedWhen(condition);
     }
 
     /**
@@ -777,7 +777,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * <pre>
      * {@code
      * accumulative(initialTransformation, accumulation, size, head, tail)
-     *     .suspendWhen(condition)}
+     *     .suspendedWhen(condition)}
      * </pre>
      */
     default <A> EventStream<T> accumulateWhen(
@@ -788,7 +788,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
             Function<? super A, ? extends T> head,
             Function<? super A, ? extends A> tail) {
         return accumulative(initialTransformation, accumulation, size, head, tail)
-                .suspendWhen(condition);
+                .suspendedWhen(condition);
     }
 
     /**
@@ -841,7 +841,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * <pre>
      * {@code
      * accumulative(unit, accumulation, size, head, tail)
-     *     .suspendWhen(condition)}
+     *     .suspendedWhen(condition)}
      * </pre>
      */
     default <A> EventStream<T> accumulateWhen(
@@ -852,7 +852,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
             Function<? super A, ? extends T> head,
             Function<? super A, ? extends A> tail) {
         return accumulative(unit, accumulation, size, head, tail)
-                .suspendWhen(condition);
+                .suspendedWhen(condition);
     }
 
     /**

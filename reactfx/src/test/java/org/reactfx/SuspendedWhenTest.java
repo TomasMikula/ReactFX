@@ -13,7 +13,7 @@ import javafx.beans.property.SimpleObjectProperty;
 
 import org.junit.Test;
 
-public class SuspendWhenTest {
+public class SuspendedWhenTest {
 
     @Test
     public void test() {
@@ -21,7 +21,7 @@ public class SuspendWhenTest {
         BooleanProperty suspended = new SimpleBooleanProperty(true);
         List<Integer> emitted = new ArrayList<>();
         SuspendableEventStream<Integer> pausable = EventStreams.valuesOf(p).pausable();
-        Subscription sub = pausable.suspendWhen(suspended).subscribe(emitted::add);
+        Subscription sub = pausable.suspendedWhen(suspended).subscribe(emitted::add);
 
         // test that the stream started suspended
         assertEquals(Arrays.asList(), emitted);

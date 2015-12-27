@@ -24,8 +24,8 @@ public interface SuspendableEventStream<T> extends EventStream<T>, Suspendable {
      * {@code condition} is {@code true} and emits normally when
      * {@code condition} is {@code false}.
      */
-    default EventStream<T> suspendWhen(ObservableValue<Boolean> condition) {
-        return new SuspendWhenStream<>(this, condition);
+    default EventStream<T> suspendedWhen(ObservableValue<Boolean> condition) {
+        return new SuspendedWhenStream<>(this, condition);
     }
 }
 

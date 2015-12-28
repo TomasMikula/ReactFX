@@ -5,7 +5,7 @@ import javafx.beans.value.ObservableBooleanValue;
 import org.reactfx.value.ValBase;
 
 abstract class SuspendableBoolean extends ValBase<Boolean>
-implements ObservableBooleanValue, Suspendable {
+implements ObservableBooleanValue, Toggle {
 
     private int suspenders = 0;
 

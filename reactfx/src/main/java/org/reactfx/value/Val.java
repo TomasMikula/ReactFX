@@ -385,6 +385,8 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
 
     /**
      * Returns a {@linkplain Val} wrapper around {@linkplain ObservableValue}.
+     * If the argument is already a {@code Val<T>}, no wrapping occurs and the
+     * argument is returned as is.
      * Note that one rarely needs to use this method, because most of the time
      * one can use the appropriate static method directly to get the desired
      * result. For example, instead of

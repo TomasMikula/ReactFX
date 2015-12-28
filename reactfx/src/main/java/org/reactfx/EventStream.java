@@ -199,7 +199,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * <pre>
      *     {@code
      *     EventStream<Integer> A = ...;
-     *     EventStream<Integer> B = A.supple(5);
+     *     EventStream<Integer> B = A.supply(5);
      *     }
      * </pre>
      * <p>Returns B. When A emits an event, B emits the supplied value.</p>
@@ -216,6 +216,20 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     /**
      * Returns an event stream that emits a value obtained from the given
      * supplier every time this event stream emits a value.
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     SimpleIntegerProperty intProp = ...;
+     *     EventStream<Double> B = A.supply(intProp::get);
+     *     }
+     * </pre>
+     * <p>Returns B. When A emits an event, B emits the supplier's value.</p>
+     * <pre>
+     *        Time ---&gt;
+     *        A :----a----b------c----d----e----&gt;
+     *  intProp :-3--------6---------9----------&gt;
+     *        B :----3----3------6----9----9----&gt;
+     * </pre>
      */
     default <U> EventStream<U> supply(Supplier<? extends U> f) {
         return map(x -> f.get());

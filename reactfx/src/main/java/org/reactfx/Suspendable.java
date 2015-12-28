@@ -3,6 +3,8 @@ package org.reactfx;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
+import javafx.beans.value.ObservableValue;
+
 /**
  * Interface for objects that can be temporarily <em>suspended</em>, where the
  * definition of "suspended" depends on the context. For example, when an
@@ -69,6 +71,55 @@ public interface Suspendable {
      */
     default <U> U suspendWhile(Supplier<U> f) {
         try(Guard g = suspend()) { return f.get(); }
+    }
+
+    /**
+     * Arranges to suspend this {@linkplain Suspendable} whenever
+     * {@code condition} is {@code true}.
+     *
+     * @return A {@linkplain Subscription} that can be used to stop observing
+     * {@code condition} and stop suspending this {@linkplain Suspendable} based
+     * on {@code condition}. If at the time of unsubscribing the returned
+     * {@linkplain Subscription} this {@linkplain Suspendable} was suspended due
+     * to {@code condition} being {@code true}, it will be resumed.
+     */
+    default Subscription suspendWhen(ObservableValue<Boolean> condition) {
+        return new Subscription() {
+
+            private Guard suspensionGuard = null;
+
+            private final Subscription sub = EventStreams.valuesOf(condition)
+                    .subscribe(this::suspendSource)
+                    .and(this::resumeSource);
+
+            @Override
+            public void unsubscribe() {
+                sub.unsubscribe();
+            }
+
+            private void suspendSource(boolean suspend) {
+                if(suspend) {
+                    suspendSource();
+                } else {
+                    resumeSource();
+                }
+            }
+
+            private void suspendSource() {
+                if(suspensionGuard == null) {
+                    suspensionGuard = Suspendable.this.suspend();
+                }
+            }
+
+            private void resumeSource() {
+                if(suspensionGuard != null) {
+                    Guard toClose = suspensionGuard;
+                    suspensionGuard = null;
+                    toClose.close();
+                }
+            }
+
+        };
     }
 
 

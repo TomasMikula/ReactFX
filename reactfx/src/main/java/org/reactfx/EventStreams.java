@@ -27,6 +27,7 @@ import javafx.event.EventType;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuItem;
+import javafx.stage.Window;
 
 import org.reactfx.collection.ListModification;
 import org.reactfx.collection.LiveList;
@@ -272,6 +273,18 @@ public class EventStreams {
                 EventHandler<T> handler = this::emit;
                 menuItem.addEventHandler(eventType, handler);
                 return () -> menuItem.removeEventHandler(eventType, handler);
+            }
+        };
+    }
+
+    public static <T extends Event> EventStream<T> eventsOf(
+        Window window, EventType<T> eventType) {
+        return new EventStreamBase<T>() {
+            @Override
+            protected Subscription observeInputs() {
+                EventHandler<T> handler = this::emit;
+                window.addEventHandler(eventType, handler);
+                return () -> window.removeEventHandler(eventType, handler);
             }
         };
     }

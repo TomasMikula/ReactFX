@@ -366,9 +366,12 @@ public final class SparseList<E> {
             return;
         }
 
-        tree = tree.split(Stats::getSize, position).map((l, m, r) -> {
-            return join(l, m, new PresentSegment<>(elems), m, r);
-        });
+        PresentSegment<E> seg = new PresentSegment<>(elems);
+        tree = tree.caseEmpty().unify(
+                emptyTree -> emptyTree.append(seg),
+                nonEmptyTree -> nonEmptyTree.split(Stats::getSize, position).map((l, m, r) -> {
+                    return join(l, m, seg, m, r);
+                }));
     }
 
     public void insertVoid(int position, int length) {
@@ -379,9 +382,12 @@ public final class SparseList<E> {
             return;
         }
 
-        tree = tree.split(Stats::getSize, position).map((l, m, r) -> {
-            return join(l, m, new AbsentSegment<>(length), m, r);
-        });
+        AbsentSegment<E> seg = new AbsentSegment<>(length);
+        tree = tree.caseEmpty().unify(
+                emptyTree -> emptyTree.append(seg),
+                nonEmptyTree -> nonEmptyTree.split(Stats::getSize, position).map((l, m, r) -> {
+                    return join(l, m, seg, m, r);
+                }));
     }
 
     public void splice(int from, int to, Collection<? extends E> elems) {
@@ -412,11 +418,14 @@ public final class SparseList<E> {
     }
 
     private void spliceSegments(int from, int to, List<Segment<E>> middle) {
-        tree = tree.split(Stats::getSize, from).map((left, lSuffix, r) -> {
-            return tree.split(Stats::getSize, to).map((l, rPrefix, right) -> {
-                return join(left, lSuffix, middle, rPrefix, right);
-            });
-        });
+        Lists.checkRange(from, to, tree.getStats().getSize());
+        tree = tree.caseEmpty()
+                .mapLeft(emptyTree -> join(emptyTree, middle, emptyTree))
+                .toLeft(nonEmptyTree -> nonEmptyTree.split(Stats::getSize, from).map((left, lSuffix, r) -> {
+                    return nonEmptyTree.split(Stats::getSize, to).map((l, rPrefix, right) -> {
+                        return join(left, lSuffix, middle, rPrefix, right);
+                    });
+                }));
     }
 
     private FingerTree<Segment<E>, Stats> join(

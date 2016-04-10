@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.function.Function;
 
 public final class Lists {
@@ -329,30 +328,29 @@ class ListConcatenation<E> extends AbstractList<E> {
 
     @Override
     public List<E> subList(int from, int to) {
-        Tuple3<
-            FingerTree<List<E>, Integer>,
-            Optional<Tuple2<List<E>, Integer>>,
-            FingerTree<List<E>, Integer>
-        > lmr;
-        final FingerTree<List<E>, Integer> l;
-        Optional<Tuple2<List<E>, Integer>> m;
-        final FingerTree<List<E>, Integer> r;
-        FingerTree<List<E>, Integer> t;
+        Lists.checkRange(from, to, size());
+        return trim(to).drop(from);
+    }
 
-        lmr = ft.split(Integer::intValue, from);
-        m = lmr._2;
-        r = lmr._3;
+    private ListConcatenation<E> trim(int limit) {
+        return ft.caseEmpty().<ListConcatenation<E>>unify(
+                emptyTree -> this,
+                neTree -> neTree.split(Integer::intValue, limit).map((l, m, r) -> {
+                    FingerTree<List<E>, Integer> t = m
+                            .map(t2 -> t2.map((lst, i) -> l.append(lst.subList(0, i))))
+                            .orElse(l);
+                    return new ListConcatenation<>(t);
+                }));
+    }
 
-        t = m.<FingerTree<List<E>, Integer>>map(t2 -> t2.map(
-                (lst, i) -> r.prepend(lst.subList(i, lst.size())))).orElse(r);
-
-        lmr = t.split(Integer::intValue, to - from);
-        l = lmr._1;
-        m = lmr._2;
-
-        t = m.<FingerTree<List<E>, Integer>>map(t2 -> t2.map(
-                (lst, i) -> l.append(lst.subList(0, i)))).orElse(l);
-
-        return new ListConcatenation<>(t);
+    private ListConcatenation<E> drop(int n) {
+        return ft.caseEmpty().<ListConcatenation<E>>unify(
+                emptyTree -> this,
+                neTree -> neTree.split(Integer::intValue, n).map((l, m, r) -> {
+                    FingerTree<List<E>, Integer> t = m
+                            .map(t2 -> t2.map((lst, i) -> r.prepend(lst.subList(i, lst.size()))))
+                            .orElse(r);
+                    return new ListConcatenation<>(t);
+                }));
     }
 }

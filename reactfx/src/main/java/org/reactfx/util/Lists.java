@@ -323,7 +323,7 @@ class ListConcatenation<E> extends AbstractList<E> {
 
     @Override
     public int size() {
-        return ft.getStats();
+        return ft.getSummary();
     }
 
     @Override

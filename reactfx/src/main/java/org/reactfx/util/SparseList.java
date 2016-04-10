@@ -241,11 +241,11 @@ public final class SparseList<E> {
     }
 
     public int size() {
-        return tree.getStats().size;
+        return tree.getSummary().size;
     }
 
     public int getPresentCount() {
-        return tree.getStats().presentCount;
+        return tree.getSummary().presentCount;
     }
 
     public boolean isPresent(int index) {
@@ -269,7 +269,7 @@ public final class SparseList<E> {
 
     public int getPresentCountBefore(int position) {
         Lists.checkPosition(position, size());
-        return tree.getStatsBetween(
+        return tree.getSummaryBetween(
                 Stats::getSize,
                 0, position,
                 Segment::getStatsBetween).getPresentCount();
@@ -303,7 +303,7 @@ public final class SparseList<E> {
     }
 
     private int locationToPosition(int major, int minor) {
-        return tree.getStatsBetween(0, major).size + minor;
+        return tree.getSummaryBetween(0, major).size + minor;
     }
 
     public List<E> collect() {
@@ -418,7 +418,7 @@ public final class SparseList<E> {
     }
 
     private void spliceSegments(int from, int to, List<Segment<E>> middle) {
-        Lists.checkRange(from, to, tree.getStats().getSize());
+        Lists.checkRange(from, to, tree.getSummary().getSize());
         tree = tree.caseEmpty()
                 .mapLeft(emptyTree -> join(emptyTree, middle, emptyTree))
                 .toLeft(nonEmptyTree -> nonEmptyTree.split(Stats::getSize, from).map((left, lSuffix, r) -> {

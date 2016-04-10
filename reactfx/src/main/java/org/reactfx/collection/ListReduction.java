@@ -73,7 +73,7 @@ class ListReduction<T> extends ValBase<T> {
         if(isObservingInputs()) {
             assert tree != null;
             int max = tree.getLeafCount();
-            return tree.getStatsBetween(getFrom(max), getTo(max));
+            return tree.getSummaryBetween(getFrom(max), getTo(max));
         } else {
             assert tree == null;
             int max = input.size();

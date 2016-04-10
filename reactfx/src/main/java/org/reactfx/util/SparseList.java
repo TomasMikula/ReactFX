@@ -430,9 +430,9 @@ public final class SparseList<E> {
 
     private FingerTree<Segment<E>, Stats> join(
             FingerTree<Segment<E>, Stats> left,
-            Optional<Tuple2<Segment<E>, Integer>> lSuffix,
+            Tuple2<Segment<E>, Integer> lSuffix,
             Segment<E> middle,
-            Optional<Tuple2<Segment<E>, Integer>> rPrefix,
+            Tuple2<Segment<E>, Integer> rPrefix,
             FingerTree<Segment<E>, Stats> right) {
         return join(
                 left, lSuffix,
@@ -442,20 +442,20 @@ public final class SparseList<E> {
 
     private FingerTree<Segment<E>, Stats> join(
             FingerTree<Segment<E>, Stats> left,
-            Optional<Tuple2<Segment<E>, Integer>> lSuffix,
+            Tuple2<Segment<E>, Integer> lSuffix,
             List<Segment<E>> middle,
-            Optional<Tuple2<Segment<E>, Integer>> rPrefix,
+            Tuple2<Segment<E>, Integer> rPrefix,
             FingerTree<Segment<E>, Stats> right) {
 
-        if(lSuffix.isPresent()) {
-            Segment<E> lSeg = lSuffix.get()._1;
-            int lMax = lSuffix.get()._2;
+        Segment<E> lSeg = lSuffix._1;
+        int lMax = lSuffix._2;
+        if(lMax > 0) {
             left = left.append(lSeg.subSegment(0, lMax));
         }
 
-        if(rPrefix.isPresent()) {
-            Segment<E> rSeg = rPrefix.get()._1;
-            int rMin = rPrefix.get()._2;
+        Segment<E> rSeg = rPrefix._1;
+        int rMin = rPrefix._2;
+        if(rMin < rSeg.getLength()) {
             right = right.prepend(rSeg.subSegment(rMin, rSeg.getLength()));
         }
 

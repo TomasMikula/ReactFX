@@ -7,7 +7,6 @@ import static org.reactfx.util.Tuples.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
@@ -27,13 +26,13 @@ public abstract class FingerTree<T, S> {
             return right(this);
         }
 
-        public Tuple3<FingerTree<T, S>, Optional<Tuple2<T, Integer>>, FingerTree<T, S>> split(
+        public Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split(
                 ToIntFunction<? super S> metric, int position) {
             Lists.checkPosition(position, measure(metric));
             return split0(metric, position);
         }
 
-        abstract Tuple3<FingerTree<T, S>, Optional<Tuple2<T, Integer>>, FingerTree<T, S>> split0(
+        abstract Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
                 ToIntFunction<? super S> metric,
                 int position);
 
@@ -318,16 +317,10 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        Tuple3<FingerTree<T, S>, Optional<Tuple2<T, Integer>>, FingerTree<T, S>> split0(
+        Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
                 ToIntFunction<? super S> metric, int position) {
             assert Lists.isValidPosition(position, measure(metric));
-            if(position == 0) {
-                return t(empty(), Optional.empty(), this);
-            } else if(position == measure(metric)) {
-                return t(this, Optional.empty(), empty());
-            } else {
-                return t(empty(), Optional.of(t(data, position)), empty());
-            }
+            return t(empty(), t(data, position), empty());
         }
     }
 
@@ -666,21 +659,16 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        Tuple3<FingerTree<T, S>, Optional<Tuple2<T, Integer>>, FingerTree<T, S>> split0(
+        Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
                 ToIntFunction<? super S> metric, int position) {
             assert Lists.isValidPosition(position, measure(metric));
-            if(position == 0) {
-                return t(empty(), Optional.empty(), this);
-            } else {
-                return split0(metric, position, children);
-            }
+            return split0(metric, position, children);
         }
 
-        private Tuple3<FingerTree<T, S>, Optional<Tuple2<T, Integer>>, FingerTree<T, S>> split0(
+        private Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
                 ToIntFunction<? super S> metric,
                 int position,
                 LL<? extends NonEmptyFingerTree<T, S>> nodes) {
-            assert position > 0;
             NonEmptyFingerTree<T, S> head = nodes.head();
             int headLen = head.measure(metric);
             if(position <= headLen) {

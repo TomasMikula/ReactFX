@@ -336,9 +336,8 @@ class ListConcatenation<E> extends AbstractList<E> {
         return ft.caseEmpty().<ListConcatenation<E>>unify(
                 emptyTree -> this,
                 neTree -> neTree.split(Integer::intValue, limit).map((l, m, r) -> {
-                    FingerTree<List<E>, Integer> t = m
-                            .map(t2 -> t2.map((lst, i) -> l.append(lst.subList(0, i))))
-                            .orElse(l);
+                    FingerTree<List<E>, Integer> t =
+                            m.map((lst, i) -> i == 0 ? l : l.append(lst.subList(0, i)));
                     return new ListConcatenation<>(t);
                 }));
     }
@@ -347,9 +346,8 @@ class ListConcatenation<E> extends AbstractList<E> {
         return ft.caseEmpty().<ListConcatenation<E>>unify(
                 emptyTree -> this,
                 neTree -> neTree.split(Integer::intValue, n).map((l, m, r) -> {
-                    FingerTree<List<E>, Integer> t = m
-                            .map(t2 -> t2.map((lst, i) -> r.prepend(lst.subList(i, lst.size()))))
-                            .orElse(r);
+                    FingerTree<List<E>, Integer> t =
+                            m.map((lst, i) -> i == lst.size() ? r : r.prepend(lst.subList(i, lst.size())));
                     return new ListConcatenation<>(t);
                 }));
     }

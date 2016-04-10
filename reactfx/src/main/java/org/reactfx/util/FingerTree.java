@@ -9,11 +9,27 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.ToIntFunction;
 
 import org.reactfx.util.LL.Cons;
 
 public abstract class FingerTree<T, S> {
+
+    public static abstract class NonEmptyFingerTree<T, S> extends FingerTree<T, S> {
+
+        private NonEmptyFingerTree(MapToMonoid<? super T, S> monoid) {
+            super(monoid);
+        }
+
+        @Override
+        public <R> R caseEmpty(
+                Function<FingerTree<T, S>, R> ifEmpty,
+                Function<NonEmptyFingerTree<T, S>, R> ifNonEmpty) {
+            return ifNonEmpty.apply(this);
+        }
+
+    }
 
     private static final class Empty<T, S> extends FingerTree<T, S> {
 
@@ -24,6 +40,13 @@ public abstract class FingerTree<T, S> {
         @Override
         public String toString() {
             return"<emtpy tree>";
+        }
+
+        @Override
+        public <R> R caseEmpty(
+                Function<FingerTree<T, S>, R> ifEmpty,
+                Function<NonEmptyFingerTree<T, S>, R> ifNonEmpty) {
+            return ifEmpty.apply(this);
         }
 
         @Override
@@ -142,7 +165,7 @@ public abstract class FingerTree<T, S> {
         }
     }
 
-    private static class Leaf<T, S> extends FingerTree<T, S> {
+    private static class Leaf<T, S> extends NonEmptyFingerTree<T, S> {
         private final T data;
         private final S stats;
 
@@ -307,7 +330,7 @@ public abstract class FingerTree<T, S> {
         }
     }
 
-    private static final class Branch<T, S> extends FingerTree<T, S> {
+    private static final class Branch<T, S> extends NonEmptyFingerTree<T, S> {
         private final Cons<FingerTree<T, S>> children;
         private final int depth;
         private final int leafCount;
@@ -726,6 +749,9 @@ public abstract class FingerTree<T, S> {
     public abstract int getDepth();
     public abstract int getLeafCount();
     public abstract S getStats();
+    public abstract <R> R caseEmpty(
+            Function<FingerTree<T, S>, R> ifEmpty,
+            Function<NonEmptyFingerTree<T, S>, R> ifNonEmpty);
 
     public final boolean isEmpty() {
         return getDepth() == 0;

@@ -29,11 +29,23 @@ public abstract class FingerTree<T, S> {
         public Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split(
                 ToIntFunction<? super S> metric, int position) {
             Lists.checkPosition(position, measure(metric));
-            return split0(metric, position);
+            return split0((s, i) -> {
+                int n = metric.applyAsInt(s);
+                return i <= n ? left(i) : right(i - n);
+            }, position);
+        }
+
+        public Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split(
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+                int position) {
+            if(navigate.apply(getStats(), position).isRight()) {
+                throw new IndexOutOfBoundsException("Position " + position + " is out of bounds");
+            }
+            return split0(navigate, position);
         }
 
         abstract Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
-                ToIntFunction<? super S> metric,
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
                 int position);
 
         @Override
@@ -318,8 +330,8 @@ public abstract class FingerTree<T, S> {
 
         @Override
         Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
-                ToIntFunction<? super S> metric, int position) {
-            assert Lists.isValidPosition(position, measure(metric));
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate, int position) {
+            assert navigate.apply(stats,  position).isLeft();
             return t(empty(), t(data, position), empty());
         }
     }
@@ -660,24 +672,21 @@ public abstract class FingerTree<T, S> {
 
         @Override
         Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
-                ToIntFunction<? super S> metric, int position) {
-            assert Lists.isValidPosition(position, measure(metric));
-            return split0(metric, position, children);
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate, int position) {
+            assert navigate.apply(stats, position).isLeft();
+            return split0(navigate, position, children);
         }
 
         private Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split0(
-                ToIntFunction<? super S> metric,
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
                 int position,
                 LL<? extends NonEmptyFingerTree<T, S>> nodes) {
             NonEmptyFingerTree<T, S> head = nodes.head();
-            int headLen = head.measure(metric);
-            if(position <= headLen) {
-                return head.split0(metric, position)
-                        .map((l, m, r) -> t(l, m, concat(cons(r, nodes.tail()))));
-            } else {
-                return split0(metric, position - headLen, nodes.tail())
-                        .map((l, m, r) -> t(head.appendTree(l), m, r));
-            }
+            return navigate.apply(head.getStats(), position).unify(
+                    posInl -> head.split0(navigate, posInl)
+                                  .map((l, m, r) -> t(l, m, concat(cons(r, nodes.tail())))),
+                    posInr -> split0(navigate, posInr, nodes.tail())
+                                  .map((l, m, r) -> t(head.appendTree(l), m, r)));
         }
     }
 

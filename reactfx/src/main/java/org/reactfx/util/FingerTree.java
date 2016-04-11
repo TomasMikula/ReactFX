@@ -119,7 +119,7 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        <R> R fold(
+        public <R> R fold(
                 R acc,
                 BiFunction<? super R, ? super T, ? extends R> reduction) {
             return acc;
@@ -247,7 +247,7 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        <R> R fold(
+        public <R> R fold(
                 R acc,
                 BiFunction<? super R, ? super T, ? extends R> reduction) {
             return reduction.apply(acc, data);
@@ -458,7 +458,7 @@ public abstract class FingerTree<T, S> {
         }
 
         @Override
-        final <R> R fold(
+        public final <R> R fold(
                 R acc,
                 BiFunction<? super R, ? super T, ? extends R> reduction) {
             return children.fold(acc, (r, n) -> n.fold(r, reduction));
@@ -832,7 +832,7 @@ public abstract class FingerTree<T, S> {
             ToIntFunction<? super S> metric,
             int position);
 
-    abstract <R> R fold(
+    public abstract <R> R fold(
             R acc,
             BiFunction<? super R, ? super T, ? extends R> reduction);
 

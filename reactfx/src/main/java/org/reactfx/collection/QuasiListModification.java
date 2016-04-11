@@ -9,6 +9,13 @@ import javafx.collections.ObservableList;
 
 public interface QuasiListModification<E> extends ListModificationLike<E> {
 
+    static <E> QuasiListModification<E> create(
+            int position,
+            List<? extends E> removed,
+            int addedSize) {
+        return new QuasiListModificationImpl<>(position, removed, addedSize);
+    }
+
     static <E, F extends E> QuasiListModification<E> fromCurrentStateOf(
             Change<F> ch) {
         List<F> list = ch.getList();

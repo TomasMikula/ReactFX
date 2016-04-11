@@ -1,6 +1,5 @@
 package org.reactfx.util;
 
-public interface Monoid<T> {
-    T unit();
+public interface Semigroup<T> {
     T reduce(T left, T right);
 }

@@ -9,14 +9,14 @@ import javafx.scene.control.IndexRange;
 import org.reactfx.Subscription;
 import org.reactfx.util.Experimental;
 import org.reactfx.util.FingerTree;
-import org.reactfx.util.MapToMonoid;
+import org.reactfx.util.ToSemigroup;
 import org.reactfx.value.Val;
 import org.reactfx.value.ValBase;
 
 class ListReduction<T> extends ValBase<T> {
     private final ObservableList<T> input;
     private final BinaryOperator<T> reduction;
-    private final MapToMonoid<T, T> monoid;
+    private final ToSemigroup<T, T> monoid;
 
     private FingerTree<T, T> tree = null;
 
@@ -25,16 +25,11 @@ class ListReduction<T> extends ValBase<T> {
             BinaryOperator<T> reduction) {
         this.input = input;
         this.reduction = reduction;
-        monoid = new MapToMonoid<T, T>() {
+        monoid = new ToSemigroup<T, T>() {
 
             @Override
             public T apply(T t) {
                 return t;
-            }
-
-            @Override
-            public T unit() {
-                return null;
             }
 
             @Override
@@ -73,7 +68,7 @@ class ListReduction<T> extends ValBase<T> {
         if(isObservingInputs()) {
             assert tree != null;
             int max = tree.getLeafCount();
-            return tree.getSummaryBetween(getFrom(max), getTo(max));
+            return tree.getSummaryBetween(getFrom(max), getTo(max)).orElse(null);
         } else {
             assert tree == null;
             int max = input.size();

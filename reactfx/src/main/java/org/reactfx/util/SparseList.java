@@ -209,13 +209,8 @@ public final class SparseList<E> {
         int getPresentCount() { return presentCount; }
     }
 
-    private static final MapToMonoid<Segment<?>, Stats> SEGMENT_STATS =
-            new MapToMonoid<Segment<?>, Stats>() {
-
-        @Override
-        public Stats unit() {
-            return Stats.ZERO;
-        }
+    private static final ToSemigroup<Segment<?>, Stats> SEGMENT_STATS =
+            new ToSemigroup<Segment<?>, Stats>() {
 
         @Override
         public Stats reduce(Stats left, Stats right) {
@@ -241,11 +236,11 @@ public final class SparseList<E> {
     }
 
     public int size() {
-        return tree.getSummary().size;
+        return tree.getSummary(Stats.ZERO).size;
     }
 
     public int getPresentCount() {
-        return tree.getSummary().presentCount;
+        return tree.getSummary(Stats.ZERO).presentCount;
     }
 
     public boolean isPresent(int index) {
@@ -272,7 +267,7 @@ public final class SparseList<E> {
         return tree.getSummaryBetween(
                 Stats::getSize,
                 0, position,
-                Segment::getStatsBetween).getPresentCount();
+                Segment::getStatsBetween).orElse(Stats.ZERO).getPresentCount();
     }
 
     public int getPresentCountAfter(int position) {
@@ -303,7 +298,7 @@ public final class SparseList<E> {
     }
 
     private int locationToPosition(int major, int minor) {
-        return tree.getSummaryBetween(0, major).size + minor;
+        return tree.getSummaryBetween(0, major).orElse(Stats.ZERO).size + minor;
     }
 
     public List<E> collect() {
@@ -418,7 +413,7 @@ public final class SparseList<E> {
     }
 
     private void spliceSegments(int from, int to, List<Segment<E>> middle) {
-        Lists.checkRange(from, to, tree.getSummary().getSize());
+        Lists.checkRange(from, to, tree.getSummary(Stats.ZERO).getSize());
         tree = tree.caseEmpty()
                 .mapLeft(emptyTree -> join(emptyTree, middle, emptyTree))
                 .toLeft(nonEmptyTree -> nonEmptyTree.split(Stats::getSize, from).map((left, lSuffix, r) -> {

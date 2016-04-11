@@ -275,17 +275,12 @@ class ConcatView<E> extends AbstractList<E> {
 
 class ListConcatenation<E> extends AbstractList<E> {
 
-    private static final MapToMonoid<List<?>, Integer> LIST_SIZE_MONOID =
-            new MapToMonoid<List<?>, Integer>() {
+    private static final ToSemigroup<List<?>, Integer> LIST_SIZE_MONOID =
+            new ToSemigroup<List<?>, Integer>() {
 
                 @Override
                 public Integer apply(List<?> t) {
                     return t.size();
-                }
-
-                @Override
-                public Integer unit() {
-                    return 0;
                 }
 
                 @Override
@@ -323,7 +318,7 @@ class ListConcatenation<E> extends AbstractList<E> {
 
     @Override
     public int size() {
-        return ft.getSummary();
+        return ft.getSummary(0);
     }
 
     @Override

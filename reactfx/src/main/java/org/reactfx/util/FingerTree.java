@@ -29,6 +29,13 @@ public abstract class FingerTree<T, S> {
 
         public abstract S getSummary();
 
+        public Tuple3<FingerTree<T, S>, T, FingerTree<T, S>> splitAt(int leaf) {
+            Lists.checkIndex(leaf, getLeafCount());
+            return split0(leaf).map((l, r0) ->
+                   r0.split0(1).map((m, r) ->
+                           t(l, m.getLeaf0(0), r)));
+        }
+
         public Tuple3<FingerTree<T, S>, Tuple2<T, Integer>, FingerTree<T, S>> split(
                 ToIntFunction<? super S> metric, int position) {
             Lists.checkPosition(position, measure(metric));

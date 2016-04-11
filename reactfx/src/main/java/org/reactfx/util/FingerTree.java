@@ -30,6 +30,16 @@ public abstract class FingerTree<T, S> {
         public abstract S getSummary();
 
         @Override
+        public BiIndex locate(
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+                int position) {
+            if(navigate.apply(getSummary(), position).isRight()) {
+                throw new IndexOutOfBoundsException("Position " + position + " is out of bounds");
+            }
+            return locate0(navigate, position);
+        }
+
+        @Override
         public BiIndex locateProgressively(
                 ToIntFunction<? super S> metric,
                 int position) {
@@ -69,6 +79,10 @@ public abstract class FingerTree<T, S> {
             }
             return split0(navigate, position);
         }
+
+        abstract BiIndex locate0(
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+                int position);
 
         abstract BiIndex locateProgressively0(
                 ToIntFunction<? super S> metric,
@@ -359,6 +373,15 @@ public abstract class FingerTree<T, S> {
                 BiFunction<? super S, Integer, Either<Integer, Integer>> navigate, int position) {
             assert navigate.apply(summary,  position).isLeft();
             return t(empty(), t(data, position), empty());
+        }
+
+        @Override
+        BiIndex locate0(
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+                int position) {
+            return navigate.apply(summary,  position).unify(
+                    inl -> new BiIndex(0, inl),
+                    inr -> { throw new AssertionError("Unreachable code"); });
         }
     }
 
@@ -717,6 +740,25 @@ public abstract class FingerTree<T, S> {
                     posInr -> split0(navigate, posInr, nodes.tail())
                                   .map((l, m, r) -> t(head.appendTree(l), m, r)));
         }
+
+        @Override
+        BiIndex locate0(
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+                int position) {
+            assert navigate.apply(summary, position).isLeft();
+            return locate0(navigate, position, children);
+        }
+
+        private BiIndex locate0(
+                BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+                int position,
+                LL<? extends NonEmptyFingerTree<T, S>> nodes) {
+            NonEmptyFingerTree<T, S> head = nodes.head();
+            return navigate.apply(head.getSummary(), position).unify(
+                    posInl -> head.locate0(navigate, posInl),
+                    posInr -> locate0(navigate, posInr, nodes.tail())
+                                  .adjustMajor(head.getLeafCount()));
+        }
     }
 
     public static <T, S> FingerTree<T, S> empty(
@@ -821,13 +863,22 @@ public abstract class FingerTree<T, S> {
 
     abstract NonEmptyFingerTree<T, S> updateLeaf0(int index, T data);
 
+    public BiIndex locate(
+            BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
+            int position) {
+
+        return caseEmpty().unify(
+                emptyTree -> { throw new IndexOutOfBoundsException("no leafs to locate in"); },
+                neTree -> { throw new AssertionError("This method must be overridden in non-empty tree"); });
+    }
+
     public BiIndex locateProgressively(
             ToIntFunction<? super S> metric,
             int position) {
 
         return caseEmpty().unify(
                 emptyTree -> { throw new IndexOutOfBoundsException("no leafs to locate in"); },
-                neTree -> neTree.locateProgressively(metric, position));
+                neTree -> { throw new AssertionError("This method must be overridden in non-empty tree"); });
     }
 
     public BiIndex locateRegressively(
@@ -836,7 +887,7 @@ public abstract class FingerTree<T, S> {
 
         return caseEmpty().unify(
                 emptyTree -> { throw new IndexOutOfBoundsException("no leafs to locate in"); },
-                neTree -> neTree.locateRegressively(metric, position));
+                neTree -> { throw new AssertionError("This method must be overridden in non-empty tree"); });
     }
 
     public abstract <R> R fold(

@@ -82,6 +82,11 @@ public abstract class FingerTree<T, S> {
             return splitAt(loc.major).map((l, m, r) -> t(l, t(m, loc.minor), r));
         }
 
+        @Override
+        public NonEmptyFingerTree<T, S> join(FingerTree<T, S> rightTree) {
+            return appendTree(rightTree);
+        }
+
         final NonEmptyFingerTree<T, S> appendTree(FingerTree<T, S> right) {
             if(this.getDepth() >= right.getDepth()) {
                 return appendLte(right).unify(
@@ -144,6 +149,11 @@ public abstract class FingerTree<T, S> {
         public
         int getLeafCount() {
             return 0;
+        }
+
+        @Override
+        public FingerTree<T, S> join(FingerTree<T, S> rightTree) {
+            return rightTree;
         }
 
         @Override
@@ -964,12 +974,7 @@ public abstract class FingerTree<T, S> {
                 .map((l, r) -> l.join(leaf(data)).join(r));
     }
 
-    public FingerTree<T, S> join(FingerTree<T, S> rightTree) {
-        return caseEmpty().unify(
-                emptyTree -> rightTree,
-                neTree -> neTree.appendTree(rightTree));
-    }
-
+    public abstract FingerTree<T, S> join(FingerTree<T, S> rightTree);
 
     public NonEmptyFingerTree<T, S> append(T data) {
         return leaf(data).prependTree(this);

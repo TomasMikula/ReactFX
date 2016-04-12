@@ -6,6 +6,7 @@ import static org.reactfx.util.Tuples.*;
 
 import java.util.AbstractList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -108,6 +109,8 @@ public abstract class FingerTree<T, S> {
             }
         }
 
+        abstract List<T> subList(int from, int to);
+
         abstract BiIndex locate0(
                 BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
                 int position);
@@ -155,6 +158,11 @@ public abstract class FingerTree<T, S> {
         @Override
         public FingerTree<T, S> join(FingerTree<T, S> rightTree) {
             return rightTree;
+        }
+
+        @Override
+        public List<T> asList() {
+            return Collections.emptyList();
         }
 
         @Override
@@ -251,6 +259,18 @@ public abstract class FingerTree<T, S> {
         @Override
         public int getLeafCount() {
             return 1;
+        }
+
+        @Override
+        public List<T> asList() {
+            return Collections.singletonList(data);
+        }
+
+        @Override
+        List<T> subList(int from, int to) {
+            return from == to
+                ? Collections.emptyList()
+                : Collections.singletonList(data);
         }
 
         @Override
@@ -424,6 +444,52 @@ public abstract class FingerTree<T, S> {
         @Override
         public int getLeafCount() {
             return leafCount;
+        }
+
+        @Override
+        public List<T> asList()  {
+            return subList0(0, leafCount);
+        }
+
+        @Override
+        List<T> subList(int from, int to) {
+            NonEmptyFingerTree<T, S> ch1 = children.head();
+            int n1 = ch1.getLeafCount();
+            if(to <= n1) {
+                return ch1.subList(from, to);
+            } else if(from >= n1) {
+                LL<? extends NonEmptyFingerTree<T, S>> tail = children.tail();
+                NonEmptyFingerTree<T, S> ch2 = tail.head();
+                int n2 = ch2.getLeafCount();
+                if(to <= n1 + n2) {
+                    return ch2.subList(from - n1, to - n1);
+                } else if(from >= n1 + n2) {
+                    return tail.tail().head().subList(from - n1 - n2, to - n1 - n2);
+                }
+            }
+            return subList0(from, to);
+        }
+
+        private List<T> subList0(int from, int to) {
+            return new AbstractList<T>() {
+
+                @Override
+                public T get(int index) {
+                    Lists.checkIndex(index, to - from);
+                    return getLeaf(from + index);
+                }
+
+                @Override
+                public int size() {
+                    return to - from;
+                }
+
+                @Override
+                public List<T> subList(int start, int end) {
+                    Lists.checkRange(start, end, to - from);
+                    return Branch.this.subList(from + start, from + end);
+                }
+            };
         }
 
         @Override
@@ -985,20 +1051,7 @@ public abstract class FingerTree<T, S> {
         return leaf(data).appendTree(this);
     }
 
-    public List<T> asList() {
-        return new AbstractList<T>() {
-
-            @Override
-            public T get(int index) {
-                return getLeaf(index);
-            }
-
-            @Override
-            public int size() {
-                return getLeafCount();
-            }
-        };
-    }
+    public abstract List<T> asList();
 
     abstract T getData(); // valid for leafs only
 

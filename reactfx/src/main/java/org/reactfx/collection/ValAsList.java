@@ -6,7 +6,7 @@ import org.reactfx.Subscription;
 import org.reactfx.util.Lists;
 import org.reactfx.value.Val;
 
-class ValAsList<T> extends LiveListBase<T> implements ReadOnlyLiveListImpl<T> {
+class ValAsList<T> extends LiveListBase<T> implements UnmodifiableByDefaultLiveList<T> {
     private final ObservableValue<T> underlying;
 
     ValAsList(ObservableValue<T> underlying) {

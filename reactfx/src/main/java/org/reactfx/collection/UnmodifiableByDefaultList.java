@@ -3,9 +3,10 @@ package org.reactfx.collection;
 import java.util.Collection;
 
 /**
- * Plain boilerplate, because java.util.List does not have default methods.
+ * Trait to be mixed into implementations of unmodifiable lists.
+ * Provides default implementations of mutating list methods.
  */
-interface ReadOnlyListImpl<E> extends AccessorListMethods<E> {
+public interface UnmodifiableByDefaultList<E> extends AccessorListMethods<E> {
 
     @Override
     default E set(int index, E element) {

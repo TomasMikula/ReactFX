@@ -25,11 +25,11 @@ public interface MemoizationList<E> extends LiveList<E> {
 
 class MemoizationListImpl<E>
 extends LiveListBase<E>
-implements MemoizationList<E>, ReadOnlyLiveListImpl<E> {
+implements MemoizationList<E>, UnmodifiableByDefaultLiveList<E> {
 
     private class MemoizedView
     extends LiveListBase<E>
-    implements ReadOnlyLiveListImpl<E> {
+    implements UnmodifiableByDefaultLiveList<E> {
 
         @Override
         protected Subscription observeInputs() {

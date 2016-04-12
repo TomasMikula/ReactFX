@@ -4,7 +4,12 @@ import java.util.Collection;
 
 import javafx.collections.ObservableList;
 
-interface ReadOnlyLiveListImpl<E> extends ObservableList<E>, ReadOnlyListImpl<E> {
+/**
+ * Trait to be mixed into implementations of unmodifiable {@link LiveList}s.
+ * Provides default implementations of mutating list methods.
+ */
+public interface UnmodifiableByDefaultLiveList<E>
+extends ObservableList<E>, UnmodifiableByDefaultList<E> {
 
     @Override
     default boolean addAll(@SuppressWarnings("unchecked") E... elems) {

@@ -4,6 +4,7 @@ import static org.reactfx.util.Either.*;
 import static org.reactfx.util.LL.*;
 import static org.reactfx.util.Tuples.*;
 
+import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -982,6 +983,21 @@ public abstract class FingerTree<T, S> {
 
     public NonEmptyFingerTree<T, S> prepend(T data) {
         return leaf(data).appendTree(this);
+    }
+
+    public List<T> asList() {
+        return new AbstractList<T>() {
+
+            @Override
+            public T get(int index) {
+                return getLeaf(index);
+            }
+
+            @Override
+            public int size() {
+                return getLeafCount();
+            }
+        };
     }
 
     abstract T getData(); // valid for leafs only

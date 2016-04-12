@@ -707,6 +707,23 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         };
     }
 
+    static <T> Val<T> create(
+            Supplier<? extends T> computeValue,
+            EventStream<?> invalidations) {
+        return new ValBase<T>() {
+
+            @Override
+            protected Subscription connect() {
+                return invalidations.subscribe(x -> invalidate());
+            }
+
+            @Override
+            protected T computeValue() {
+                return computeValue.get();
+            }
+        };
+    }
+
     /**
      * Returns a constant {@linkplain Val} that holds the given value.
      * The value never changes and no notifications are ever produced.

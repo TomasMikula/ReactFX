@@ -39,14 +39,28 @@ public interface QuasiListModification<E> extends ListModificationLike<E> {
     static <E> ListModification<E> instantiate(
             QuasiListModification<? extends E> template,
             ObservableList<E> list) {
-        return new ListModificationImpl<>(template, list);
+        return new ListModificationImpl<>(
+                template.getFrom(),
+                template.getRemoved(),
+                template.getAddedSize(),
+                list);
     }
 
     static <E> MaterializedListModification<E> materialize(
             QuasiListModification<? extends E> template,
             ObservableList<E> list) {
-        return new MaterializedListModificationImpl<>(
-                template, list.subList(template.getFrom(), template.getTo()));
+        return MaterializedListModification.create(
+                template.getFrom(),
+                template.getRemoved(),
+                new ArrayList<>(list.subList(template.getFrom(), template.getTo())));
+    }
+
+    default ListModification<E> instantiate(ObservableList<E> list) {
+        return instantiate(this, list);
+    }
+
+    default MaterializedListModification<E> materialize(ObservableList<E> list) {
+        return materialize(this, list);
     }
 
     default QuasiListChange<E> asListChange() {

@@ -64,30 +64,3 @@ interface ListModificationLike<E> {
      */
     List<? extends E> getRemoved();
 }
-
-abstract class ListModificationBase<E> implements ListModificationLike<E> {
-    private final QuasiListModification<? extends E> template;
-
-    ListModificationBase(QuasiListModification<? extends E> template) {
-        this.template = template;
-    }
-
-    @Override
-    public int getFrom() {
-        return template.getFrom();
-    }
-
-    @Override
-    public List<? extends E> getRemoved() {
-        return template.getRemoved();
-    }
-
-    @Override
-    public int getAddedSize() {
-        return template.getAddedSize();
-    }
-
-    QuasiListModification<? extends E> getTemplate() {
-        return template;
-    }
-}

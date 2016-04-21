@@ -814,20 +814,27 @@ public abstract class FingerTree<T, S> {
         return new Empty<>(statisticsProvider);
     }
 
+    public static <T> FingerTree<T, Void> mkTree(List<? extends T> items) {
+        return mkTree(items, new ToSemigroup<T, Void>() {
+            @Override public Void apply(T t) { return null; }
+            @Override public Void reduce(Void left, Void right) { return null; }
+        });
+    }
+
     public static <T, S> FingerTree<T, S> mkTree(
             List<? extends T> initialItems,
-            ToSemigroup<? super T, S> statisticsProvider) {
+            ToSemigroup<? super T, S> summaryProvider) {
         if(initialItems.isEmpty()) {
-            return new Empty<>(statisticsProvider);
+            return new Empty<>(summaryProvider);
         }
         List<NonEmptyFingerTree<T, S>> leafs = new ArrayList<>(initialItems.size());
         for(T item: initialItems) {
-            leafs.add(new Leaf<T, S>(statisticsProvider, item));
+            leafs.add(new Leaf<T, S>(summaryProvider, item));
         }
-        return mkTree(leafs);
+        return mkTree0(leafs);
     }
 
-    private static <T, S> FingerTree<T, S> mkTree(List<NonEmptyFingerTree<T, S>> trees) {
+    private static <T, S> FingerTree<T, S> mkTree0(List<NonEmptyFingerTree<T, S>> trees) {
         while(trees.size() > 1) {
             for(int i = 0; i < trees.size(); ++i) {
                 if(trees.size() - i >= 5 || trees.size() - i == 3) {

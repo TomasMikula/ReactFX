@@ -93,7 +93,7 @@ public abstract class FingerTree<T, S> {
             if(this.getDepth() >= right.getDepth()) {
                 return appendLte(right).unify(
                         Function.identity(),
-                        two -> two.map(this::branch));
+                        two -> two.map(FingerTree::branch));
             } else {
                 return ((NonEmptyFingerTree<T, S>) right).prependTree(this);
             }
@@ -103,7 +103,7 @@ public abstract class FingerTree<T, S> {
             if(this.getDepth() >= left.getDepth()) {
                 return prependLte(left).unify(
                         Function.identity(),
-                        two -> two.map(this::branch));
+                        two -> two.map(FingerTree::branch));
             } else {
                 return ((NonEmptyFingerTree<T, S>) left).appendTree(this);
             }
@@ -415,10 +415,8 @@ public abstract class FingerTree<T, S> {
         private final int leafCount;
         private final S summary;
 
-        private Branch(
-                ToSemigroup<? super T, S> semigroup,
-                Cons<NonEmptyFingerTree<T, S>> children) {
-            super(semigroup);
+        private Branch(Cons<NonEmptyFingerTree<T, S>> children) {
+            super(children.head().semigroup);
             assert children.size() == 2 || children.size() == 3;
             FingerTree<T, S> head = children.head();
             int headDepth = head.getDepth();
@@ -741,7 +739,7 @@ public abstract class FingerTree<T, S> {
                 return children.mapFirst3((left, middle, right) -> {
                     return right.appendLte(suffix)
                             .mapLeft(r -> branch(left, middle, r))
-                            .mapRight(mr -> t(branch(left, middle), mr.map(this::branch)));
+                            .mapRight(mr -> t(branch(left, middle), mr.map(FingerTree::branch)));
                 });
             }
         }
@@ -763,7 +761,7 @@ public abstract class FingerTree<T, S> {
                 return children.mapFirst3((left, middle, right) -> {
                     return left.prependLte(prefix)
                             .mapLeft(l -> branch(l, middle, right))
-                            .mapRight(lm -> t(lm.map(this::branch), branch(middle, right)));
+                            .mapRight(lm -> t(lm.map(FingerTree::branch), branch(middle, right)));
                 });
             }
         }
@@ -837,19 +835,34 @@ public abstract class FingerTree<T, S> {
                     NonEmptyFingerTree<T, S> t1 = trees.get(i);
                     NonEmptyFingerTree<T, S> t2 = trees.get(i + 1);
                     NonEmptyFingerTree<T, S> t3 = trees.get(i + 2);
-                    Branch<T, S> branch = t1.branch(t1, t2, t3);
+                    Branch<T, S> branch = branch(t1, t2, t3);
                     trees.set(i, branch);
                     trees.subList(i + 1, i + 3).clear();
                 } else { // (trees.size() - i) is 4 or 2
                     NonEmptyFingerTree<T, S> t1 = trees.get(i);
                     NonEmptyFingerTree<T, S> t2 = trees.get(i + 1);
-                    Branch<T, S> b = t1.branch(t1, t2);
+                    Branch<T, S> b = branch(t1, t2);
                     trees.set(i, b);
                     trees.remove(i + 1);
                 }
             }
         }
         return trees.get(0);
+    }
+
+    private static <T, S> Branch<T, S> branch(NonEmptyFingerTree<T, S> left, NonEmptyFingerTree<T, S> right) {
+        return branch(LL.of(left, right));
+    }
+
+    private static <T, S> Branch<T, S> branch(
+            NonEmptyFingerTree<T, S> left,
+            NonEmptyFingerTree<T, S> middle,
+            NonEmptyFingerTree<T, S> right) {
+        return branch(LL.of(left, middle, right));
+    }
+
+    private static <T, S> Branch<T, S> branch(Cons<NonEmptyFingerTree<T, S>> children) {
+        return new Branch<>(children);
     }
 
     private static <T, S> FingerTree<T, S> concat(
@@ -1061,21 +1074,6 @@ public abstract class FingerTree<T, S> {
 
     Leaf<T, S> leaf(T data) {
         return new Leaf<>(semigroup, data);
-    }
-
-    Branch<T, S> branch(NonEmptyFingerTree<T, S> left, NonEmptyFingerTree<T, S> right) {
-        return branch(LL.of(left, right));
-    }
-
-    Branch<T, S> branch(
-            NonEmptyFingerTree<T, S> left,
-            NonEmptyFingerTree<T, S> middle,
-            NonEmptyFingerTree<T, S> right) {
-        return branch(LL.of(left, middle, right));
-    }
-
-    Branch<T, S> branch(Cons<NonEmptyFingerTree<T, S>> children) {
-        return new Branch<>(semigroup, children);
     }
 
     final int measure(ToIntFunction<? super S> metric) {

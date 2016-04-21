@@ -109,8 +109,6 @@ public abstract class FingerTree<T, S> {
             }
         }
 
-        abstract List<T> subList(int from, int to);
-
         abstract BiIndex locate0(
                 BiFunction<? super S, Integer, Either<Integer, Integer>> navigate,
                 int position);
@@ -264,13 +262,6 @@ public abstract class FingerTree<T, S> {
         @Override
         public List<T> asList() {
             return Collections.singletonList(data);
-        }
-
-        @Override
-        List<T> subList(int from, int to) {
-            return from == to
-                ? Collections.emptyList()
-                : Collections.singletonList(data);
         }
 
         @Override
@@ -449,23 +440,31 @@ public abstract class FingerTree<T, S> {
             return subList0(0, leafCount);
         }
 
-        @Override
-        List<T> subList(int from, int to) {
-            NonEmptyFingerTree<T, S> ch1 = children.head();
-            int n1 = ch1.getLeafCount();
-            if(to <= n1) {
-                return ch1.subList(from, to);
-            } else if(from >= n1) {
-                LL<? extends NonEmptyFingerTree<T, S>> tail = children.tail();
-                NonEmptyFingerTree<T, S> ch2 = tail.head();
-                int n2 = ch2.getLeafCount();
-                if(to <= n1 + n2) {
-                    return ch2.subList(from - n1, to - n1);
-                } else if(from >= n1 + n2) {
-                    return tail.tail().head().subList(from - n1 - n2, to - n1 - n2);
+        /**
+         * Complexity of calling once: O(log(n)).
+         * Complexity of calling subList recursively on the resulting list,
+         * i.e. {@code tree.asList().subList(...).subList(...). ... .subList(...)}
+         * up to n times: O(n).
+         * When the resulting list has size m, it may prevent up to m additional
+         * elements of the original tree from being garbage collected.
+         */
+        private List<T> subList(int from, int to) {
+            int len = to - from;
+
+            if(2*len >= getLeafCount()) {
+                return subList0(from, to);
+            } else {
+                FingerTree<T, S> tree = this;
+                if(2*(getLeafCount() - to) > len) {
+                    tree = tree.split(to)._1;
                 }
+                if(2*from > len) {
+                    tree = tree.split(from)._2;
+                    to -= from;
+                    from = 0;
+                }
+                return tree.asList().subList(from, to);
             }
-            return subList0(from, to);
         }
 
         private List<T> subList0(int from, int to) {

@@ -5,9 +5,13 @@ import java.util.List;
 
 import javafx.collections.ObservableList;
 
+import org.reactfx.util.Lists;
+
 public interface ListModification<E> extends ListModificationLike<E> {
 
     List<? extends E> getAddedSubList();
+
+    ListModification<E> trim();
 
     default MaterializedListModification<E> materialize() {
         return MaterializedListModification.create(
@@ -60,5 +64,20 @@ implements ListModification<E> {
         return "[modification at: " + getFrom() +
                 ", removed: " + getRemoved() +
                 ", added size: " + getAddedSize() + "]";
+    }
+
+    @Override
+    public ListModification<E> trim()  {
+        return Lists.commonPrefixSuffixLengths(removed, getAddedSubList()).map((pref, suff) -> {
+            if(pref == 0 && suff == 0) {
+                return this;
+            } else {
+                return new ListModificationImpl<>(
+                        position + pref,
+                        removed.subList(pref, getRemovedSize() - suff),
+                        addedSize - pref - suff,
+                        list);
+            }
+        });
     }
 }

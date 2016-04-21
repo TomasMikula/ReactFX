@@ -1,11 +1,14 @@
 package org.reactfx.util;
 
+import static org.reactfx.util.Tuples.*;
+
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -219,6 +222,54 @@ public final class Lists {
      */
     public static <E> List<E> concat(List<List<? extends E>> lists) {
         return ListConcatenation.create(lists);
+    }
+
+    public static int commonPrefixLength(List<?> l, List<?> m) {
+        ListIterator<?> i = l.listIterator();
+        ListIterator<?> j = m.listIterator();
+        while(i.hasNext() && j.hasNext()) {
+            if(!Objects.equals(i.next(), j.next())) {
+                return i.nextIndex() - 1;
+            }
+        }
+        return i.nextIndex();
+    }
+
+    public static int commonSuffixLength(List<?> l, List<?> m) {
+        ListIterator<?> i = l.listIterator(l.size());
+        ListIterator<?> j = m.listIterator(m.size());
+        while(i.hasPrevious() && j.hasPrevious()) {
+            if(!Objects.equals(i.previous(), j.previous())) {
+                return l.size() - i.nextIndex() - 1;
+            }
+        }
+        return l.size() - i.nextIndex();
+    }
+
+    /**
+     * Returns the lengths of common prefix and common suffix of two lists.
+     * The total of the two lengths returned is not greater than either of
+     * the list sizes. Prefix is prioritized: for lists [a, b, a, b], [a, b]
+     * returns (2, 0); although the two lists have a common suffix of length 2,
+     * the length of the second list is already included in the length of the
+     * common prefix.
+     */
+    public static Tuple2<Integer, Integer> commonPrefixSuffixLengths(List<?> l1, List<?> l2) {
+        int n1 = l1.size();
+        int n2 = l2.size();
+
+        if(n1 == 0 || n2 == 0) {
+            return t(0, 0);
+        }
+
+        int pref = commonPrefixLength(l1, l2);
+        if(pref == n1 || pref == n2) {
+            return t(pref, 0);
+        }
+
+        int suff = commonSuffixLength(l1, l2);
+
+        return t(pref, suff);
     }
 }
 

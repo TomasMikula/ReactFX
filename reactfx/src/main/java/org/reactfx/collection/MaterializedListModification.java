@@ -2,6 +2,8 @@ package org.reactfx.collection;
 
 import java.util.List;
 
+import org.reactfx.util.Lists;
+
 public interface MaterializedListModification<E> extends ListModificationLike<E> {
 
     /**
@@ -16,6 +18,19 @@ public interface MaterializedListModification<E> extends ListModificationLike<E>
 
     @Override
     default int getAddedSize() { return getAdded().size(); }
+
+    default MaterializedListModification<E> trim() {
+        return Lists.commonPrefixSuffixLengths(getRemoved(), getAdded()).map((pref, suff) -> {
+            if(pref == 0 && suff == 0) {
+                return this;
+            } else {
+                return create(
+                        getFrom() + pref,
+                        getRemoved().subList(pref, getRemovedSize() - suff),
+                        getAdded().subList(pref, getAddedSize() - suff));
+            }
+        });
+    }
 }
 
 final class MaterializedListModificationImpl<E>

@@ -822,37 +822,39 @@ public abstract class FingerTree<T, S> {
     }
 
     public static <T, S> FingerTree<T, S> mkTree(
-            List<? extends T> initialItems,
+            List<? extends T> items,
             ToSemigroup<? super T, S> summaryProvider) {
-        if(initialItems.isEmpty()) {
+
+        if(items.isEmpty()) {
             return new Empty<>(summaryProvider);
         }
-        List<NonEmptyFingerTree<T, S>> leafs = new ArrayList<>(initialItems.size());
-        for(T item: initialItems) {
-            leafs.add(new Leaf<T, S>(summaryProvider, item));
-        }
-        return mkTree0(leafs);
-    }
 
-    private static <T, S> FingerTree<T, S> mkTree0(List<NonEmptyFingerTree<T, S>> trees) {
+        ArrayList<NonEmptyFingerTree<T, S>> trees = new ArrayList<>(items.size());
+        for(T item: items) {
+            trees.add(new Leaf<T, S>(summaryProvider, item));
+        }
+
         while(trees.size() > 1) {
-            for(int i = 0; i < trees.size(); ++i) {
-                if(trees.size() - i >= 5 || trees.size() - i == 3) {
-                    NonEmptyFingerTree<T, S> t1 = trees.get(i);
-                    NonEmptyFingerTree<T, S> t2 = trees.get(i + 1);
-                    NonEmptyFingerTree<T, S> t3 = trees.get(i + 2);
-                    Branch<T, S> branch = branch(t1, t2, t3);
-                    trees.set(i, branch);
-                    trees.subList(i + 1, i + 3).clear();
-                } else { // (trees.size() - i) is 4 or 2
-                    NonEmptyFingerTree<T, S> t1 = trees.get(i);
-                    NonEmptyFingerTree<T, S> t2 = trees.get(i + 1);
-                    Branch<T, S> b = branch(t1, t2);
-                    trees.set(i, b);
-                    trees.remove(i + 1);
+            final int n = trees.size();
+            int src = 0;
+            int tgt = 0;
+            while(src < n) {
+                if(n - src >= 5 || n - src == 3) {
+                    NonEmptyFingerTree<T, S> t1 = trees.get(src++);
+                    NonEmptyFingerTree<T, S> t2 = trees.get(src++);
+                    NonEmptyFingerTree<T, S> t3 = trees.get(src++);
+                    Branch<T, S> t = branch(t1, t2, t3);
+                    trees.set(tgt++, t);
+                } else { // (n - i) is 4 or 2
+                    NonEmptyFingerTree<T, S> t1 = trees.get(src++);
+                    NonEmptyFingerTree<T, S> t2 = trees.get(src++);
+                    Branch<T, S> t = branch(t1, t2);
+                    trees.set(tgt++, t);
                 }
             }
+            trees.subList(tgt, n).clear();
         }
+
         return trees.get(0);
     }
 

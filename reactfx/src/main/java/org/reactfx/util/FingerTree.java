@@ -7,9 +7,12 @@ import static org.reactfx.util.Tuples.*;
 import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Stack;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
@@ -485,6 +488,102 @@ public abstract class FingerTree<T, S> {
                 public List<T> subList(int start, int end) {
                     Lists.checkRange(start, end, to - from);
                     return Branch.this.subList(from + start, from + end);
+                }
+
+                @Override
+                public Iterator<T> iterator() {
+                    return listIterator(0);
+                }
+
+                /**
+                 * Iterates in both directions in time O(n),
+                 * with at most O(log(n)) allocations (as the stack expands).
+                 */
+                @Override
+                public ListIterator<T> listIterator(int pos) {
+                    final int dd = 3; // maximum depth for which we directly call get(idx)
+                    Lists.checkPosition(pos, size());
+                    return new ListIterator<T>() {
+                        private int position = from + pos; // position within this finger tree
+                        private int topOffset = 0; // absolute offset of top of the stack relative to this finger tree
+                        private Stack<NonEmptyFingerTree<T, S>> stack = new Stack<>();
+                        { stack.push(Branch.this); }
+
+                        @Override public boolean hasNext() { return position < to; }
+                        @Override public boolean hasPrevious() { return position > from; }
+                        @Override public int nextIndex() { return position - from; }
+                        @Override public int previousIndex() { return position - from - 1; }
+
+                        @Override public void remove() { throw new UnsupportedOperationException(); }
+                        @Override public void set(T e) { throw new UnsupportedOperationException(); }
+                        @Override public void add(T e) { throw new UnsupportedOperationException(); }
+
+                        @Override
+                        public T next() {
+                            if(position == topOffset + stack.peek().getLeafCount()) {
+                                up();
+                                return next();
+                            } else if(stack.peek().getDepth() <= dd) {
+                                return stack.peek().getLeaf(position++ - topOffset);
+                            } else {
+                                downR();
+                                return next();
+                            }
+                        }
+
+                        @Override
+                        public T previous() {
+                            if(position == topOffset) {
+                                up();
+                                return previous();
+                            } else if(stack.peek().getDepth() <= dd) {
+                                return stack.peek().getLeaf(--position - topOffset);
+                            } else {
+                                downL();
+                                return previous();
+                            }
+                        }
+
+                        private void up() {
+                            NonEmptyFingerTree<T, S> child = stack.pop();
+                            Branch<T, S> top = (Branch<T, S>) stack.peek();
+                            int chOffsetInParent = 0;
+                            LL<? extends NonEmptyFingerTree<T, S>> children = top.children;
+                            while(children.head() != child) {
+                                chOffsetInParent += children.head().getLeafCount();
+                                children = children.tail();
+                            }
+                            topOffset -= chOffsetInParent;
+                        }
+
+                        private void downR() {
+                            downR(((Branch<T, S>) stack.peek()).children);
+                        }
+
+                        private void downR(LL<? extends NonEmptyFingerTree<T, S>> children) {
+                            NonEmptyFingerTree<T, S> head = children.head();
+                            if(position - topOffset < head.getLeafCount()) {
+                                stack.push(head);
+                            } else {
+                                topOffset += head.getLeafCount();
+                                downR(children.tail());
+                            }
+                        }
+
+                        private void downL() {
+                            downL(((Branch<T, S>) stack.peek()).children);
+                        }
+
+                        private void downL(LL<? extends NonEmptyFingerTree<T, S>> children) {
+                            NonEmptyFingerTree<T, S> head = children.head();
+                            if(position - topOffset <= head.getLeafCount()) {
+                                stack.push(head);
+                            } else {
+                                topOffset += head.getLeafCount();
+                                downL(children.tail());
+                            }
+                        }
+                    };
                 }
             };
         }
@@ -1072,6 +1171,19 @@ public abstract class FingerTree<T, S> {
         return leaf(data).appendTree(this);
     }
 
+    /**
+     * Returns a list view of this tree.
+     * Complexity of operations on the returned list:
+     * <ul>
+     *   <li>{@code size()}: O(1);</li>
+     *   <li>{@code get}: O(log(n));</li>
+     *   <li><b>iteration</b>: O(n) in either direction,
+     *     with O(log(n)) total allocations;</li>
+     *   <li>{@code subList}: O(log(n));</li>
+     *   <li><b>iterative {@code subList},</b> i.e. calling {@code subList}
+     *     on the result of previous {@code subList}, up to n times: O(n).</li>
+     * </ul>
+     */
     public abstract List<T> asList();
 
     abstract T getData(); // valid for leafs only

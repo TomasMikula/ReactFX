@@ -419,31 +419,31 @@ libraryDependencies += "org.reactfx" % "reactfx" % "1.4.1"
 
 ### Milestone release
 
-Current milestone release is 2.0-M4u1.
+Current milestone release is 2.0-M5.
 
 #### Maven coordinates
 
 | Group ID    | Artifact ID | Version |
 | :---------: | :---------: | :-----: |
-| org.reactfx | reactfx     | 2.0-M4u1  |
+| org.reactfx | reactfx     | 2.0-M5  |
 
 #### Gradle example
 
 ```groovy
 dependencies {
-    compile group: 'org.reactfx', name: 'reactfx', version: '2.0-M4u1'
+    compile group: 'org.reactfx', name: 'reactfx', version: '2.0-M5'
 }
 ```
 
 #### Sbt example
 
 ```scala
-libraryDependencies += "org.reactfx" % "reactfx" % "2.0-M4u1"
+libraryDependencies += "org.reactfx" % "reactfx" % "2.0-M5"
 ```
 
 #### Manual download
 
-[Download](https://github.com/TomasMikula/ReactFX/releases/download/v2.0-M4u1/reactfx-2.0-M4u1.jar) the JAR file and place it on your classpath.
+[Download](https://github.com/TomasMikula/ReactFX/releases/download/v2.0-M5/reactfx-2.0-M5.jar) the JAR file and place it on your classpath.
 
 
 ### Snapshot releases
@@ -487,7 +487,7 @@ Links
 -----
 
 [API 1.4.1 (Javadoc)](http://www.reactfx.org/javadoc/1.4.1/overview-summary.html)  
-[API 2.0-M4u1 (Javadoc)](http://www.reactfx.org/javadoc/2.0-M4u1/overview-summary.html)  
+[API 2.0-M5 (Javadoc)](http://www.reactfx.org/javadoc/2.0-M5/overview-summary.html)  
 
 
 License

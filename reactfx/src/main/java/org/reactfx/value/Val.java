@@ -4,6 +4,9 @@ import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -744,6 +747,60 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 .flatMap(node.sceneProperty(), Scene::windowProperty)
                 .flatMap(Window::showingProperty)
                 .orElseConst(false);
+    }
+    
+    /**
+     * Returns a {@linkplain Val} with the value returned by {@code supplier}.
+     * The {@linkplain Supplier} will only be called when {@code getValue()} is
+     * called for the first time. It will not be called again. Although
+     * technically the value is undefined until requested for the first time,
+     * this will not result in a change. No listener will ever be notified.
+     */
+    static <T> Val<T> lazy(Supplier<T> supplier) {
+        return new RigidVal<T>() {
+            Supplier<T> sup = supplier;
+            T value;
+            
+            @Override
+            public T getValue() {
+                if (sup != null) {
+                    value = sup.get();
+                    sup = null;
+                }
+                return value;
+            }
+        };
+    }
+    
+    /**
+     * Returns a {@linkplain Val} whose value is {@code placeholder}. Upon the
+     * first call of {@code getValue()}, {@code callable} will be executed in
+     * parallel and the result will become the new value of this
+     * {@linkplain Val}. In contrast to {@linkplain Val#lazy(Supplier)}, this
+     * will result in listeners being notified.
+     * <p>
+     * The {@linkplain Callable} should handle any errors itself. Any
+     * {@linkplain Exception} will be rethrown on the FX Thread.
+     */
+    static <T> Val<T> lazyAsync(T placeholder, Callable<T> callable) {
+        // Not sure about Callable, as it specifically allows throwing any
+        // checked exception
+        return null;
+    }
+    
+    static <T> Val<T> lazyAsync(
+            T placeholder,
+            Callable<T> callable,
+            Executor executor) {
+        return null;
+    }
+    
+    static <T> Val<T> lazyAsync(
+            T placeholder,
+            Supplier<CompletionStage<T>> completionStage) {
+        // This might need a different name as Supplier and Callable have the
+        // same signature
+        return null;
     }
 }
 

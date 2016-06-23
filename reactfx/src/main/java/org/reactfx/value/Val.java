@@ -1,18 +1,5 @@
 package org.reactfx.value;
 
-import java.time.Duration;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-
 import javafx.animation.Interpolatable;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
@@ -21,20 +8,19 @@ import javafx.beans.value.ObservableValue;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.stage.Window;
-
-import org.reactfx.Change;
-import org.reactfx.EventStream;
-import org.reactfx.EventStreamBase;
-import org.reactfx.EventStreams;
-import org.reactfx.Observable;
-import org.reactfx.Subscription;
+import org.reactfx.*;
 import org.reactfx.collection.LiveList;
-import org.reactfx.util.HexaFunction;
-import org.reactfx.util.Interpolator;
-import org.reactfx.util.PentaFunction;
-import org.reactfx.util.TetraFunction;
-import org.reactfx.util.TriFunction;
-import org.reactfx.util.WrapperBase;
+import org.reactfx.util.*;
+
+import java.time.Duration;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionStage;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ForkJoinPool;
+import java.util.function.*;
 
 /**
  * Adds more operations to {@link ObservableValue}.
@@ -773,33 +759,29 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     }
     
     /**
-     * Returns a {@linkplain Val} whose value is {@code placeholder}. Upon the
+     * Returns a {@linkplain Val} whose value is an empty {@linkplain Try}. Upon the
      * first call of {@code getValue()}, {@code callable} will be executed in
      * parallel and the result will become the new value of this
      * {@linkplain Val}. In contrast to {@linkplain Val#lazy(Supplier)}, this
      * will result in listeners being notified.
      * <p>
-     * The {@linkplain Callable} should handle any errors itself. Any
-     * {@linkplain Exception} will be rethrown on the FX Thread.
+     * Any exception thrown by the callable will be caught and returned as part
+     * of the {@linkplain Try}. The execution is handled by
+     * {@linkplain ForkJoinPool#commonPool()}. For more control, see
+     * {@linkplain Val#lazyAsync(Callable, Executor)}.
      */
-    static <T> Val<T> lazyAsync(T placeholder, Callable<T> callable) {
-        // Not sure about Callable, as it specifically allows throwing any
-        // checked exception
+    static <T> Val<Try<T>> lazyAsync(Callable<T> callable) {
         return null;
     }
     
-    static <T> Val<T> lazyAsync(
-            T placeholder,
+    static <T> Val<Try<T>> lazyAsync(
             Callable<T> callable,
             Executor executor) {
         return null;
     }
     
-    static <T> Val<T> lazyAsync(
-            T placeholder,
-            Supplier<CompletionStage<T>> completionStage) {
-        // This might need a different name as Supplier and Callable have the
-        // same signature
+    static <T> Val<Try<T>> awaitAsync(
+            CompletionStage<T> completionStage) {
         return null;
     }
 }

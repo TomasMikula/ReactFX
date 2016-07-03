@@ -1,6 +1,7 @@
 package org.reactfx.value;
 
 import javafx.animation.Interpolatable;
+import javafx.application.Platform;
 import javafx.beans.InvalidationListener;
 import javafx.beans.property.Property;
 import javafx.beans.value.ChangeListener;
@@ -16,10 +17,7 @@ import java.time.Duration;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionStage;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.*;
 import java.util.function.*;
 
 /**
@@ -759,11 +757,10 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     }
     
     /**
-     * Returns a {@linkplain Val} whose value is an empty {@linkplain Try}. Upon the
-     * first call of {@code getValue()}, {@code callable} will be executed in
-     * parallel and the result will become the new value of this
-     * {@linkplain Val}. In contrast to {@linkplain Val#lazy(Supplier)}, this
-     * will result in listeners being notified.
+     * Returns a {@linkplain Val} whose initial value is {@code null}. When the
+     * first listener is registered, the {@linkplain Callable} will be run in
+     * parallel. The result will become the new value. All listeners registered
+     * at that time will be notified of this change.
      * <p>
      * Any exception thrown by the callable will be caught and returned as part
      * of the {@linkplain Try}. The execution is handled by
@@ -771,18 +768,89 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
      * {@linkplain Val#lazyAsync(Callable, Executor)}.
      */
     static <T> Val<Try<T>> lazyAsync(Callable<T> callable) {
-        return null;
+        return lazyAsync(callable, ForkJoinPool.commonPool());
     }
-    
+
+    /**
+     * Returns a {@linkplain Val} whose initial value is {@code null}. When the
+     * first listener is registered, the {@linkplain Callable} will be run in
+     * parallel using the given {@linkplain Executor}. The result will become
+     * the new value. All listeners registered at that time will be notified of
+     * this change.
+     * <p>
+     * Any exception thrown by the callable will be caught and returned as part
+     * of the {@linkplain Try}.
+     */
     static <T> Val<Try<T>> lazyAsync(
             Callable<T> callable,
             Executor executor) {
-        return null;
+        return new AsyncVal<>(callable, executor);
     }
-    
+
+    /**
+     * Returns a {@linkplain Val} whose value is the result of the given
+     * {@linkplain CompletionStage}. Until it completes, the value is
+     * {@code null}. Any listener registered when the
+     * {@linkplain CompletionStage} completes will be notified.
+     */
     static <T> Val<Try<T>> awaitAsync(
             CompletionStage<T> completionStage) {
-        return null;
+        return new ValBase<Try<T>>() {
+            Try<T> value;
+
+            {
+                completionStage.handleAsync((v, e) -> {
+                    value = e != null ? Try.failure(e) : Try.success(v);
+                    invalidate();
+                    return value;
+                }, Platform::runLater);
+            }
+
+            @Override
+            protected Subscription connect() {
+                return () -> {};
+            }
+
+            @Override
+            protected Try<T> computeValue() {
+                return value;
+            }
+        };
+    }
+}
+
+class AsyncVal<T>
+extends ObservableBase<Consumer<? super Try<T>>, Try<T>>
+implements ProperVal<Try<T>> {
+    private Callable<T> cal;
+    private Executor exec;
+    private Try<T> value;
+
+    public AsyncVal(Callable<T> callable, Executor executor) {
+        this.cal = callable;
+        this.exec = executor;
+    }
+
+    @Override
+    protected Subscription observeInputs() {
+        if (cal != null) {
+            final Callable<T> loCal = cal;
+            CompletableFuture.supplyAsync(
+                    () -> Try.tryGet(loCal),
+                    exec).handleAsync((t, e) -> {
+                value = t;
+                notifyObservers(null);
+                return value;
+            }, Platform::runLater);
+            cal = null;
+            exec = null;
+        }
+        return () -> {};
+    }
+
+    @Override
+    public Try<T> getValue() {
+        return value;
     }
 }
 

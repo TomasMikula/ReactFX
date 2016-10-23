@@ -31,14 +31,7 @@ import javafx.stage.Window;
 
 import org.reactfx.collection.ListModification;
 import org.reactfx.collection.LiveList;
-import org.reactfx.util.Either;
-import org.reactfx.util.FxTimer;
-import org.reactfx.util.Timer;
-import org.reactfx.util.Tuple2;
-import org.reactfx.util.Tuple3;
-import org.reactfx.util.Tuple4;
-import org.reactfx.util.Tuple5;
-import org.reactfx.util.Tuple6;
+import org.reactfx.util.*;
 
 public class EventStreams {
 

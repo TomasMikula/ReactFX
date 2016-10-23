@@ -805,6 +805,67 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     }
 
     /**
+     * Returns a {@linkplain Val} whose initial value is {@code null}. When the
+     * first listener is registered, a countdown for the {@code delay} starts.
+     * Removing all listeners will cancel the countdown. Afterwards the
+     * {@linkplain Callable} will be run in parallel using the
+     * {@linkplain ForkJoinPool#commonPool()}. The result will become the new
+     * value. All listeners registered at that time will be notified of this
+     * change on the FX Thread.
+     * <p>
+     * Any exception thrown by the callable will be caught and returned as part
+     * of the {@linkplain Try}.
+     */
+    static <T> Val<Try<T>> delayedAsync(
+            Duration delay,
+            Callable<T> callable) {
+        return new DelayedVal<>(
+                delay,
+                callable,
+                ForkJoinPool.commonPool(),
+                Platform::runLater);
+    }
+
+    /**
+     * Returns a {@linkplain Val} whose initial value is {@code null}. When the
+     * first listener is registered, a countdown for the {@code delay} starts.
+     * Removing all listeners will cancel the countdown. Afterwards the
+     * {@linkplain Callable} will be run in parallel using the given
+     * {@linkplain Executor} {@code worker}. The result will become the new
+     * value. All listeners registered at that time will be notified of this
+     * change on the FX Thread.
+     * <p>
+     * Any exception thrown by the callable will be caught and returned as part
+     * of the {@linkplain Try}.
+     */
+    static <T> Val<Try<T>> delayedAsync(
+            Duration delay,
+            Callable<T> callable,
+            Executor worker) {
+        return new DelayedVal<>(delay, callable, worker, Platform::runLater);
+    }
+
+    /**
+     * Returns a {@linkplain Val} whose initial value is {@code null}. When the
+     * first listener is registered, a countdown for the {@code delay} starts.
+     * Removing all listeners will cancel the countdown. Afterwards the
+     * {@linkplain Callable} will be run in parallel using the given
+     * {@linkplain Executor} {@code worker}. The result will become the new
+     * value. All listeners registered at that time will be notified of this
+     * change on {@code publisher}.
+     * <p>
+     * Any exception thrown by the callable will be caught and returned as part
+     * of the {@linkplain Try}.
+     */
+    static <T> Val<Try<T>> delayedAsync(
+            Duration delay,
+            Callable<T> callable,
+            Executor worker,
+            Executor publisher) {
+        return new DelayedVal<>(delay, callable, worker, publisher);
+    }
+
+    /**
      * Returns a {@linkplain Val} whose value is the result of the given
      * {@linkplain CompletionStage}. Until it completes, the value is
      * {@code null}. Any listener registered when the
@@ -854,6 +915,7 @@ implements ProperVal<Try<T>> {
     private Callable<T> cal;
     private Executor worker;
     private Executor publisher;
+
     private Try<T> value;
 
     public AsyncVal(Callable<T> callable, Executor worker, Executor publisher) {
@@ -886,6 +948,67 @@ implements ProperVal<Try<T>> {
     }
 }
 
+class DelayedVal<T>
+extends ObservableBase<Consumer<? super Try<T>>, Try<T>>
+implements ProperVal<Try<T>> {
+    private static final ScheduledExecutorService SCHEDULER =
+            Executors.newScheduledThreadPool(
+                    Runtime.getRuntime().availableProcessors());
+
+    private Timer timer;
+
+    private Callable<T> cal;
+    private Executor worker;
+    private Executor publisher;
+
+    private Try<T> value;
+
+    public DelayedVal(
+            Duration delay,
+            Callable<T> callable,
+            Executor worker,
+            Executor publisher) {
+        timer = ScheduledExecutorServiceTimer.create(
+                delay,
+                this::startWork,
+                SCHEDULER,
+                publisher);
+        this.cal = callable;
+        this.worker = worker;
+        this.publisher = publisher;
+    }
+
+    @Override
+    protected Subscription observeInputs() {
+        if (timer != null) {
+            timer.restart();
+        }
+        return () -> {
+            if (timer != null)
+                timer.stop();
+        };
+    }
+
+    private void startWork() {
+        final Callable<T> loCal = cal;
+        CompletableFuture.supplyAsync(
+                () -> Try.tryGet(loCal),
+                worker).handleAsync((t, e) -> {
+            value = t;
+            notifyObservers(null);
+            return value;
+        }, publisher);
+        timer = null;
+        cal = null;
+        worker = null;
+        publisher = null;
+    }
+
+    @Override
+    public Try<T> getValue() {
+        return value;
+    }
+}
 
 class InvalidationListenerWrapper<T>
 extends WrapperBase<InvalidationListener>

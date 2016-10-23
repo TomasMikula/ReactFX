@@ -16,6 +16,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.reactfx.util.FxTimer;
+import org.reactfx.util.ScheduledExecutorServiceTimer;
 
 
 public class TicksTest {

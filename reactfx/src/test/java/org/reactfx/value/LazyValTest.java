@@ -12,6 +12,7 @@ import org.junit.runner.RunWith;
 import org.reactfx.Subscription;
 import org.reactfx.util.Try;
 
+import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -472,6 +473,196 @@ public class LazyValTest {
                         "Success!",
                         val.get().getValue().get());
             });
+        }
+    }
+
+    public static class DelayedAsync {
+        @Test(timeout = 1000L)
+        public void ensureLaziness() {
+            final Val<Try<String>> val = Val.delayedAsync(
+                    Duration.ofMillis(50),
+                    () -> {
+                        fail("Delayed method is not lazy.");
+                        return "Failed!";
+                    });
+
+            try {
+                Thread.sleep(200L);
+            } catch (InterruptedException e) {
+                fail("Interrupted!");
+            }
+
+            assertTrue("Val is not empty.", val.isEmpty());
+        }
+
+        @Test(timeout = 2000L)
+        public void ensureInitializedOnce() {
+            // Create Val on FX thread
+            AtomicReference<Val<Try<String>>> val = new AtomicReference<>();
+            doOnFx(() -> val.set(Val.delayedAsync(
+                    Duration.ofMillis(50),
+                    new Callable<String>() {
+                        boolean called = false;
+
+                        @Override
+                        public String call() throws Exception {
+                            if (called) {
+                                fail("Supplier called twice.");
+                            }
+                            called = true;
+                            Thread.sleep(200L);
+                            return "Hello World!";
+                        }
+                    })));
+
+            doOnFx(() -> assertTrue(
+                    "New Val is not empty.",
+                    val.get().isEmpty()));
+
+            // Add two listeners on FX thread to try and force
+            // double initialization
+            final CountDownLatch observed = new CountDownLatch(2);
+
+            AtomicReference<Subscription> subs = new AtomicReference<>();
+            doOnFx(() -> {
+                subs.set(val.get().observeChanges((obs, oldVal, newVal) -> {
+                    doOnFx(() -> {
+                        assertTrue(
+                                "Old value after initialization was not null.",
+                                oldVal == null);
+                        assertTrue(
+                                "Initialization was not a success.",
+                                newVal.isSuccess());
+                        assertEquals(
+                                "New value after initialization is not correct.",
+                                "Hello World!",
+                                newVal.get());
+                    });
+                    observed.countDown();
+                }));
+
+                subs.set(subs.get().and(val.get().observeChanges(
+                        (obs, oldVal, newVal) -> {
+                            doOnFx(() -> {
+                                assertTrue(
+                                        "Old value after initialization was not null.",
+                                        oldVal == null);
+                                assertTrue(
+                                        "Initialization was not a success.",
+                                        newVal.isSuccess());
+                                assertEquals(
+                                        "New value after initialization is not correct.",
+                                        "Hello World!",
+                                        newVal.get());
+                            });
+                            observed.countDown();
+                        })));
+            });
+
+            // Initialization runs on background, so it should still be empty
+            doOnFx(() -> assertTrue(
+                    "New Val is not empty.",
+                    val.get().isEmpty()));
+
+            try {
+                observed.await();
+            } catch (InterruptedException e) {
+                fail("Interrupted!");
+            }
+
+            // unsubscribe and subscribe again to try and force reinitialization
+            doOnFx(() -> {
+                subs.get().unsubscribe();
+                val.get().observe(
+                        it -> fail("Invalidated after initialization!"));
+            });
+
+            // wait a bit to make sure
+            try {
+                Thread.sleep(500L);
+            } catch (InterruptedException e) {
+                fail("Interrupted!");
+            }
+
+            // check final values
+            doOnFx(() -> {
+                assertTrue("Val is not initialized.", val.get().isPresent());
+                assertEquals(
+                        "Final value is not correct.",
+                        "Hello World!",
+                        val.get().getValue().get());
+            });
+        }
+
+        @Test(timeout = 1500L)
+        public void ensureExceptionsGetCaught() {
+            // Create Val on FX thread
+            AtomicReference<Val<Try<String>>> val = new AtomicReference<>();
+            doOnFx(() -> val.set(Val.delayedAsync(
+                    Duration.ofMillis(50),
+                    () -> {
+                        throw new IllegalStateException("Success!");
+                    })));
+
+            final CountDownLatch observed = new CountDownLatch(1);
+
+            // Add observer on FX thread
+            doOnFx(() -> val.get().observeChanges((obs, oldVal, newVal) -> {
+                doOnFx(() -> {
+                    assertTrue(
+                            "Old value after initialization was not null.",
+                            oldVal == null);
+                    assertTrue(
+                            "Initialization was not a failure.",
+                            newVal.isFailure());
+                    assertTrue(
+                            "Did not receive the expected Exception.",
+                            newVal.getFailure() instanceof IllegalStateException);
+                });
+                observed.countDown();
+            }));
+
+            try {
+                observed.await();
+            } catch (InterruptedException e) {
+                fail("Interrupted!");
+            }
+
+            // assert final error
+            doOnFx(() -> {
+                assertTrue("Val is not initialized.", val.get().isPresent());
+                assertTrue(
+                        "Final value is not a failure.",
+                        val.get().getValue().isFailure());
+            });
+        }
+
+        @Test(timeout = 1000L)
+        public void ensureCanceled() {
+            final Val<Try<String>> val = Val.delayedAsync(
+                    Duration.ofMillis(200),
+                    () -> {
+                        fail("Delayed method was not canceled.");
+                        return "Failed!";
+                    });
+
+            final Subscription sub =
+                    val.observeInvalidations(vl -> fail("Listener triggered!"));
+
+            try {
+                Thread.sleep(50L);
+                sub.unsubscribe();
+            } catch (InterruptedException e) {
+                fail("Interrupted!");
+            }
+
+            try {
+                Thread.sleep(500L);
+            } catch (InterruptedException e) {
+                fail("Interrupted!");
+            }
+
+            assertTrue("Val is not empty.", val.isEmpty());
         }
     }
 }

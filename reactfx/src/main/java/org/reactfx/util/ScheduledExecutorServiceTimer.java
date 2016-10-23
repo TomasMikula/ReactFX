@@ -1,14 +1,11 @@
-package org.reactfx;
+package org.reactfx.util;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.reactfx.util.Timer;
-import org.reactfx.util.TriFunction;
-
-class ScheduledExecutorServiceTimer implements Timer {
+public class ScheduledExecutorServiceTimer implements Timer {
 
     public static Timer create(
             java.time.Duration timeout,

@@ -760,7 +760,7 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
      * Returns a {@linkplain Val} whose initial value is {@code null}. When the
      * first listener is registered, the {@linkplain Callable} will be run in
      * parallel. The result will become the new value. All listeners registered
-     * at that time will be notified of this change.
+     * at that time will be notified of this change on the FX Thread.
      * <p>
      * Any exception thrown by the callable will be caught and returned as part
      * of the {@linkplain Try}. The execution is handled by
@@ -774,17 +774,45 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     /**
      * Returns a {@linkplain Val} whose initial value is {@code null}. When the
      * first listener is registered, the {@linkplain Callable} will be run in
-     * parallel using the given {@linkplain Executor}. The result will become
-     * the new value. All listeners registered at that time will be notified of
-     * this change.
+     * parallel using the given {@linkplain Executor} {@code worker}. The result
+     * will become the new value. All listeners registered at that time will be
+     * notified of this change on the FX Thread.
      * <p>
      * Any exception thrown by the callable will be caught and returned as part
      * of the {@linkplain Try}.
      */
     static <T> Val<Try<T>> lazyAsync(
             Callable<T> callable,
-            Executor executor) {
-        return new AsyncVal<>(callable, executor);
+            Executor worker) {
+        return lazyAsync(callable, worker, Platform::runLater);
+    }
+
+    /**
+     * Returns a {@linkplain Val} whose initial value is {@code null}. When the
+     * first listener is registered, the {@linkplain Callable} will be run in
+     * parallel using the given {@linkplain Executor} {@code worker}. The result
+     * will become the new value. All listeners registered at that time will be
+     * notified of this change on {@code publisher}.
+     * <p>
+     * Any exception thrown by the callable will be caught and returned as part
+     * of the {@linkplain Try}.
+     */
+    static <T> Val<Try<T>> lazyAsync(
+            Callable<T> callable,
+            Executor worker,
+            Executor publisher) {
+        return new AsyncVal<>(callable, worker, publisher);
+    }
+
+    /**
+     * Returns a {@linkplain Val} whose value is the result of the given
+     * {@linkplain CompletionStage}. Until it completes, the value is
+     * {@code null}. Any listener registered when the
+     * {@linkplain CompletionStage} completes will be notified on the FX Thread.
+     */
+    static <T> Val<Try<T>> awaitAsync(
+            CompletionStage<T> completionStage) {
+        return awaitAsync(completionStage, Platform::runLater);
     }
 
     /**
@@ -794,7 +822,8 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
      * {@linkplain CompletionStage} completes will be notified.
      */
     static <T> Val<Try<T>> awaitAsync(
-            CompletionStage<T> completionStage) {
+            CompletionStage<T> completionStage,
+            Executor publisher) {
         return new ValBase<Try<T>>() {
             Try<T> value;
 
@@ -803,7 +832,7 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                     value = e != null ? Try.failure(e) : Try.success(v);
                     invalidate();
                     return value;
-                }, Platform::runLater);
+                }, publisher);
             }
 
             @Override
@@ -823,12 +852,14 @@ class AsyncVal<T>
 extends ObservableBase<Consumer<? super Try<T>>, Try<T>>
 implements ProperVal<Try<T>> {
     private Callable<T> cal;
-    private Executor exec;
+    private Executor worker;
+    private Executor publisher;
     private Try<T> value;
 
-    public AsyncVal(Callable<T> callable, Executor executor) {
+    public AsyncVal(Callable<T> callable, Executor worker, Executor publisher) {
         this.cal = callable;
-        this.exec = executor;
+        this.worker = worker;
+        this.publisher = publisher;
     }
 
     @Override
@@ -837,13 +868,14 @@ implements ProperVal<Try<T>> {
             final Callable<T> loCal = cal;
             CompletableFuture.supplyAsync(
                     () -> Try.tryGet(loCal),
-                    exec).handleAsync((t, e) -> {
+                    worker).handleAsync((t, e) -> {
                 value = t;
                 notifyObservers(null);
                 return value;
-            }, Platform::runLater);
+            }, publisher);
             cal = null;
-            exec = null;
+            worker = null;
+            publisher = null;
         }
         return () -> {};
     }

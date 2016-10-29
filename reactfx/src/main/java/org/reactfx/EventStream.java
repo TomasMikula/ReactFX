@@ -687,12 +687,12 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     }
      * </pre>
      * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
-     * When B is suspended and A emits an event, B does not emit that event, nor does
-     * it store that event for later emission. Those events are "forgotten."
+     * When B is suspended and A emits an event, B does not emit that event, but
+     * stores the latest. It is emitted upon resume.
      * <pre>
      *     Time ---&gt;
      *     A :-a--b----c---d-----e------------f-------&gt;
-     *     B :-a--b--|---Suspended----|-------f-------&gt;
+     *     B :-a--b--|---Suspended----|e------f-------&gt;
      * </pre>
      */
     default SuspendableEventStream<T> forgetful() {

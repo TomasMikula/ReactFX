@@ -13,7 +13,7 @@ public class ForgetfulEventStreamTest {
     @Test
     public void test() {
         EventSource<Integer> source = new EventSource<>();
-        SuspendableEventStream<Integer> suspendable = source.forgetful();
+        SuspendableEventStream<Integer> suspendable = source.retainingLast();
         List<Integer> emitted = new ArrayList<>();
         suspendable.subscribe(emitted::add);
 
@@ -30,7 +30,7 @@ public class ForgetfulEventStreamTest {
     @Test
     public void testResetOnUnsubscribe() {
         EventSource<Integer> source = new EventSource<>();
-        SuspendableEventStream<Integer> suspendable = source.forgetful();
+        SuspendableEventStream<Integer> suspendable = source.retainingLast();
         List<Integer> emitted = new ArrayList<>();
         Subscription sub = suspendable.subscribe(emitted::add);
 

@@ -676,6 +676,14 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
+     * @deprecated renamed to {@linkplain EventStream#retainingLast()} to avoid confusion
+     */
+    @Deprecated
+    default SuspendableEventStream<T> forgetful() {
+        return new ForgetfulEventStream<>(this);
+    }
+
+    /**
      * Returns a suspendable event stream that, when suspended, forgets all but
      * the latest event emitted by this event stream. The remembered event, if
      * any, is emitted from the returned stream upon resume.
@@ -683,7 +691,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      * <pre>
      *     {@code
      *     EventStream<?> A = ...;
-     *     EventStream<?> B = A.forgetful();
+     *     EventStream<?> B = A.retainingLast();
      *     }
      * </pre>
      * <p>Returns B. When B is not suspended and A emits an event, B emits that event.
@@ -695,15 +703,15 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     B :-a--b--|---Suspended----|e------f-------&gt;
      * </pre>
      */
-    default SuspendableEventStream<T> forgetful() {
+    default SuspendableEventStream<T> retainingLast() {
         return new ForgetfulEventStream<>(this);
     }
 
     /**
-     * Shortcut for {@code forgetful().suspendedWhen(condition)}.
+     * Shortcut for {@code retainingLast().suspendedWhen(condition)}.
      */
     default EventStream<T> retainLatestWhen(ObservableValue<Boolean> condition) {
-        return forgetful().suspendedWhen(condition);
+        return retainingLast().suspendedWhen(condition);
     }
 
     /**
@@ -740,7 +748,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     <li>d = 5 [reduction(5, 7) == 5]</li>
      * </ul>
      *
-     * <p>Note that {@link #forgetful()} is equivalent to
+     * <p>Note that {@link #retainingLast()} is equivalent to
      * {@code reducible((a, b) -> b)}.
      */
     default SuspendableEventStream<T> reducible(BinaryOperator<T> reduction) {

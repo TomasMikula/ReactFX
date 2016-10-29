@@ -567,6 +567,28 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     }
 
     /**
+     * Inversion of {@link #emitBothOnEach(EventStream)}.
+     * For example,
+     * <pre>
+     *     {@code
+     *     EventStream<?> A = ...;
+     *     EventStream<?> B = ...;
+     *     EventStream<?> C = A.combineWithLatestFrom(B);}
+     * </pre>
+     * <p>Returns C. When A emits an event, C emits A and B's most recent events.
+     * Only emits an event when both A and B have emitted at least one new event.
+     * <pre>
+     *     Time ---&gt;
+     *     A :----1-----------2-----3---------4-------&gt;
+     *     B :-a-------b---c-------------d------------&gt;
+     *     C :---[1,a]------[2,c]-[3,c]-----[4,d]-----&gt;
+     * </pre>
+     */
+    default <I> EventStream<Tuple2<T, I>> combineWithLatestFrom(EventStream<I> other) {
+        return new EmitBothOnEachStream<>(other, this).map(tu -> t(tu._2, tu._1));
+    }
+
+    /**
      * Returns a new event stream that emits all the events emitted from this
      * stream and in addition to that re-emits the most recent event on every
      * event emitted from {@code impulse}.

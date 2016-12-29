@@ -124,6 +124,15 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     }
 
     /**
+     * Returns a stream of non-null values of this {@linkplain Val}. The returned stream
+     * emits the current value of this {@linkplain Val} if it is not null for each new subscriber
+     * and then the new value if it is not null whenever the value changes.
+     */
+    default EventStream<T> nonNullValues() {
+        return EventStreams.nonNullValuesOf(this);
+    }
+
+    /**
      * Checks whether this {@linkplain Val} holds a (non-null) value.
      * @return {@code true} if this {@linkplain Val} holds a (non-null) value,
      * {@code false} otherwise.

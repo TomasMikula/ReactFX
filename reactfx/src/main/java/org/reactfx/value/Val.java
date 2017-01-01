@@ -475,13 +475,13 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
     static <T, U> Val<U> flatMap(
             ObservableValue<T> src,
             Function<? super T, ? extends ObservableValue<U>> f) {
-        return new FlatMappedVal<>(src, f);
+        return new FlatMappedVal<>(src, (Function) f);
     }
 
     static <T, U> Var<U> selectVar(
             ObservableValue<T> src,
             Function<? super T, ? extends Property<U>> f) {
-        return new FlatMappedVar<>(src, f);
+        return new FlatMappedVar<>(src, (Function) f);
     }
 
     static <T, U> Var<U> selectVar(

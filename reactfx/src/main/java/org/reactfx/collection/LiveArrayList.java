@@ -5,10 +5,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.RandomAccess;
 
 import org.reactfx.Subscription;
 
-public final class LiveArrayList<E> extends LiveListBase<E> {
+public final class LiveArrayList<E> extends LiveListBase<E> implements RandomAccess {
     private List<E> list;
 
     public LiveArrayList() {

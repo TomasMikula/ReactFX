@@ -1738,4 +1738,14 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
     default <S extends Suspendable> SuspenderStream<T, S> suspenderOf(S suspendable) {
         return new SuspenderStreamImpl<>(this, suspendable);
     }
+
+	/**
+	 * Returns a new event stream that does not emit the next event when the
+	 * trigger event stream emits one or more events before the next source
+	 * event happens.
+	 */
+	default EventStream<T> swallonOn(EventStream<?> trigger) {
+		return new SwallowOnStream<>(this, trigger);
+	}
+
 }

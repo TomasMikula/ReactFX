@@ -1,5 +1,8 @@
 package org.reactfx.util;
 
+/**
+ * Factory class for creating Tuples of all sizes.
+ */
 public class Tuples {
 
     public static <A, B> Tuple2<A, B> t(A a, B b) {

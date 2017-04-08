@@ -4,6 +4,9 @@ import static org.reactfx.util.Tuples.*;
 
 import java.util.Objects;
 
+/**
+ * To create this Tuple, use {@link Tuples} factory method
+ */
 public class Tuple4<A, B, C, D> {
     public final A _1;
     public final B _2;
@@ -38,14 +41,23 @@ public class Tuple4<A, B, C, D> {
         return t(_1, _2, _3, d);
     }
 
+    /**
+     * Maps this Tuple into a new object by passing all of its values into the given {@code Function}.
+     */
     public <T> T map(TetraFunction<? super A, ? super B, ? super C, ? super D, ? extends T> f) {
         return f.apply(_1, _2, _3, _4);
     }
 
+    /**
+     * Returns the result of passing all of its values into the {@code Predicate}'s test method.
+     */
     public boolean test(TetraPredicate<? super A, ? super B, ? super C, ? super D> f) {
         return f.test(_1, _2, _3, _4);
     }
 
+    /**
+     * Passes all of this Tuple's values into the given {@code Consumer}.
+     */
     public void exec(TetraConsumer<? super A, ? super B, ? super C, ? super D> f) {
         f.accept(_1, _2, _3, _4);
     }

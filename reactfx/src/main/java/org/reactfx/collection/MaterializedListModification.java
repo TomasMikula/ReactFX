@@ -4,6 +4,10 @@ import java.util.List;
 
 import org.reactfx.util.Lists;
 
+/**
+ * Sub-interface of {@link ListModificationLike} that has its own copy of added elements ({@link #getAdded()}),
+ * thus the validity of the list of added elements returned from {@code getAdded()} is not restricted.
+ */
 public interface MaterializedListModification<E> extends ListModificationLike<E> {
 
     /**

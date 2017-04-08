@@ -8,6 +8,7 @@ import org.reactfx.util.NotificationAccumulator;
  * {@link ProxyObservable}, which registers observers with an underlying
  * {@linkplain Observable}, and unlike {@link RigidObservable}, which does
  * not produce any notifications.
+ *
  * @param <O> observer type accepted by this {@linkplain Observable}
  * @param <T> notification type produced by this {@linkplain Observable}
  */

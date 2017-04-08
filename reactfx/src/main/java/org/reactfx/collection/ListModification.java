@@ -7,12 +7,24 @@ import javafx.collections.ObservableList;
 
 import org.reactfx.util.Lists;
 
+/**
+ * A sub-interface of {@link ListModificationLike} that holds a reference to the observable list in which the
+ * modification occurred and whose {@link #getAddedSubList()} method returns a sublist view of
+ * the original observable list. Such sublist is valid only until the next list modification.
+ */
 public interface ListModification<E> extends ListModificationLike<E> {
 
     List<? extends E> getAddedSubList();
 
+    /**
+     * Trims the common prefix and suffix of the {@link #getRemoved()} and {@link #getAddedSubList()} using
+     * {@link Lists#commonPrefixSuffixLengths(List, List)}.
+     */
     ListModification<E> trim();
 
+    /**
+     * Converts this into a {@link MaterializedListModification}.
+     */
     default MaterializedListModification<E> materialize() {
         return MaterializedListModification.create(
                 getFrom(),

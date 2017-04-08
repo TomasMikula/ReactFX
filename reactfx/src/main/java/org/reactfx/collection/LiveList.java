@@ -6,6 +6,7 @@ import java.util.NoSuchElementException;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ObservableValue;
@@ -25,7 +26,38 @@ import org.reactfx.util.WrapperBase;
 import org.reactfx.value.Val;
 
 /**
- * Adds additional methods to {@link ObservableList}.
+ * Adds additional methods to {@link ObservableList} for observing its changes and for composition (similar to
+ * {@link EventStream}).
+ *
+ * <p>
+ *     In observing its changes, there are two types of more helpful objects/observers to use instead of
+ *     {@link ListChangeListener.Change}. There are the regular types (the first pair listed below) that
+ *     better adhere to how one thinks. There are also the {@code Quasi}-types (the second pair below) that
+ *     only which items were removed and how many were added, but which doesn't specify which items were added.
+ *     The two types allow more flexibility as to what is needed or appropriate in various cases:
+ * </p>
+ * <ul>
+ *     <li>{@link ListChange} (e.g. {@link #observeChanges(Consumer)}). It is similar to
+ *     {@link ListChangeListener.Change} in that it stores a list of modifications but it is more straight-forward
+ *     than its counterpart.</li>
+ *     <li>{@link ListModification} (e.g. {@link #observeModifications(Consumer)}). It is an actual modification
+ *     that occurred in the list. </li>
+ *     <li>{@link QuasiListChange} (e.g. {@link #observeQuasiChanges(QuasiChangeObserver)})</li>
+ *     <li>{@link QuasiListModification} (e.g. {@link #observeQuasiModifications(QuasiModificationObserver)})</li>
+ * </ul>
+ *
+ * <p>As for composition, one can use methods like:</p>
+ * <ul>
+ *     <li>{@link #map(Function)}</li>
+ *     <li>{@link #mapDynamic(ObservableValue)}</li>
+ *     <li>{@link #filtered(Predicate)}</li>
+ *     <li>{@link #sizeProperty()}</li>
+ *     <li>{@link #reduce(BinaryOperator)}</li>
+ *     <li>
+ *         or methods that determine what items are stored in the returned list, such as
+ *         {@link #suspendable()} and {@link #memoize()}.
+ *     </li>
+ * </ul>
  *
  * @param <E> type of list elements
  */
@@ -44,6 +76,9 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         void onChange(O change);
     }
 
+    /**
+     * Observes the {@link QuasiListChange}s (the list of {@link QuasiListModification}) of this list
+     */
     @FunctionalInterface
     public interface QuasiChangeObserver<E>
     extends Observer<E, QuasiListChange<? extends E>> {
@@ -67,6 +102,9 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         }
     }
 
+    /**
+     * Observes the individual {@link QuasiListModification}s of this list
+     */
     @FunctionalInterface
     public interface QuasiModificationObserver<E>
     extends Observer<E, QuasiListModification<? extends E>> {
@@ -95,53 +133,89 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
      * Default Methods *
      * *************** */
 
+    /**
+     * See {@link QuasiChangeObserver}
+     */
     default void addQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
         addObserver(observer);
     }
 
+    /**
+     * See {@link QuasiChangeObserver}
+     */
     default void removeQuasiChangeObserver(QuasiChangeObserver<? super E> observer) {
         removeObserver(observer);
     }
 
+    /**
+     * See {@link QuasiModificationObserver}
+     */
     default void addQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
         addObserver(observer);
     }
 
+    /**
+     * See {@link QuasiModificationObserver}
+     */
     default void removeQuasiModificationObserver(QuasiModificationObserver<? super E> observer) {
         removeObserver(observer);
     }
 
+    /**
+     * See {@link ListChange}
+     */
     default void addChangeObserver(Consumer<? super ListChange<? extends E>> observer) {
         addQuasiChangeObserver(new ChangeObserverWrapper<>(this, observer));
     }
 
+    /**
+     * See {@link ListChange}
+     */
     default void removeChangeObserver(Consumer<? super ListChange<? extends E>> observer) {
         removeQuasiChangeObserver(new ChangeObserverWrapper<>(this, observer));
     }
 
+    /**
+     * See {@link ListModification}
+     */
     default void addModificationObserver(Consumer<? super ListModification<? extends E>> observer) {
         addQuasiModificationObserver(new ModificationObserverWrapper<>(this, observer));
     }
 
+    /**
+     * See {@link ListModification}
+     */
     default void removeModificationObserver(Consumer<? super ListModification<? extends E>> observer) {
         removeQuasiModificationObserver(new ModificationObserverWrapper<>(this, observer));
     }
 
+    /**
+     * See {@link QuasiChangeObserver}
+     */
     default Subscription observeQuasiChanges(QuasiChangeObserver<? super E> observer) {
         addQuasiChangeObserver(observer);
         return () -> removeQuasiChangeObserver(observer);
     }
 
+    /**
+     * See {@link QuasiModificationObserver}
+     */
     default Subscription observeQuasiModifications(QuasiModificationObserver<? super E> observer) {
         addQuasiModificationObserver(observer);
         return () -> removeQuasiModificationObserver(observer);
     }
 
+    /**
+     * See {@link ListChange}
+     */
     default Subscription observeChanges(Consumer<? super ListChange<? extends E>> observer) {
         addChangeObserver(observer);
         return () -> removeChangeObserver(observer);
     }
 
+    /**
+     * See {@link ListModification}
+     */
     default Subscription observeModifications(Consumer<? super ListModification<? extends E>> observer) {
         addModificationObserver(observer);
         return () -> removeModificationObserver(observer);
@@ -171,27 +245,45 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return observeQuasiChanges(qc -> {});
     }
 
+    /**
+     * Calls {@link #sizeOf(ObservableList)} using this list as the observable list in that method
+     */
     default Val<Integer> sizeProperty() {
         return sizeOf(this);
     }
 
+    /**
+     * Calls {@link #map(ObservableList, Function)} using this list as the observable list in that method
+     */
     default <F> LiveList<F> map(Function<? super E, ? extends F> f) {
         return map(this, f);
     }
 
+    /**
+     * Calls {@link #mapDynamic(ObservableList, ObservableValue)} using this list as the observable list in that method
+     */
     default <F> LiveList<F> mapDynamic(
             ObservableValue<? extends Function<? super E, ? extends F>> f) {
         return mapDynamic(this, f);
     }
 
+    /**
+     * Calls {@link #suspendable(ObservableList)} using this list as the observable list in that method
+     */
     default SuspendableList<E> suspendable() {
         return suspendable(this);
     }
 
+    /**
+     * Calls {@link #memoize(ObservableList)} using this list as the observable list in that method
+     */
     default MemoizationList<E> memoize() {
         return memoize(this);
     }
 
+    /**
+     * Calls {@link #reduce(ObservableList, BinaryOperator)} using this list as the observable list in that method.
+     */
     default Val<E> reduce(BinaryOperator<E> reduction) {
         return reduce(this, reduction);
     }
@@ -213,6 +305,9 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return collapseDynamic(this, f);
     }
 
+    /**
+     * Returns an {@link EventStream} that emits a {@link QuasiListChange} event every time this list changes.
+     */
     default EventStream<QuasiListChange<? extends E>> quasiChanges() {
         return new EventStreamBase<QuasiListChange<? extends E>>() {
             @Override
@@ -222,10 +317,16 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         };
     }
 
+    /**
+     * Returns an {@link EventStream} that emits a {@link ListChange} event every time this list changes.
+     */
     default EventStream<ListChange<? extends E>> changes() {
         return quasiChanges().map(qc -> QuasiListChange.instantiate(qc, this));
     }
 
+    /**
+     * Returns an {@link EventStream} that emits a {@link QuasiListModification} event every time this list changes.
+     */
     default EventStream<QuasiListModification<? extends E>> quasiModifications() {
         return new EventStreamBase<QuasiListModification<? extends E>>() {
             @Override
@@ -235,6 +336,9 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         };
     }
 
+    /**
+     * Returns an {@link EventStream} that emits a {@link ListModification} event every time this list changes.
+     */
     default EventStream<ListModification<? extends E>> modifications() {
         return quasiModifications().map(qm -> QuasiListModification.instantiate(qm, this));
     }
@@ -244,6 +348,9 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
      * Static Methods *
      * ************** */
 
+    /**
+     * See {@link QuasiChangeObserver}
+     */
     static <E> Subscription observeQuasiChanges(
             ObservableList<? extends E> list,
             QuasiChangeObserver<? super E> observer) {
@@ -283,26 +390,46 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         }
     }
 
+    /**
+     * Returns an {@link EventStream} that emits a {@link ListChange} every time a change occurs in the {@code list}.
+     */
     static <E> EventStream<ListChange<? extends E>> changesOf(ObservableList<E> list) {
         return quasiChangesOf(list).map(qc -> QuasiListChange.instantiate(qc, list));
     }
 
+    /**
+     * Returns a {@link Val} whose value always equals the size of the given {@code list}.
+     */
     static Val<Integer> sizeOf(ObservableList<?> list) {
         return Val.create(() -> list.size(), list);
     }
 
+    /**
+     * Returns a {@link LiveList} whose items are the result of applying the mapping function, {@code f}, to
+     * every item in {@code list} when the returned list is first created and then only to any replacements or
+     * additions after that. The size of the returned list always equals the size of {@code list}.
+     */
     static <E, F> LiveList<F> map(
             ObservableList<? extends E> list,
             Function<? super E, ? extends F> f) {
         return new MappedList<>(list, f);
     }
 
+    /**
+     * Returns a {@link LiveList} whose items are the result of applying the mapping function currently stored in
+     * {@code f} to every item in {@code list} when the returned list is first created and then only to any
+     * replacements or additions after that. The size of the returned list always equals the size of {@code list}.
+     */
     static <E, F> LiveList<F> mapDynamic(
             ObservableList<? extends E> list,
             ObservableValue<? extends Function<? super E, ? extends F>> f) {
         return new DynamicallyMappedList<>(list, f);
     }
 
+    /**
+     * Returns a {@link LiveList} whose items are the same as {@code list} when unsuspended; once suspended,
+     * any updates to {@code list} will not propagate to the returned list until the returned list is unsuspended again.
+     */
     static <E> SuspendableList<E> suspendable(ObservableList<E> list) {
         if(list instanceof SuspendableList) {
             return (SuspendableList<E>) list;
@@ -311,6 +438,11 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         }
     }
 
+    /**
+     * Returns a {@link MemoizationList} that wraps the {@code list}, so that the returned list contains all of
+     * the given list's items when it hasn't been memorized or only some of the items in the list when
+     * {@link MemoizationList#isMemoized(int)} is true.
+     */
     static <E> MemoizationList<E> memoize(ObservableList<E> list) {
         if(list instanceof MemoizationList) {
             return (MemoizationList<E>) list;
@@ -319,6 +451,12 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         }
     }
 
+    /**
+     * Returns a {@link Val} whose value is the result returned from applying the {@link BinaryOperator} on every
+     * item in the list each time the list changes. The first value passed into the {@code reduction} is the
+     * accumulated value returned from the last reduction, and the second value is the next item in the {@code list}.
+     * For more clarity on how this works, see {@link EventStream#reducible(BinaryOperator)}
+     */
     static <E> Val<E> reduce(
             ObservableList<E> list, BinaryOperator<E> reduction) {
         return new ListReduction<>(list, reduction);

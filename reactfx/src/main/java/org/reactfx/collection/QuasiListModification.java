@@ -7,8 +7,17 @@ import java.util.List;
 import javafx.collections.ListChangeListener.Change;
 import javafx.collections.ObservableList;
 
+/**
+ * Sub-interface of {@link ListModificationLike} that does not provide a way to get the added elements directly,
+ * but has to be combined with the observable list to obtain {@linkplain ListModification}
+ * ({@link QuasiListModification#instantiate(QuasiListModification, ObservableList)}) or
+ * {@linkplain MaterializedListModification} ({@link QuasiListModification#materialize(QuasiListModification, ObservableList)}).
+ */
 public interface QuasiListModification<E> extends ListModificationLike<E> {
 
+    /**
+     * Creates a {@link QuasiListModification} using the given parameters
+     */
     static <E> QuasiListModification<E> create(
             int position,
             List<? extends E> removed,
@@ -16,6 +25,10 @@ public interface QuasiListModification<E> extends ListModificationLike<E> {
         return new QuasiListModificationImpl<>(position, removed, addedSize);
     }
 
+    /**
+     * Creates a {@link QuasiListModification} from the current state in the
+     * {@link javafx.collections.ListChangeListener.Change}.
+     */
     static <E, F extends E> QuasiListModification<E> fromCurrentStateOf(
             Change<F> ch) {
         List<F> list = ch.getList();

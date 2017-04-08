@@ -14,6 +14,10 @@ import org.reactfx.collection.LiveList.Observer;
 import org.reactfx.collection.QuasiListChange;
 
 /**
+ * Determines how multiple accumulations should be handled. For example, one can hold only the last accumulated
+ * value and drop all the others (e.g. {@link #retainLatestStreamNotifications()}). Another can queue all
+ * the accumulated values (e.g. {@link #queuingStreamNotifications()}).
+ *
  * @param <O> observer type
  * @param <V> type of produced values
  * @param <A> type of accumulated value
@@ -30,26 +34,46 @@ public interface NotificationAccumulator<O, V, A> {
                 size, head, tail, initialTransformation, reduction);
     }
 
+    /**
+     * Accumulates zero to multiple values by placing any new values into a {@link Deque}.
+     */
     static <T> NotificationAccumulator<Consumer<? super T>, T, Deque<T>> queuingStreamNotifications() {
         return new QueuingStreamNotifications<>();
     }
 
+    /**
+     * Accumulates only one value by reducing the currently-stored accumulated value with the next value via
+     * {@code reduction}.
+     */
     static <T> NotificationAccumulator<Consumer<? super T>, T, T> reducingStreamNotifications(BinaryOperator<T> reduction) {
         return new ReducingStreamNotifications<>(reduction);
     }
 
+    /**
+     * Accumulates only one value (the last one) and ignores the rest.
+     */
     static <T> NotificationAccumulator<Consumer<? super T>, T, T> retainLatestStreamNotifications() {
         return new RetainLatestStreamNotifications<>();
     }
 
+    /**
+     * Accumulates only one value (the first one) and ignores the rest.
+     */
     static <T> NotificationAccumulator<Consumer<? super T>, T, T> retainOldestValNotifications() {
         return new RetailOldestValNotifications<>();
     }
 
+    /**
+     * Accumulates only the first value and throws if one attempts to accumulate additional values.
+     */
     static <T> NotificationAccumulator<Consumer<? super T>, T, T> nonAccumulativeStreamNotifications() {
         return new NonAccumulativeStreamNotifications<>();
     }
 
+    /**
+     * Accumulates a {@link QuasiListChange} by either storing it (if no other accumulation has occurred yet) or by
+     * adding it to {@link org.reactfx.collection.ListChangeAccumulator}.
+     */
     static <E> NotificationAccumulator<LiveList.Observer<? super E, ?>, QuasiListChange<? extends E>, ListModificationSequence<E>> listNotifications() {
         return new ListNotifications<>();
     }

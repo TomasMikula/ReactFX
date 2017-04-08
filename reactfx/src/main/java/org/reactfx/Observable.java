@@ -13,20 +13,25 @@ import org.reactfx.value.Val;
  * {@link #observe(Object)} method and removed by the returned
  * {@linkplain Subscription}.
  *
- * In specific subtypes, methods for adding/removing canonical observers may
- * have aliases that are more descriptive for the specific type, for example,
- * in {@link EventStream}, {@linkplain #observe(Object)} is aliased as
- * {@linkplain EventStream#subscribe(java.util.function.Consumer)}, or in
- * {@link Val}, {@linkplain #addObserver(Object)} is aliased as
- * {@linkplain Val#addInvalidationObserver(java.util.function.Consumer)}.
+ * <p>
+ *     In specific subtypes, methods for adding/removing canonical observers may
+ *     have aliases that are more descriptive for the specific type, for example,
+ *     in {@link EventStream}, {@linkplain #observe(Object)} is aliased as
+ *     {@linkplain EventStream#subscribe(java.util.function.Consumer)}, or in
+ *     {@link Val}, {@linkplain #addObserver(Object)} is aliased as
+ *     {@linkplain Val#addInvalidationObserver(java.util.function.Consumer)}.
+ * </p>
+
  *
- * In addition to the canonical observer, subtypes may support adding other
- * observer types. These other observers will be wrapped to "look like" a
- * canonical observer. For example, the canonical observer for
- * {@code Val<T>} is an <em>invalidation observer</em>, which is of type
- * {@code Consumer<? super T>}, which accepts the invalidated value.
- * In addition to this canonical observer, {@linkplain Val} also supports
- * {@link InvalidationListener}s and {@link ChangeListener}s.
+ * <p>
+ *     In addition to the canonical observer, subtypes may support adding other
+ *     observer types. These other observers will be wrapped to "look like" a
+ *     canonical observer. For example, the canonical observer for
+ *     {@code Val<T>} is an <em>invalidation observer</em>, which is of type
+ *     {@code Consumer<? super T>}, which accepts the invalidated value.
+ *     In addition to this canonical observer, {@linkplain Val} also supports
+ *     {@link InvalidationListener}s and {@link ChangeListener}s.
+ * </p>
  *
  * @param <O> observer type accepted by this {@linkplain Observable}
  */

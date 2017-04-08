@@ -9,6 +9,9 @@ import javafx.collections.ObservableList;
 
 import org.reactfx.util.Lists;
 
+/**
+ * Stores a list of {@link QuasiListModification}s
+ */
 public interface QuasiListChange<E> extends ListModificationSequence<E> {
 
     @Override
@@ -28,7 +31,10 @@ public interface QuasiListChange<E> extends ListModificationSequence<E> {
         return (QuasiListChange<E>) mod;
     }
 
-
+    /**
+     * Creates a QuasiListChange based on the given {@code change} that only holds {@link QuasiListModification}s
+     * in its list of {@link #getModifications()}.
+     */
     static <E> QuasiListChange<E> from(Change<? extends E> ch) {
         QuasiListChangeImpl<E> res = new QuasiListChangeImpl<>();
         while(ch.next()) {

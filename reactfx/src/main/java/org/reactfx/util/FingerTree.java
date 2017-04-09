@@ -19,6 +19,15 @@ import java.util.function.ToIntFunction;
 
 import org.reactfx.util.LL.Cons;
 
+/**
+ * A 2-3 Finger Tree (see http://www.staff.city.ac.uk/~ross/papers/FingerTree.html for more explanation).
+ *
+ * Create one using {@link #mkTree(List)}, {@link #mkTree(List, ToSemigroup)}, or {@link #empty()}.
+ *
+ * @param <T> the type of data to store in the FingerTree
+ * @param <S> the type of summary data to use. This is often used to calculate meta-data (e.g. the length of something)
+ *           about the values stored in the FingerTree
+ */
 public abstract class FingerTree<T, S> {
 
     public static abstract class NonEmptyFingerTree<T, S> extends FingerTree<T, S> {
@@ -987,18 +996,34 @@ public abstract class FingerTree<T, S> {
     }
 
     public abstract int getDepth();
+
+    /**
+     * Gets the number of items (leafs) in this tree
+     */
     public abstract int getLeafCount();
+
     public abstract Optional<S> getSummaryOpt();
+
+    /**
+     * Returns an {@code Either} whose {@link Either#left(Object) left} is an empty FingerTree and whose right
+     * is a {@link NonEmptyFingerTree}. Useful for calling {@link Either#unify(Function, Function)}.
+     */
     public abstract Either<FingerTree<T, S>, NonEmptyFingerTree<T, S>> caseEmpty();
 
     public final boolean isEmpty() {
         return getDepth() == 0;
     }
 
+    /**
+     * Returns {@code getSummaryOpt().orElse(whenEmpty)}
+     */
     public S getSummary(S whenEmpty) {
         return getSummaryOpt().orElse(whenEmpty);
     }
 
+    /**
+     * Gets the data at the given index
+     */
     public T getLeaf(int index) {
         Lists.checkIndex(index, getLeafCount());
         return getLeaf0(index);
@@ -1061,10 +1086,19 @@ public abstract class FingerTree<T, S> {
                 neTree -> { throw new AssertionError("This method must be overridden in non-empty tree"); });
     }
 
+    /**
+     * Reduces all of the items in this FingerTree into one value by passing the accumulated value ({@code acc}
+     * initially and the result returned from {@code reduction}) and the next item
+     * in the FingerTree to {@code reduction} until all values have been reduced.
+     */
     public abstract <R> R fold(
             R acc,
             BiFunction<? super R, ? super T, ? extends R> reduction);
 
+    /**
+     * Same as {@link #fold(Object, BiFunction)} but only reduces the items between {@code startLeaf} and
+     * {@code endLeaf} with {@code acc} being the returned value is the start and end values equal.
+     */
     public <R> R foldBetween(
             R acc,
             BiFunction<? super R, ? super T, ? extends R> reduction,

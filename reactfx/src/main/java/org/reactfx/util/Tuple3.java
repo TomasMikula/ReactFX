@@ -4,6 +4,9 @@ import static org.reactfx.util.Tuples.*;
 
 import java.util.Objects;
 
+/**
+ * To create this Tuple, use {@link Tuples} factory method
+ */
 public class Tuple3<A, B, C> {
     public final A _1;
     public final B _2;
@@ -31,14 +34,23 @@ public class Tuple3<A, B, C> {
         return t(_1, _2, c);
     }
 
+    /**
+     * Maps this Tuple into a new object by passing all of its values into the given {@code Function}.
+     */
     public <T> T map(TriFunction<? super A, ? super B, ? super C, ? extends T> f) {
         return f.apply(_1, _2, _3);
     }
 
+    /**
+     * Returns the result of passing all of its values into the {@code Predicate}'s test method.
+     */
     public boolean test(TriPredicate<? super A, ? super B, ? super C> f) {
         return f.test(_1, _2, _3);
     }
 
+    /**
+     * Passes all of this Tuple's values into the given {@code Consumer}.
+     */
     public void exec(TriConsumer<? super A, ? super B, ? super C> f) {
         f.accept(_1, _2, _3);
     }

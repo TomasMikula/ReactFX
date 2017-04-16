@@ -4,6 +4,9 @@ import static org.reactfx.util.Tuples.*;
 
 import java.util.Objects;
 
+/**
+ * To create this Tuple, use {@link Tuples} factory method
+ */
 public class Tuple6<A, B, C, D, E, F> {
     public final A _1;
     public final B _2;
@@ -52,14 +55,23 @@ public class Tuple6<A, B, C, D, E, F> {
         return t(_1, _2, _3, _4, _5, f);
     }
 
+    /**
+     * Maps this Tuple into a new object by passing all of its values into the given {@code Function}.
+     */
     public <T> T map(HexaFunction<? super A, ? super B, ? super C, ? super D, ? super E, ? super F, ? extends T> f) {
         return f.apply(_1, _2, _3, _4, _5, _6);
     }
 
+    /**
+     * Returns the result of passing all of its values into the {@code Predicate}'s test method.
+     */
     public boolean test(HexaPredicate<? super A, ? super B, ? super C, ? super D, ? super E, ? super F> f) {
         return f.test(_1, _2, _3, _4, _5, _6);
     }
 
+    /**
+     * Passes all of this Tuple's values into the given {@code Consumer}.
+     */
     public void exec(HexaConsumer<? super A, ? super B, ? super C, ? super D, ? super E, ? super F> f) {
         f.accept(_1, _2, _3, _4, _5, _6);
     }

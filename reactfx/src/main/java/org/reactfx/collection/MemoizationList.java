@@ -10,17 +10,79 @@ import org.reactfx.Subscription;
 import org.reactfx.util.Lists;
 import org.reactfx.util.SparseList;
 
+/**
+ * A list for handling which items from its {@code sourceList} appear in its {@link #memoizedItems() memoized list}.
+ * When {@link #isMemoized(int) this list is memoized}, {@link #memoizedItems()} will only contain some of the items
+ * from the {@code sourceList}. Otherwise, it will contain all of those items. <b>Note: {@link #memoizedItems()}'
+ * items do not need to be continuous. It can have the {@code sourceList}'s first and last item while ignoring the
+ * middle items.</b>
+ *
+ * <p>
+ *     The methods, {@link #force(int, int)} and {@link #forget(int, int)}, will throw {@link IllegalStateException}
+ *     if they are called when this list or its {@link #memoizedItems()} list is not currently observing its inputs.
+ *     One can force the observation of its inputs by calling {@link LiveList#pin()} or any other
+ *     "{@code observe-}" related methods on this list or its {@link #memoizedItems()} list.
+ * </p>
+
+ */
 public interface MemoizationList<E> extends LiveList<E> {
+
+    /**
+     * Returns a unmodifiable list that either contains all of this list's {@code sourceList} when not memoized or
+     * some of that list's items when memoized.
+     */
     LiveList<E> memoizedItems();
+
+    /**
+     * True if the item at the given index in the {@code sourceList} is also in the {@link #memoizedItems()} list.
+     */
     boolean isMemoized(int index);
+
+    /**
+     * Gets the item at {@code index} if it is listed in the {@link #memoizedItems()}. Otherwise, returns
+     * {@link Optional#empty()}
+     */
     Optional<E> getIfMemoized(int index);
+
+    /**
+     * Gets the size of {@link #memoizedItems()}
+     */
     int getMemoizedCount();
+
+    /**
+     * Gets the number of items in {@link #memoizedItems()} that occur before the given position in {@link #memoizedItems()}.
+     */
     int getMemoizedCountBefore(int position);
+
+    /**
+     * Gets the number of items in {@link #memoizedItems()} that occur after the given position in {@link #memoizedItems()}.
+     */
     int getMemoizedCountAfter(int position);
+
+    /**
+     * Excludes the items in the specified range (using the {@code sourceList}'s index system) from
+     * {@link #memoizedItems()}
+     */
     void forget(int from, int to);
+
+    /**
+     * Using the {@code index} of an item in {@link #memoizedItems()}, returns the index of that same item in this
+     * list's {@code sourceList}.
+     */
     int indexOfMemoizedItem(int index);
+
+    /**
+     * Gets the lower and upper index bounds (according to the {@code sourceList}'s indexes) of the first and last
+     * item in {@link #memoizedItems()}. <b>Note: remember that the memoized items may not be continuous</b>
+     */
     IndexRange getMemoizedItemsRange();
+
+    /**
+     * Forces the {@link #memoizedItems()} to only include the items in the specified range (according to the
+     * {@code sourceList}'s index system.
+     */
     void force(int from, int to);
+
 }
 
 class MemoizationListImpl<E>

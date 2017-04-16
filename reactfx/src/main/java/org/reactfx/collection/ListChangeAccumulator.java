@@ -8,6 +8,11 @@ import javafx.collections.ListChangeListener;
 
 import org.reactfx.util.Lists;
 
+/**
+ * Accumulates {@link QuasiListChange}s until {@link #fetch()} is called, which returns the accumulated list
+ * and then clears its list of accumulations. During the accumulation process, modifications can be added or
+ * {@link #drop(int) dropped} before {@code fetch()} is called.
+ */
 public final class ListChangeAccumulator<E> implements ListModificationSequence<E> {
     private QuasiListChangeImpl<E> modifications = new QuasiListChangeImpl<>();
 
@@ -36,17 +41,29 @@ public final class ListChangeAccumulator<E> implements ListModificationSequence<
         return modifications.isEmpty();
     }
 
+    /**
+     * Returns the current list of accumulated {@link QuasiListModification}s and then sets its
+     * list of accumulated changes to an empty list.
+     */
     public QuasiListChange<E> fetch() {
         QuasiListChange<E> res = modifications;
         modifications = new QuasiListChangeImpl<>();
         return res;
     }
 
+    /**
+     * Clears out the list of accumulated {@link QuasiListModification}s from index 0 to index {@code n}. In other
+     * words {@code modifications.subList(0, n).clear()}.
+     */
     public ListChangeAccumulator<E> drop(int n) {
         modifications.subList(0, n).clear();
         return this;
     }
 
+    /**
+     * Adds the {@link QuasiListModification} to the list of accumulated modifications and combines overlapping
+     * modifications into one.
+     */
     public ListChangeAccumulator<E> add(QuasiListModification<? extends E> mod) {
         if(modifications.isEmpty()) {
             modifications.add(mod);

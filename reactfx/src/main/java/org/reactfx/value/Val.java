@@ -424,6 +424,10 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 : new ValWrapper<>(obs);
     }
 
+    /**
+     * Adds the given invalidation {@code listener} to the {@code obs} and returns a {@link Subscription} whose
+     * {@link Subscription#unsubscribe() unsubscribe()} will remove the listener and prevent memory leaks.
+     */
     static <T> Subscription observeChanges(
             ObservableValue<? extends T> obs,
             ChangeListener<? super T> listener) {
@@ -435,6 +439,10 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         }
     }
 
+    /**
+     * Adds the given change {@code listener} to the {@code obs} and returns a {@link Subscription} whose
+     * {@link Subscription#unsubscribe() unsubscribe()} will remove the listener and prevent memory leaks.
+     */
     static Subscription observeInvalidations(
             ObservableValue<?> obs,
             InvalidationListener listener) {
@@ -442,28 +450,48 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         return () -> obs.removeListener(listener);
     }
 
+    /**
+     * Returns a {@link Val} whose value is either the value of {@code src} when it is null, or the {@code other}
+     * value when {@code src}'s value is null.
+     */
     static <T> Val<T> orElseConst(ObservableValue<? extends T> src, T other) {
         return new OrElseConst<>(src, other);
     }
 
+    /**
+     * Returns a {@link Val} whose value is either the value of {@code src} when it is non-null, and the value
+     * of {@code other} when {@code src}'s value is null.
+     */
     static <T> Val<T> orElse(
             ObservableValue<? extends T> src,
             ObservableValue<? extends T> other) {
         return new OrElse<>(src, other);
     }
 
+    /**
+     * Returns a {@link Val} whose value is either null when the value stored in {@code src} does not pass the
+     * {@link Predicate#test(Object) predicate's test} or the value stored in {@code src} when it does.
+     */
     static <T> Val<T> filter(
             ObservableValue<T> src,
             Predicate<? super T> p) {
         return map(src, t -> p.test(t) ? t : null);
     }
 
+    /**
+     * Returns a {@link Val} whose value is the result of applying the given mapping function, {@code f}, to
+     * {@code src}'s value wheneve it changes.
+     */
     static <T, U> Val<U> map(
             ObservableValue<T> src,
             Function<? super T, ? extends U> f) {
         return new MappedVal<>(src, f);
     }
 
+    /**
+     * Returns a {@link Val} whose value is the result of applying the current mapping function stored in {@code f}
+     * to {@code src}'s value whenever it changes.
+     */
     static <T, U> Val<U> mapDynamic(
             ObservableValue<T> src,
             ObservableValue<? extends Function<? super T, ? extends U>> f) {
@@ -472,6 +500,10 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 (t, fn) -> t == null || fn == null ? null : fn.apply(t));
     }
 
+    /**
+     * Returns a {@link Val} whose value is equal to that stored in the returned {@link ObservableValue} after applying
+     * the function, {@code f}, to {@code src}'s value every time it changes.
+     */
     static <T, U> Val<U> flatMap(
             ObservableValue<T> src,
             Function<? super T, ? extends ObservableValue<U>> f) {
@@ -491,16 +523,30 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         return new FlatMappedVar<>(src, f, resetToOnUnbind);
     }
 
+    /**
+     * Returns a {@link Val} whose value is the value of {@code obs} while {@code condition}'s value is true; when
+     * that becomes false, this {@code Val}'s value will be the currently stored value of {@code obs} and
+     * not update its value, even when {@code obs}' value changes, until {@code condition} becomes true again.
+     */
     static <T> Val<T> conditionOn(
             ObservableValue<T> obs,
             ObservableValue<Boolean> condition) {
         return flatMap(condition, con -> con ? obs : constant(obs.getValue()));
     }
 
+    /**
+     * Same as {@link #conditionOn(ObservableValue, ObservableValue)} but uses {@link #showingProperty(Node)} as
+     * its {@code condition} using the given {@code node}.
+     */
     static <T> Val<T> conditionOnShowing(ObservableValue<T> obs, Node node) {
         return conditionOn(obs, showingProperty(node));
     }
 
+    /**
+     * Returns a {@link Val} whose value is the value of {@code obs} while unsuspended; once suspended, the
+     * {@code Val} will ignore any updates until unsuspended again, which will cause this {@code Val} to recompute
+     * its value to the latest stored in {@code obs}.
+     */
     static <T> SuspendableVal<T> suspendable(ObservableValue<T> obs) {
         if(obs instanceof SuspendableVal) {
             return (SuspendableVal<T>) obs;
@@ -583,7 +629,11 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         return animate(obs, duration, Interpolator.get());
     }
 
-
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given function, {@code f}, whenever any of the
+     * given observable values (dependencies) change by passing the currently stored value of each dependency
+     * into {@code f} and storing the returned result into the {@code Val}.
+     */
     static <A, B, R> Val<R> combine(
             ObservableValue<A> src1,
             ObservableValue<B> src2,
@@ -599,6 +649,11 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 src1, src2);
     }
 
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given function, {@code f}, whenever any of the
+     * given observable values (dependencies) change by passing the currently stored value of each dependency
+     * into {@code f} and storing the returned result into the {@code Val}.
+     */
     static <A, B, C, R> Val<R> combine(
             ObservableValue<A> src1,
             ObservableValue<B> src2,
@@ -618,6 +673,11 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 src1, src2, src3);
     }
 
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given function, {@code f}, whenever any of the
+     * given observable values (dependencies) change by passing the currently stored value of each dependency
+     * into {@code f} and storing the returned result into the {@code Val}.
+     */
     static <A, B, C, D, R> Val<R> combine(
             ObservableValue<A> src1,
             ObservableValue<B> src2,
@@ -640,6 +700,11 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 src1, src2, src3, src4);
     }
 
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given function, {@code f}, whenever any of the
+     * given observable values (dependencies) change by passing the currently stored value of each dependency
+     * into {@code f} and storing the returned result into the {@code Val}.
+     */
     static <A, B, C, D, E, R> Val<R> combine(
             ObservableValue<A> src1,
             ObservableValue<B> src2,
@@ -664,6 +729,11 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 src1, src2, src3, src4, src5);
     }
 
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given function, {@code f}, whenever any of the
+     * given observable values (dependencies) change by passing the currently stored value of each dependency
+     * into {@code f} and storing the returned result into the {@code Val}.
+     */
     static <A, B, C, D, E, F, R> Val<R> combine(
             ObservableValue<A> src1,
             ObservableValue<B> src2,
@@ -690,6 +760,10 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
                 src1, src2, src3, src4, src5, src6);
     }
 
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given {@link Supplier}, {@code computeValue},
+     * whenever any of the given observable values (dependencies) change.
+     */
     static <T> Val<T> create(
             Supplier<? extends T> computeValue,
             javafx.beans.Observable... dependencies) {
@@ -716,6 +790,10 @@ extends ObservableValue<T>, Observable<Consumer<? super T>> {
         };
     }
 
+    /**
+     * Returns a {@link Val} whose value is recalculated using the given {@link Supplier}, {@code computeValue},
+     * whenever any of the given {@link EventStream}s emit a value.
+     */
     static <T> Val<T> create(
             Supplier<? extends T> computeValue,
             EventStream<?> invalidations) {

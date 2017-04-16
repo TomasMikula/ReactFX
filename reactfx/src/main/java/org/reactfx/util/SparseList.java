@@ -9,8 +9,16 @@ import java.util.Optional;
 
 import javafx.scene.control.IndexRange;
 
+/**
+ * A list that observes a {@code sourceList} and stores information on which items in that {@code sourceList} are
+ * considered "present" and which are considered "absent." The "present" items do not need to be continuous, but
+ * can be split apart by items that are "absent."
+ */
 public final class SparseList<E> {
 
+    /**
+     * Represents a span in the {@code sourceList} with additional methods.
+     */
     private static interface Segment<E> {
         boolean isPresent();
         int getLength();
@@ -30,6 +38,9 @@ public final class SparseList<E> {
         }
     }
 
+    /**
+     * Represents a span in the {@code sourceList} that is not considered "present" in the enclosing SparseList.
+     */
     private static final class AbsentSegment<E> implements Segment<E> {
         private int length;
 
@@ -110,6 +121,9 @@ public final class SparseList<E> {
         }
     }
 
+    /**
+     * Represents a span in the {@code sourceList} that is considered "present" in the enclosing SparseList.
+     */
     private static final class PresentSegment<E> implements Segment<E> {
         private final List<E> list;
 
@@ -193,6 +207,10 @@ public final class SparseList<E> {
         }
     }
 
+    /**
+     * Calculates the size of this {@link SparseList}'s {@code sourceList} (size) is and the number of items
+     * within that {@code sourceList} that are currently present in the {@code SparseList} (presentCount).
+     */
     private static final class Stats {
         private static final Stats ZERO = new Stats(0, 0);
 
@@ -235,14 +253,24 @@ public final class SparseList<E> {
         tree = emptyTree();
     }
 
+    /**
+     * Gets the size of the {@code sourceList}
+     */
     public int size() {
         return tree.getSummary(Stats.ZERO).size;
     }
 
+    /**
+     * Gets the size of the "present" items
+     */
     public int getPresentCount() {
         return tree.getSummary(Stats.ZERO).presentCount;
     }
 
+    /**
+     * Returns true if the item at the index in the {@code sourceList}'s index system is included in the list
+     * of "present" items.
+     */
     public boolean isPresent(int index) {
         return tree.get(Stats::getSize, index, Segment::isPresent);
     }
@@ -251,10 +279,17 @@ public final class SparseList<E> {
         return tree.get(Stats::getSize, index, Segment::getOrThrow);
     }
 
+    /**
+     * Gets the item at the {@code sourceList}'s index.
+     */
     public Optional<E> get(int index) {
         return tree.get(Stats::getSize, index, Segment::get);
     }
 
+    /**
+     * Gets the item using the index system of the "present" items where 0 is the first present item even if
+     * it's in the middle or end of the {@code sourceList}.
+     */
     public E getPresent(int presentIndex) {
         return tree.get(
                 Stats::getPresentCount,
@@ -262,6 +297,9 @@ public final class SparseList<E> {
                 Segment::getOrThrow);
     }
 
+    /**
+     * Gets the number of items that are "present" before the given position.
+     */
     public int getPresentCountBefore(int position) {
         Lists.checkPosition(position, size());
         return tree.getSummaryBetween(
@@ -270,21 +308,34 @@ public final class SparseList<E> {
                 Segment::getStatsBetween).orElse(Stats.ZERO).getPresentCount();
     }
 
+    /**
+     * Gets the number of items that are "present" after the given position.
+     */
     public int getPresentCountAfter(int position) {
         return getPresentCount() - getPresentCountBefore(position);
     }
 
+    /**
+     * Gets the number of items that are "present" between the given positions.
+     */
     public int getPresentCountBetween(int from, int to) {
         Lists.checkRange(from, to, size());
         return getPresentCountBefore(to) - getPresentCountBefore(from);
     }
 
+    /**
+     * Returns the index (in the {@code sourceList}'s index system) of the "present" item using the index system of the
+     * list of "present" items.
+     */
     public int indexOfPresentItem(int presentIndex) {
         Lists.checkIndex(presentIndex, getPresentCount());
         return tree.locateProgressively(Stats::getPresentCount, presentIndex)
                 .map(this::locationToPosition);
     }
 
+    /**
+     * Gets the lower and upper index bounds (in the {@code sourceList}'s index system) of the "present" items
+     */
     public IndexRange getPresentItemsRange() {
         if(getPresentCount() == 0) {
             return new IndexRange(0, 0);
@@ -301,11 +352,18 @@ public final class SparseList<E> {
         return tree.getSummaryBetween(0, major).orElse(Stats.ZERO).size + minor;
     }
 
+    /**
+     * Returns a list of the "present" items.
+     */
     public List<E> collect() {
         List<E> acc = new ArrayList<E>(getPresentCount());
         return tree.fold(acc, (l, seg) -> seg.appendTo(l));
     }
 
+    /**
+     * Returns a list of the "present" items between {@code from} and {@code to} using the index system
+     * of the "present" items list.
+     */
     public List<E> collect(int from, int to) {
         List<E> acc = new ArrayList<E>(getPresentCountBetween(from, to));
         return tree.foldBetween(
@@ -317,14 +375,23 @@ public final class SparseList<E> {
                 (l, seg, start, end) -> seg.appendRangeTo(l, start, end));
     }
 
+    /**
+     * Clears out the list of "present" items.
+     */
     public void clear() {
         tree = emptyTree();
     }
 
+    /**
+     * Counts the item at index as "absent."
+     */
     public void remove(int index) {
         remove(index, index + 1);
     }
 
+    /**
+     * Counts the items in the specified range as "absent."
+     */
     public void remove(int from, int to) {
         Lists.checkRange(from, to, size());
         if(from != to) {
@@ -332,6 +399,9 @@ public final class SparseList<E> {
         }
     }
 
+    /**
+     * Sets the given item and index as "present"
+     */
     public void set(int index, E elem) {
         tree.get(Stats::getSize, index).exec((seg, loc) -> {
             if(seg.isPresent()) {
@@ -343,6 +413,11 @@ public final class SparseList<E> {
         });
     }
 
+    /**
+     * Returns false if the item at the given index in the {@code sourceList}'s index system is included
+     * in the list of "present" items; if it isn't, sets the item at that index in the "present" items list
+     * to {@code elem}, and returns true.
+     */
     public boolean setIfAbsent(int index, E elem) {
         if(isPresent(index)) {
             return false;
@@ -352,10 +427,16 @@ public final class SparseList<E> {
         }
     }
 
+    /**
+     * Calls {@link #insertAll(int, Collection)}
+     */
     public void insert(int position, E elem) {
         insertAll(position, Collections.singleton(elem));
     }
 
+    /**
+     * Inserts the given items into the list of "present" items list
+     */
     public void insertAll(int position, Collection<? extends E> elems) {
         if(elems.isEmpty()) {
             return;
@@ -369,6 +450,9 @@ public final class SparseList<E> {
                 }));
     }
 
+    /**
+     * Counts the span in the {@code sourceList} from {@code position} to {@code length} as "absent".
+     */
     public void insertVoid(int position, int length) {
         if(length < 0) {
             throw new IllegalArgumentException(
@@ -385,6 +469,10 @@ public final class SparseList<E> {
                 }));
     }
 
+    /**
+     * Counts the given items in the given index range as "present." If {@code elems} is empty, counts the
+     * the items in the specified index range as "absent."
+     */
     public void splice(int from, int to, Collection<? extends E> elems) {
         if(elems.isEmpty()) {
             remove(from, to);
@@ -397,6 +485,10 @@ public final class SparseList<E> {
         }
     }
 
+    /**
+     * Counts the given items in the given index range as "absent." Throws {@link IllegalArgumentException} if
+     * {@code length < 0}.
+     */
     public void spliceByVoid(int from, int to, int length) {
         if(length == 0) {
             remove(from, to);

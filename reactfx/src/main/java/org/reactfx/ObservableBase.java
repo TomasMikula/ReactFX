@@ -37,6 +37,7 @@ public abstract class ObservableBase<O, T> implements ProperObservable<O, T> {
      * This method is called when the number of observers goes from 0 to 1.
      * This method is called <em>before</em> {@link #newObserver(Object)}
      * is called for the first observer.
+     *
      * @return subscription used to stop observing inputs. The subscription
      * is unsubscribed (i.e. input observation stops) when the number of
      * observers goes down to 0.

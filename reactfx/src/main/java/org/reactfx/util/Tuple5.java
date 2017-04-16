@@ -4,6 +4,9 @@ import static org.reactfx.util.Tuples.*;
 
 import java.util.Objects;
 
+/**
+ * To create this Tuple, use {@link Tuples} factory method
+ */
 public class Tuple5<A, B, C, D, E> {
     public final A _1;
     public final B _2;
@@ -45,14 +48,23 @@ public class Tuple5<A, B, C, D, E> {
         return t(_1, _2, _3, _4, e);
     }
 
+    /**
+     * Maps this Tuple into a new object by passing all of its values into the given {@code Function}.
+     */
     public <T> T map(PentaFunction<? super A, ? super B, ? super C, ? super D, ? super E, ? extends T> f) {
         return f.apply(_1, _2, _3, _4, _5);
     }
 
+    /**
+     * Returns the result of passing all of its values into the {@code Predicate}'s test method.
+     */
     public boolean test(PentaPredicate<? super A, ? super B, ? super C, ? super D, ? super E> f) {
         return f.test(_1, _2, _3, _4, _5);
     }
 
+    /**
+     * Passes all of this Tuple's values into the given {@code Consumer}.
+     */
     public void exec(PentaConsumer<? super A, ? super B, ? super C, ? super D, ? super E> f) {
         f.accept(_1, _2, _3, _4, _5);
     }

@@ -14,10 +14,13 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Immutable singly-linked list.
+ * "LL" stands for "LinkedList," but it's an immutable singly-linked list.
  */
 public abstract class LL<T> implements Iterable<T> {
 
+    /**
+     * Immutable empty singly-linked list. Note: "LL" stands for "LinkedList," but it's an immutable singly-linked list.
+     */
     private static class Nil<T> extends LL<T> {
         private static final Nil<?> INSTANCE = new Nil<Void>();
 
@@ -46,6 +49,10 @@ public abstract class LL<T> implements Iterable<T> {
         }
     }
 
+    /**
+     * Immutable non-empty singly-linked list. Note: "LL" stands for "LinkedList," but it's an immutable singly-linked
+     * list.
+     */
     public static final class Cons<T> extends LL<T> {
         private final T head;
         private final LL<? extends T> tail;
@@ -115,6 +122,10 @@ public abstract class LL<T> implements Iterable<T> {
             return Optional.of(mapReduce1(map, reduce));
         }
 
+        /**
+         * Same as {@link #mapReduce(Function, BinaryOperator)} but without the safety of wrapping
+         * the returned value in an {@link Optional}.
+         */
         public <R> R mapReduce1(
                 Function<? super T, ? extends R> map,
                 BinaryOperator<R> reduce) {
@@ -123,14 +134,23 @@ public abstract class LL<T> implements Iterable<T> {
         }
     }
 
+    /**
+     * Constructs an empty immutable singly-linked list
+     */
     public static <T> LL<T> nil() {
         return Nil.instance();
     }
 
+    /**
+     * Constructs a non-empty immutable singly-linked list
+     */
     public static <T> Cons<T> cons(T head, LL<? extends T> tail) {
         return new Cons<>(head, tail);
     }
 
+    /**
+     * Constructs a non-empty immutable singly-linked list
+     */
     @SafeVarargs
     public static <T> Cons<T> of(T head, T... tail) {
         return cons(head, of(tail, tail.length, LL.<T>nil()));
@@ -159,12 +179,30 @@ public abstract class LL<T> implements Iterable<T> {
     public abstract int size();
     public abstract T head();
     public abstract LL<? extends T> tail();
+
+    /**
+     * Maps this list into a new immutable list by applying the {@link Function} to every item in ths list
+     * and storing its result into the returned list.
+     */
     public abstract <U> LL<U> map(Function<? super T, ? extends U> f);
+
+    /**
+     * Reduces this list into a single value by passing in the accumulated value (either the initial value of head,
+     * or the last accumulated value) and the next item in the list into the {@code reduction} {@link BiFunction}
+     */
     public abstract <R> R fold(R acc, BiFunction<? super R, ? super T, ? extends R> reduction);
+
+    /**
+     * Calls {@link #fold(Object, BiFunction)} but applies the given mapping function, {@code map}, to each element
+     * in this list before passing it to the {@code reduce} {@link BinaryOperator}.
+     */
     public abstract <R> Optional<R> mapReduce(
             Function<? super T, ? extends R> map,
             BinaryOperator<R> reduce);
 
+    /**
+     * Returns true if all items in the list pass the given condition
+     */
     public boolean all(Predicate<T> cond) {
         return fold(true, (b, t) -> b && cond.test(t));
     }

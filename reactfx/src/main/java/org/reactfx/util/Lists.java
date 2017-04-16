@@ -12,6 +12,9 @@ import java.util.ListIterator;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Class consisting of helper methods for {@link List}s.
+ */
 public final class Lists {
 
     // private constructor to prevent instantiation
@@ -45,6 +48,10 @@ public final class Lists {
         return true;
     }
 
+    /**
+     * Returns "[]" if list is empty, "[item]" if list has only one item, or "[item, item, ..., item]" if list has two
+     * or more items (the comma is properly inserted in-between items.
+     */
     public static String toString(List<?> list) {
         StringBuilder res = new StringBuilder();
         res.append('[');
@@ -171,6 +178,10 @@ public final class Lists {
         return min < from && from < to && to < max;
     }
 
+    /**
+     * When {@link AbstractList#get(int) get(index)} is called, applies the given function, {@code f}, to item
+     * returned from calling {@code source.get(index)}.
+     */
     public static <E, F> List<F> mappedView(
             List<? extends E> source,
             Function<? super E, ? extends F> f) {
@@ -188,6 +199,9 @@ public final class Lists {
         };
     }
 
+    /**
+     * See {@link #concatView(List[])}
+     */
     @SafeVarargs
     public static <E> List<E> concatView(List<? extends E>... lists) {
         return concatView(Arrays.asList(lists));
@@ -207,6 +221,9 @@ public final class Lists {
         }
     }
 
+    /**
+     * See {@link #concat(List)}
+     */
     @SafeVarargs
     public static <E> List<E> concat(List<? extends E>... lists) {
         return concat(Arrays.asList(lists));

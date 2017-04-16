@@ -19,12 +19,66 @@ import org.reactfx.StateMachine.StatefulStreamBuilderOn;
 import org.reactfx.util.LL;
 import org.reactfx.util.Tuple2;
 
+/**
+ * Provides flexibility to compose streams together in more complicated ways than those found in {@link EventStream}.
+ *
+ * <p>
+ *     First, the machine must be initialized with an initial state via {@link #init(Object)}. Then, one begins to
+ *     compose {@link EventStream}s together via {@code on(EventStream)} followed by one of three methods:
+ *     {@link StatefulStreamBuilderOn#transition(BiFunction) transition(BiFunction)},
+ *     {@link StatefulStreamBuilderOn#emit(BiFunction) emit(BiFunction)}, and
+ *     {@link StatefulStreamBuilderOn#transmit(BiFunction) transmit(BiFunction)}. After
+ *     a combination of {@code on(inputEventStream).transition/emit/transmit(BiFunction)}, one can call
+ *     {@link StatefulStreamBuilder#toEventStream()}. For example,
+ * </p>
+ *
+ * <pre><code>
+ *     StateMachine
+ *          // set the initial state
+ *          .init(10)
+ *
+ *          // transition: sets the machine's state to the value returned by the BiFunction
+ *          .on(mouseEvents)     .transition((me, state) -&gt; 10)
+ *          .on(leftArrowEvents) .transition((lae, state) -&gt; state - 1)
+ *          .on(rightArrowEvents).transition((rae, state) -&gt; state + 1)
+ *
+ *          // emission: emits the value returned by the BiFunction if it is present
+ *          .on(upArrowEvents).emit((uae, state) -&gt;
+ *              uae.isShiftDown()
+ *                  ? Optional.of(state)
+ *                  : Optional.empty())
+ *
+ *           // transmission: combo of transition and emission: sets state to Tuple2::get1 and emits Tuple2::get2
+ *           .on(downArrowEvents).transmit((dae, state) -&gt;
+ *                  Tuples.t(
+ *                      0,  // state will be set to this value
+ *                      Optional.of(state + calculateSomeValue(dae)) // final EventStream will emit this value
+ *                  ))
+ *
+ *           // finish composition by turning machine into an EventStream
+ *           .toEventStream();
+ * </code></pre>
+ *
+ * <p>
+ *     One can also only use the {@link ObservableStateBuilder ObservableState} on-transmit couples
+ *     ({@link ObservableStateBuilder#on}, {@link ObservableStateBuilderOn#transmit}) to
+ *     return a {@link ObservableStateBuilder#toStateStream}, whose emission occurs under different circumstances than
+ *     {@link StatefulStreamBuilder#toEventStream}, or {@link ObservableStateBuilder#toObservableState} its
+ *     {@link EventStream#toBinding(Object) binding-like counterpart}.
+ * </p>
+ */
 public class StateMachine {
     public interface InitialState<S> {
         <I> ObservableStateBuilderOn<S, I> on(EventStream<I> input);
     }
 
     public interface ObservableStateBuilder<S> {
+
+        /**
+         * Indicates than when the {@code input} {@link EventStream} emits a value, one of the following
+         * three methods' {@link BiFunction} should be called: {@link ObservableStateBuilderOn#transition(BiFunction)},
+         * {@link ObservableStateBuilderOn#emit(BiFunction)}, or {@link ObservableStateBuilderOn#transmit(BiFunction)}.
+         */
         <I> ObservableStateBuilderOn<S, I> on(EventStream<I> input);
 
         /**
@@ -44,6 +98,12 @@ public class StateMachine {
     }
 
     public interface StatefulStreamBuilder<S, O> {
+
+        /**
+         * Indicates than when the {@code input} {@link EventStream} emits a value, one of the following
+         * three methods' {@link BiFunction} should be called: {@link StatefulStreamBuilderOn#transition(BiFunction)},
+         * {@link StatefulStreamBuilderOn#emit(BiFunction)}, or {@link StatefulStreamBuilderOn#transmit(BiFunction)}.
+         */
         <I> StatefulStreamBuilderOn<S, O, I> on(EventStream<I> input);
 
         /**
@@ -62,14 +122,46 @@ public class StateMachine {
     }
 
     public interface ObservableStateBuilderOn<S, I> {
+
+        /**
+         * When the given {@link EventStream} emits a value, sets the machine's initial state to
+         * {@code f.apply(emittedEvent, state)}
+         */
         ObservableStateBuilder<S> transition(BiFunction<? super S, ? super I, ? extends S> f);
+
+        /**
+         * When the given {@link EventStream} emits a value, calls {@code f.apply(emittedEvent, state)} and
+         * emits the value stored in the {@link Optional} if it {@link Optional#isPresent()}.
+         */
         <O> StatefulStreamBuilder<S, O> emit(BiFunction<? super S, ? super I, Optional<O>> f);
+
+        /**
+         * When the given {@link EventStream} emits a value, calls {@code f.apply(emittedEvent, state)} and
+         * sets the state's value to {@link Tuple2#get1()} and gets the {@link Optional} via {@link Tuple2#get2()}
+         * and emits the value stored in it if it {@link Optional#isPresent()}.
+         */
         <O> StatefulStreamBuilder<S, O> transmit(BiFunction<? super S, ? super I, Tuple2<S, Optional<O>>> f);
     }
 
     public interface StatefulStreamBuilderOn<S, O, I> {
+
+        /**
+         * When the given {@link EventStream} emits a value, sets the machine's initial state to
+         * {@code f.apply(emittedEvent, state)}
+         */
         StatefulStreamBuilder<S, O> transition(BiFunction<? super S, ? super I, ? extends S> f);
+
+        /**
+         * When the given {@link EventStream} emits a value, calls {@code f.apply(emittedEvent, state)} and
+         * emits the value stored in the {@link Optional} if it {@link Optional#isPresent()}.
+         */
         StatefulStreamBuilder<S, O> emit(BiFunction<? super S, ? super I, Optional<O>> f);
+
+        /**
+         * When the given {@link EventStream} emits a value, calls {@code f.apply(emittedEvent, state)} and
+         * sets the state's value to {@link Tuple2#get1()} and then gets the {@link Optional} via {@link Tuple2#get2()}
+         * and emits the value stored in it if it {@link Optional#isPresent()}.
+         */
         StatefulStreamBuilder<S, O> transmit(BiFunction<? super S, ? super I, Tuple2<S, Optional<O>>> f);
     }
 

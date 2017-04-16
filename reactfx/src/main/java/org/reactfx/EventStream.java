@@ -37,7 +37,8 @@ import org.reactfx.util.Tuple2;
 import org.reactfx.value.Val;
 
 /**
- * Stream of values (events).
+ * Stream of values (events). They can be composed, turning otherwise complex situations into simple consistent
+ * reactive handling. For more composition flexibility than what is provided here, see {@link StateMachine}.
  *
  * @param <T> type of values emitted by this stream.
  */

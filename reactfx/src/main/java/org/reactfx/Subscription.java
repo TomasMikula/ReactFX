@@ -1,11 +1,15 @@
 package org.reactfx;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
 
 @FunctionalInterface
@@ -96,6 +100,81 @@ public interface Subscription {
             setSub.unsubscribe();
             elemSubs.forEach((t, sub) -> sub.unsubscribe());
         };
+    }
+
+
+    /**
+     * Dynamically subscribes to all elements of the given observable list.
+     * When an element is added to the list, it is automatically subscribed to.
+     * When an element is removed from the list, it is automatically unsubscribed
+     * from.
+     *
+     * @param elems Observable list of elements that will be subscribed to
+     * @param f     Function to subscribe to an element of the list. The first parameter
+     *              is the element, the second is its index in the new source list
+     * @param <T>   Type of elements
+     *
+     * @return An aggregate subscription that tracks elementary subscriptions.
+     * When the returned subscription is unsubscribed, all elementary
+     * subscriptions are unsubscribed as well, and no new elementary
+     * subscriptions will be created.
+     */
+    static <T> Subscription dynamic(ObservableList<T> elems,
+                                    BiFunction<? super T, Integer, ? extends Subscription> f) {
+
+        List<Subscription> elemSubs = new ArrayList<>(elems.size());
+
+        for (int i = 0; i < elems.size(); i++) {
+            elemSubs.add(f.apply(elems.get(i), i));
+        }
+
+        Subscription lstSub = EventStreams.changesOf(elems).subscribe(ch -> {
+            while (ch.next()) {
+                if (ch.wasPermutated()) {
+                    Subscription left = elemSubs.get(ch.getFrom());
+                    Subscription right = elemSubs.set(ch.getTo(), left);
+                    elemSubs.set(ch.getFrom(), right);
+                } else if (ch.wasRemoved()) {
+                    // getFrom == getTo
+                    int i = ch.getFrom();
+                    for (T ignored : ch.getRemoved()) {
+                        elemSubs.remove(i).unsubscribe();
+                        i++;
+                    }
+
+                } else if (ch.wasAdded()) {
+                    // [getFrom..getTo] === getAddedSubList
+                    int i = ch.getFrom();
+                    for (T added : ch.getAddedSubList()) {
+                        elemSubs.add(i, f.apply(added, i));
+                        i++;
+                    }
+                }
+            }
+        });
+
+        return () -> {
+            lstSub.unsubscribe();
+            elemSubs.forEach(Subscription::unsubscribe);
+        };
+    }
+
+
+    /**
+     * An overload of {@link #dynamic(ObservableList, BiFunction)} that can be used when the
+     * subscribe function does not use the index of the element in the list.
+     *
+     * @param elems Observable list of elements that will be subscribed to
+     * @param f     Function to subscribe to an element of the list
+     * @param <T>   Type of elements
+     *
+     * @return An aggregate subscription that tracks elementary subscriptions.
+     * When the returned subscription is unsubscribed, all elementary
+     * subscriptions are unsubscribed as well, and no new elementary
+     * subscriptions will be created.
+     */
+    static <T> Subscription dynamic(ObservableList<? extends T> elems, Function<? super T, ? extends Subscription> f) {
+        return dynamic(elems, (e, i) -> f.apply(e));
     }
 }
 

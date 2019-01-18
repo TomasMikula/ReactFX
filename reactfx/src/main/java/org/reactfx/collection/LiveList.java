@@ -3,15 +3,10 @@ package org.reactfx.collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
-import javafx.beans.InvalidationListener;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ListChangeListener;
-import javafx.collections.ObservableList;
-import javafx.scene.control.IndexRange;
 
 import org.reactfx.EventStream;
 import org.reactfx.EventStreamBase;
@@ -23,6 +18,12 @@ import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.Experimental;
 import org.reactfx.util.WrapperBase;
 import org.reactfx.value.Val;
+
+import javafx.beans.InvalidationListener;
+import javafx.beans.value.ObservableValue;
+import javafx.collections.ListChangeListener;
+import javafx.collections.ObservableList;
+import javafx.scene.control.IndexRange;
 
 /**
  * Adds additional methods to {@link ObservableList}.
@@ -356,6 +357,28 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
      */
     static <E> LiveList<E> wrapVal(ObservableValue<E> obs) {
         return new ValAsList<>(obs);
+    }
+
+
+    /**
+     * Creates a new LiveList that reflects the values of the elements of the
+     * given list of observables. If any of the observable values contained in
+     * the source list change, a list change is pushed (lazily). Additions or
+     * removals made to the source collection are also reflected by the returned
+     * list. It kind of behaves like {@code source.map(ObservableValue::getValue)},
+     * except the list is also updated when the individual elements change.
+     *
+     * <p>The returned list is unmodifiable.
+     *
+     * @param source List of observables
+     * @param <E>    Type of values of the returned list
+     *
+     * @return A new live list
+     *
+     * @throws NullPointerException If the source collection is null
+     */
+    static <E> LiveList<E> flattenVals(ObservableList<? extends ObservableValue<? extends E>> source) {
+        return new FlatValList<>(Objects.requireNonNull(source));
     }
 }
 

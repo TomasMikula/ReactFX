@@ -40,10 +40,10 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> strings = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(strings);
+        LiveList<String> flat = LiveList.flattenVals(strings);
 
-        assertEquals(asList("foo", "bar"), rx);
-        assertEquals(2, rx.size());
+        assertEquals(asList("foo", "bar"), flat);
+        assertEquals(2, flat.size());
     }
 
 
@@ -53,11 +53,11 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> strings = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(strings);
+        LiveList<String> flat = LiveList.flattenVals(strings);
 
         List<String> removed = new ArrayList<>();
         List<String> added = new ArrayList<>();
-        rx.observeChanges(ch -> {
+        flat.observeChanges(ch -> {
             for (ListModification<? extends String> mod : ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
                 added.addAll(mod.getAddedSubList());
@@ -68,6 +68,8 @@ public class FlatValListTest {
 
         assertEquals(singletonList("foo"), removed);
         assertEquals(singletonList("fan"), added);
+
+        assertEquals(asList("fan", "bar"), flat);
     }
 
 
@@ -77,13 +79,13 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         List<String> removed = new ArrayList<>();
         List<String> added = new ArrayList<>();
         List<Integer> fromIdx = new ArrayList<>();
         List<Integer> toIdx = new ArrayList<>();
-        rx.observeChanges(ch -> {
+        flat.observeChanges(ch -> {
             for (ListModification<? extends String> mod : ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
                 added.addAll(mod.getAddedSubList());
@@ -99,7 +101,7 @@ public class FlatValListTest {
         assertEquals(singletonList(2), fromIdx);
         assertEquals(singletonList(3), toIdx);
 
-        assertEquals(asList("foo", "bar", "foobar"), rx);
+        assertEquals(asList("foo", "bar", "foobar"), flat);
     }
 
 
@@ -109,13 +111,13 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         List<String> removed = new ArrayList<>();
         List<String> added = new ArrayList<>();
         List<Integer> fromIdx = new ArrayList<>();
         List<Integer> toIdx = new ArrayList<>();
-        rx.observeChanges(ch -> {
+        flat.observeChanges(ch -> {
             for (ListModification<? extends String> mod : ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
                 added.addAll(mod.getAddedSubList());
@@ -131,7 +133,7 @@ public class FlatValListTest {
         assertEquals(singletonList(1), fromIdx);
         assertEquals(singletonList(1), toIdx);
 
-        assertEquals(singletonList("foo"), rx);
+        assertEquals(singletonList("foo"), flat);
 
     }
 
@@ -142,13 +144,13 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         List<String> removed = new ArrayList<>();
         List<String> added = new ArrayList<>();
         List<Integer> fromIdx = new ArrayList<>();
         List<Integer> toIdx = new ArrayList<>();
-        rx.observeChanges(ch -> {
+        flat.observeChanges(ch -> {
             for (ListModification<? extends String> mod : ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
                 added.addAll(mod.getAddedSubList());
@@ -164,10 +166,10 @@ public class FlatValListTest {
         assertEquals(singletonList(0), fromIdx);
         assertEquals(singletonList(1), toIdx);
 
-        assertEquals(asList("bar", "bar"), rx);
+        assertEquals(asList("bar", "bar"), flat);
 
         obsB.setValue("cou");
-        assertEquals(asList("cou", "cou"), rx);
+        assertEquals(asList("cou", "cou"), flat);
 
     }
 
@@ -178,11 +180,11 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         expected.expect(UnsupportedOperationException.class);
 
-        rx.add("FOO");
+        flat.add("FOO");
 
 
     }
@@ -194,12 +196,12 @@ public class FlatValListTest {
         Var<String> obsB = Var.newSimpleVar("bar");
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         expected.expect(UnsupportedOperationException.class);
 
-        assertTrue(rx.contains("bar"));
-        rx.remove("bar");
+        assertTrue(flat.contains("bar"));
+        flat.remove("bar");
     }
 
 
@@ -218,7 +220,7 @@ public class FlatValListTest {
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
 
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         assertEquals(0, evaluations.get()); // nothing yet
 
@@ -228,7 +230,7 @@ public class FlatValListTest {
         // less lazy that a MappedList
         // because it has to observe the changes of elements & ValBase asks for an initial valid value
 
-        rx.observeChanges(ch -> {});
+        flat.observeChanges(ch -> {});
         assertEquals(1, evaluations.get());
 
     }
@@ -249,17 +251,17 @@ public class FlatValListTest {
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB, obsC);
 
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         assertEquals(0, evaluations.get());
 
         source.remove(obsB);
 
-        rx.observeChanges(ch -> {});
+        flat.observeChanges(ch -> {});
 
         assertEquals(0, evaluations.get()); // no more evaluation
 
-        assertEquals(asList("foo", "kro"), rx);
+        assertEquals(asList("foo", "kro"), flat);
 
         assertEquals(0, evaluations.get());
 
@@ -281,11 +283,11 @@ public class FlatValListTest {
 
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB, obsC);
 
-        LiveList<String> rx = LiveList.flattenVals(source);
+        LiveList<String> flat = LiveList.flattenVals(source);
 
         assertEquals(0, evaluations.get()); // nothing yet
 
-        SuspendableList<String> suspendable = rx.suspendable();
+        SuspendableList<String> suspendable = flat.suspendable();
 
         suspendable.observeChanges(ch -> {});
         suspendable.suspendWhile(() -> {
@@ -297,7 +299,7 @@ public class FlatValListTest {
 
         obsB.setValue("kirikou");
 
-        assertEquals(asList("foo", "koko"), rx);
+        assertEquals(asList("foo", "koko"), flat);
 
         assertEquals(3, evaluations.get());
 

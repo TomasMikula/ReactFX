@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -24,15 +25,43 @@ import javafx.collections.ObservableList;
 
 /**
  * @author Clément Fournier
- * @since 1.0
  */
-@SuppressWarnings({"Duplicates", "unchecked"})
-
+@SuppressWarnings({"unchecked"}) // bc of generic array creation in varargs
 public class FlatValListTest {
 
 
     @Rule
     public ExpectedException expected = ExpectedException.none();
+
+    private List<String> removed;
+    private List<String> added;
+    private List<Integer> fromIdx;
+    private List<Integer> toIdx;
+    private Var<Integer> calls;
+
+
+    @Before
+    public void testSetup() {
+
+        removed = new ArrayList<>();
+        added = new ArrayList<>();
+        fromIdx = new ArrayList<>();
+        toIdx = new ArrayList<>();
+        calls = Var.newSimpleVar(0);
+    }
+
+
+    private void addListModObserver(LiveList<String> flat) {
+        flat.observeChanges(ch -> {
+            for (ListModification<? extends String> mod : ch.getModifications()) {
+                removed.addAll(mod.getRemoved());
+                added.addAll(mod.getAddedSubList());
+                fromIdx.add(mod.getFrom());
+                toIdx.add(mod.getTo());
+                calls.setValue(calls.getValue() + 1);
+            }
+        });
+    }
 
 
     @Test
@@ -56,9 +85,6 @@ public class FlatValListTest {
         ObservableList<Var<String>> strings = observableArrayList(obsA, obsB);
         LiveList<String> flat = LiveList.flattenVals(strings);
 
-        List<String> removed = new ArrayList<>();
-        List<String> added = new ArrayList<>();
-        Var<Integer> calls = Var.newSimpleVar(0);
         flat.observeChanges(ch -> {
             for (ListModification<? extends String> mod : ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
@@ -86,18 +112,7 @@ public class FlatValListTest {
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
         LiveList<String> flat = LiveList.flattenVals(source);
 
-        List<String> removed = new ArrayList<>();
-        List<String> added = new ArrayList<>();
-        List<Integer> fromIdx = new ArrayList<>();
-        List<Integer> toIdx = new ArrayList<>();
-        flat.observeChanges(ch -> {
-            for (ListModification<? extends String> mod : ch.getModifications()) {
-                removed.addAll(mod.getRemoved());
-                added.addAll(mod.getAddedSubList());
-                fromIdx.add(mod.getFrom());
-                toIdx.add(mod.getTo());
-            }
-        });
+        addListModObserver(flat);
 
         source.add(Var.newSimpleVar("foobar"));
 
@@ -118,18 +133,7 @@ public class FlatValListTest {
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
         LiveList<String> flat = LiveList.flattenVals(source);
 
-        List<String> removed = new ArrayList<>();
-        List<String> added = new ArrayList<>();
-        List<Integer> fromIdx = new ArrayList<>();
-        List<Integer> toIdx = new ArrayList<>();
-        flat.observeChanges(ch -> {
-            for (ListModification<? extends String> mod : ch.getModifications()) {
-                removed.addAll(mod.getRemoved());
-                added.addAll(mod.getAddedSubList());
-                fromIdx.add(mod.getFrom());
-                toIdx.add(mod.getTo());
-            }
-        });
+        addListModObserver(flat);
 
         source.remove(obsB);
 
@@ -151,18 +155,7 @@ public class FlatValListTest {
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
         LiveList<String> flat = LiveList.flattenVals(source);
 
-        List<String> removed = new ArrayList<>();
-        List<String> added = new ArrayList<>();
-        List<Integer> fromIdx = new ArrayList<>();
-        List<Integer> toIdx = new ArrayList<>();
-        flat.observeChanges(ch -> {
-            for (ListModification<? extends String> mod : ch.getModifications()) {
-                removed.addAll(mod.getRemoved());
-                added.addAll(mod.getAddedSubList());
-                fromIdx.add(mod.getFrom());
-                toIdx.add(mod.getTo());
-            }
-        });
+        addListModObserver(flat);
 
         source.set(0, obsB); // it's duplicated now
 
@@ -188,20 +181,7 @@ public class FlatValListTest {
         ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
         LiveList<String> flat = LiveList.flattenVals(source);
 
-        List<String> removed = new ArrayList<>();
-        List<String> added = new ArrayList<>();
-        List<Integer> fromIdx = new ArrayList<>();
-        List<Integer> toIdx = new ArrayList<>();
-        Var<Integer> calls = Var.newSimpleVar(0);
-        flat.observeChanges(ch -> {
-            for (ListModification<? extends String> mod : ch.getModifications()) {
-                removed.addAll(mod.getRemoved());
-                added.addAll(mod.getAddedSubList());
-                fromIdx.add(mod.getFrom());
-                toIdx.add(mod.getTo());
-                calls.setValue(calls.getValue() + 1);
-            }
-        });
+        addListModObserver(flat);
 
         assertEquals(asList("foo", "bar"), flat);
 

@@ -181,13 +181,15 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
      * Creates a new LiveList that reflects the values of the elements of the
      * given list of observables. See {@link #flattenVals(ObservableList)}.
      *
+     * <p>The returned list is unmodifiable but can be observed.
+     *
      * @param f   Maps the elements of this list to observable values
      * @param <F> Type of the returned list
      *
      * @return A new LiveList
      */
     default <F> LiveList<F> flattenVals(Function<? super E, ? extends ObservableValue<? extends F>> f) {
-        return flattenVals(this.map(f));
+        return flattenVals(this, f);
     }
 
 
@@ -383,7 +385,7 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
      * list. It kind of behaves like {@code source.map(ObservableValue::getValue)},
      * except the list is also updated when the individual elements change.
      *
-     * <p>The returned list is unmodifiable.
+     * <p>The returned list is unmodifiable but can be observed.
      *
      * @param source List of observables
      * @param <E>    Type of values of the returned list
@@ -394,6 +396,27 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
      */
     static <E> LiveList<E> flattenVals(ObservableList<? extends ObservableValue<? extends E>> source) {
         return new FlatValList<>(Objects.requireNonNull(source));
+    }
+
+
+    /**
+     * Creates a new LiveList on top of a list of observables that reflects the values
+     * of the elements of the source list.
+     *
+     * <p>The returned list is unmodifiable but can be observed.
+     *
+     * @param source Observable list
+     * @param f      Maps the elements of the source list to observable values
+     * @param <E>    Type of values of the input list
+     * @param <F>    Type of values of the returned list
+     *
+     * @return A new live list
+     *
+     * @throws NullPointerException If the source collection is null
+     */
+    static <E, F> LiveList<F> flattenVals(ObservableList<? extends E> source,
+                                          Function<? super E, ? extends ObservableValue<? extends F>> f) {
+        return flattenVals(map(source, f));
     }
 }
 

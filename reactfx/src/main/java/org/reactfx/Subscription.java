@@ -119,7 +119,7 @@ public interface Subscription {
      * subscriptions are unsubscribed as well, and no new elementary
      * subscriptions will be created.
      */
-    static <T> Subscription dynamic(ObservableList<T> elems,
+    static <T> Subscription dynamic(ObservableList<? extends T> elems,
                                     BiFunction<? super T, Integer, ? extends Subscription> f) {
 
         List<Subscription> elemSubs = new ArrayList<>(elems.size());

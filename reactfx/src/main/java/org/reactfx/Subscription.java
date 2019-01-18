@@ -49,7 +49,7 @@ public interface Subscription {
             Function<? super T, ? extends Subscription> f,
             T... elems) {
         return multi(Stream.of(elems).map(f)
-                .<Subscription>toArray(n -> new Subscription[n]));
+                .<Subscription>toArray(Subscription[]::new));
     }
 
     /**
@@ -61,7 +61,7 @@ public interface Subscription {
             Function<? super T, ? extends Subscription> f,
             Collection<T> elems) {
         return multi(elems.stream().map(f)
-                .<Subscription>toArray(n -> new Subscription[n]));
+                .<Subscription>toArray(Subscription[]::new));
     }
 
     /**

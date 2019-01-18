@@ -176,6 +176,21 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return sizeOf(this);
     }
 
+
+    /**
+     * Creates a new LiveList that reflects the values of the elements of the
+     * given list of observables. See {@link #flattenVals(ObservableList)}.
+     *
+     * @param f   Maps the elements of this list to observable values
+     * @param <F> Type of the returned list
+     *
+     * @return A new LiveList
+     */
+    default <F> LiveList<F> flattenVals(Function<? super E, ? extends ObservableValue<? extends F>> f) {
+        return flattenVals(this.map(f));
+    }
+
+
     default <F> LiveList<F> map(Function<? super E, ? extends F> f) {
         return map(this, f);
     }

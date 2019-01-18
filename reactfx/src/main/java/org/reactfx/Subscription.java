@@ -134,20 +134,22 @@ public interface Subscription {
                     Subscription left = elemSubs.get(ch.getFrom());
                     Subscription right = elemSubs.set(ch.getTo(), left);
                     elemSubs.set(ch.getFrom(), right);
-                } else if (ch.wasRemoved()) {
-                    // getFrom == getTo
-                    int i = ch.getFrom();
-                    for (T ignored : ch.getRemoved()) {
-                        elemSubs.remove(i).unsubscribe();
-                        i++;
+                } else {
+                    if (ch.wasRemoved()) {
+                        // oldList[from : from + removed.size] === removed
+                        int i = ch.getFrom();
+                        for (T ignored : ch.getRemoved()) {
+                            elemSubs.remove(i).unsubscribe();
+                            i++;
+                        }
                     }
-
-                } else if (ch.wasAdded()) {
-                    // [getFrom..getTo] === getAddedSubList
-                    int i = ch.getFrom();
-                    for (T added : ch.getAddedSubList()) {
-                        elemSubs.add(i, f.apply(added, i));
-                        i++;
+                    if (ch.wasAdded()) {
+                        // newList[from : to] === addedSubList
+                        int i = ch.getFrom();
+                        for (T added : ch.getAddedSubList()) {
+                            elemSubs.add(i, f.apply(added, i));
+                            i++;
+                        }
                     }
                 }
             }

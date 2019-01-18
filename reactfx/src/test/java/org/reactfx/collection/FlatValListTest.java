@@ -14,6 +14,7 @@ import java.util.function.Function;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.reactfx.Subscription;
 import org.reactfx.value.Var;
 
 import javafx.beans.property.IntegerProperty;
@@ -57,10 +58,13 @@ public class FlatValListTest {
 
         List<String> removed = new ArrayList<>();
         List<String> added = new ArrayList<>();
+        Var<Integer> calls = Var.newSimpleVar(0);
         flat.observeChanges(ch -> {
             for (ListModification<? extends String> mod : ch.getModifications()) {
                 removed.addAll(mod.getRemoved());
                 added.addAll(mod.getAddedSubList());
+                calls.setValue(calls.getValue() + 1);
+
             }
         });
 
@@ -68,6 +72,7 @@ public class FlatValListTest {
 
         assertEquals(singletonList("foo"), removed);
         assertEquals(singletonList("fan"), added);
+        assertEquals(1, (int) calls.getValue());
 
         assertEquals(asList("fan", "bar"), flat);
     }
@@ -139,7 +144,7 @@ public class FlatValListTest {
 
 
     @Test
-    public void testSourceListReplacement() {
+    public void testSourceListReplacementDups() {
         Var<String> obsA = Var.newSimpleVar("foo");
         Var<String> obsB = Var.newSimpleVar("bar");
 
@@ -175,7 +180,58 @@ public class FlatValListTest {
 
 
     @Test
-    public void testOneCannotAddToReactiveList() {
+    public void testSourceListReplacement() {
+        Var<String> obsA = Var.newSimpleVar("foo");
+        Var<String> obsB = Var.newSimpleVar("bar");
+        Var<String> obsC = Var.newSimpleVar("sfam");
+
+        ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
+        LiveList<String> flat = LiveList.flattenVals(source);
+
+        List<String> removed = new ArrayList<>();
+        List<String> added = new ArrayList<>();
+        List<Integer> fromIdx = new ArrayList<>();
+        List<Integer> toIdx = new ArrayList<>();
+        Var<Integer> calls = Var.newSimpleVar(0);
+        flat.observeChanges(ch -> {
+            for (ListModification<? extends String> mod : ch.getModifications()) {
+                removed.addAll(mod.getRemoved());
+                added.addAll(mod.getAddedSubList());
+                fromIdx.add(mod.getFrom());
+                toIdx.add(mod.getTo());
+                calls.setValue(calls.getValue() + 1);
+            }
+        });
+
+        assertEquals(asList("foo", "bar"), flat);
+
+        source.set(0, obsC);
+
+        assertEquals(singletonList("foo"), removed);
+        assertEquals(singletonList("sfam"), added);
+        assertEquals(singletonList(0), fromIdx);
+        assertEquals(singletonList(1), toIdx);
+        assertEquals(1, (int) calls.getValue());
+
+        assertEquals(asList("sfam", "bar"), flat);
+
+        obsB.setValue("cou");
+        assertEquals(asList("sfam", "cou"), flat);
+        assertEquals(2, (int) calls.getValue());
+
+        obsA.setValue("bro");// no change
+        assertEquals(asList("sfam", "cou"), flat);
+        assertEquals(2, (int) calls.getValue());
+
+        obsC.setValue("air"); // a change
+        assertEquals(asList("air", "cou"), flat);
+        assertEquals(3, (int) calls.getValue());
+
+    }
+
+
+    @Test
+    public void testAddIsImpossible() {
         Var<String> obsA = Var.newSimpleVar("foo");
         Var<String> obsB = Var.newSimpleVar("bar");
 
@@ -191,7 +247,7 @@ public class FlatValListTest {
 
 
     @Test
-    public void testOneCannotRemoveFromReactiveList() {
+    public void testRemoveIsImpossible() {
         Var<String> obsA = Var.newSimpleVar("foo");
         Var<String> obsB = Var.newSimpleVar("bar");
 
@@ -289,6 +345,8 @@ public class FlatValListTest {
 
         SuspendableList<String> suspendable = flat.suspendable();
 
+        // tbh I don't really know what this should be doing,
+        // I adapted it from the MappedList tests
         suspendable.observeChanges(ch -> {});
         suspendable.suspendWhile(() -> {
             source.remove(1);
@@ -301,7 +359,48 @@ public class FlatValListTest {
 
         assertEquals(asList("foo", "koko"), flat);
 
-        assertEquals(3, evaluations.get());
+        assertEquals(3, evaluations.get()); // no more calls
+
+    }
+
+
+    @Test
+    public void testChangeStream() {
+        Var<String> obsA = Var.newSimpleVar("foo");
+        Var<String> obsB = Var.newSimpleVar("bar");
+        Var<String> obsC = Var.newSimpleVar("sfam");
+
+        ObservableList<Var<String>> source = observableArrayList(obsA, obsB);
+        LiveList<String> flat = LiveList.flattenVals(source);
+
+        Var<Integer> calls = Var.newSimpleVar(0);
+        Subscription sub = flat.changes().subscribe(ch -> {
+            for (ListModification<? extends String> mod : ch.getModifications()) {
+                calls.setValue(calls.getValue() + 1);
+            }
+        });
+
+        assertEquals(asList("foo", "bar"), flat);
+
+        source.set(0, obsC);
+        assertEquals(asList("sfam", "bar"), flat);
+        assertEquals(1, (int) calls.getValue());
+
+        obsB.setValue("cou");
+        assertEquals(asList("sfam", "cou"), flat);
+        assertEquals(2, (int) calls.getValue());
+
+        obsA.setValue("bro");// no change
+        assertEquals(asList("sfam", "cou"), flat);
+        assertEquals(2, (int) calls.getValue());
+
+
+        sub.unsubscribe();
+
+        obsB.setValue("plot");
+        assertEquals(asList("sfam", "plot"), flat);
+        assertEquals(2, (int) calls.getValue()); // no call
+
 
     }
 

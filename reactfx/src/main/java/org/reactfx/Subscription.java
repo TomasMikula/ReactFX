@@ -137,10 +137,9 @@ public interface Subscription {
                 } else {
                     if (ch.wasRemoved()) {
                         // oldList[from : from + removed.size] === removed
-                        int i = ch.getFrom();
+                        int from = ch.getFrom();
                         for (T ignored : ch.getRemoved()) {
-                            elemSubs.remove(i).unsubscribe();
-                            i++;
+                            elemSubs.remove(from).unsubscribe();
                         }
                     }
                     if (ch.wasAdded()) {

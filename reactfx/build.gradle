@@ -1,3 +1,7 @@
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
@@ -9,6 +13,11 @@ dependencies {
     testImplementation group: 'org.junit.contrib', name: 'junit-theories', version: '4.12'
     testImplementation group: 'com.pholser', name: 'junit-quickcheck-core', version: '0.4'
     testImplementation group: 'com.pholser', name: 'junit-quickcheck-generators', version: '0.4'
+}
+
+javafx {
+    version = "18"
+    modules = ['javafx.controls', 'javafx.swing']
 }
 
 javadoc {

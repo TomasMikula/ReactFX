@@ -4,3 +4,4 @@ gradle.properties
 .classpath
 .project
 .settings/
+.idea/

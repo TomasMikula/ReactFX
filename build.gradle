@@ -1,12 +1,18 @@
+plugins {
+    id 'biz.aQute.bnd.builder' version '5.0.1'
+}
+
 subprojects {
     version = '2.0-SNAPSHOT'
 
     apply plugin: 'java'
     apply plugin: 'eclipse'
-    apply plugin: 'osgi'
+    apply plugin: 'biz.aQute.bnd.builder'
+    //apply plugin: 'osgi'
 
     repositories {
         mavenCentral()
+        gradlePluginPortal()
     }
 
     sourceCompatibility = '1.8'

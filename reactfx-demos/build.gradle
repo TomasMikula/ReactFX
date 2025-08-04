@@ -1,21 +1,24 @@
 dependencies {
-    compile project(":reactfx")
+    implementation project(":reactfx")
 }
 
-task fatJar(type: Jar, dependsOn: classes) {
-    appendix = 'fat'
+tasks.register('fatJar', Jar) {
+    dependsOn tasks.named('classes')
+    archiveAppendix.set('fat')
     from sourceSets.main.output
     from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
 }
 
 assemble.dependsOn fatJar
 
-task AndGateDemo(type: JavaExec, dependsOn: classes) {
-    main = 'org.reactfx.inhibeans.demo.AndGateDemo'
+tasks.register('AndGateDemo', JavaExec) {
+    dependsOn tasks.named('classes')
+    mainClass.set('org.reactfx.inhibeans.demo.AndGateDemo')
     classpath = files(sourceSets.main.output, configurations.runtime)
 }
 
-task FibTest(type: JavaExec, dependsOn: classes) {
-    main = 'org.reactfx.inhibeans.demo.FibTest'
+tasks.register('FibTest', JavaExec) {
+    dependsOn tasks.named('classes')
+    mainClass.set('org.reactfx.inhibeans.demo.FibTest')
     classpath = files(sourceSets.main.output, configurations.runtime)
 }

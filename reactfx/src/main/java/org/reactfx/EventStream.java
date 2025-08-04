@@ -474,7 +474,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     C :----a------------c-----------d----&gt;
      * </pre>
      *
-     * <h2>Relationship to other EventStreams:</h2>
+     * <h4>Relationship to other EventStreams:</h4>
      * <ul>
      *     <li>
      *         This stream does NOT emit A's most recent event multiple
@@ -514,7 +514,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     C :----a------------c--c--c-----d----&gt;
      * </pre>
      *
-     * <h2>Relationship to other EventStreams:</h2>
+     * <h4>Relationship to other EventStreams:</h4>
      * <ul>
      *     <li>
      *         This stream DOES emit A's most recent event multiple
@@ -553,7 +553,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     C :---[a,1]------[c,2]-----------[d,4]-----&gt;
      * </pre>
      *
-     * <h2>Relationship to other EventStreams:</h2>
+     * <h4>Relationship to other EventStreams:</h4>
      * <ul>
      *     <li>
      *         This stream emits both A and B's events whereas {@link #emitOn(EventStream)},
@@ -586,7 +586,7 @@ public interface EventStream<T> extends Observable<Consumer<? super T>> {
      *     C :-a--a----b---c--c-----c-----c---d-------&gt;
      * </pre>
      *
-     * <h2>Relationship to other EventStreams:</h2>
+     * <h4>Relationship to other EventStreams:</h4>
      * <ul>
      *     <li>
      *         This stream emits A's events when A emits an event and

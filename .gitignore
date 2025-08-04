@@ -5,3 +5,7 @@ gradle.properties
 .project
 .settings/
 .idea/
+
+gradle/
+gradlew
+gradle.bat

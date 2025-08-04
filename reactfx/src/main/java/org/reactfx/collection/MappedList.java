@@ -10,34 +10,29 @@ import org.reactfx.Subscription;
 import org.reactfx.util.Lists;
 import org.reactfx.value.Val;
 
-class MappedList<E, F> extends LiveListBase<F>
-implements UnmodifiableByDefaultLiveList<F> {
-    private final ObservableList<? extends E> source;
+/**
+ * The mapped list is applying a mapping {@link Function} taking as input the element from the source method
+ * and mapping the result to be used for the mapped list content
+ * @param <E> the type of elements from the source
+ * @param <F> the output type of the {@link Function} mapping the elements
+ */
+class MappedList<E, F> extends AbstractMappedList<E, F> {
     private final Function<? super E, ? extends F> mapper;
 
     public MappedList(
             ObservableList<? extends E> source,
             Function<? super E, ? extends F> mapper) {
-        this.source = source;
+        super(source);
         this.mapper = mapper;
     }
 
     @Override
     public F get(int index) {
-        return mapper.apply(source.get(index));
+        return mapper.apply(getSource().get(index));
     }
 
     @Override
-    public int size() {
-        return source.size();
-    }
-
-    @Override
-    protected Subscription observeInputs() {
-        return LiveList.<E>observeQuasiChanges(source, this::sourceChanged);
-    }
-
-    private void sourceChanged(QuasiListChange<? extends E> change) {
+    protected void sourceChanged(QuasiListChange<? extends E> change) {
         notifyObservers(mappedChangeView(change, mapper));
     }
 

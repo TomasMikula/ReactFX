@@ -1,11 +1,14 @@
 package org.reactfx.collection;
 
 import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertLinesMatch;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.SimpleIntegerProperty;
@@ -13,6 +16,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 
 import org.junit.Test;
+import org.junit.jupiter.api.DisplayName;
 import org.reactfx.value.Var;
 
 public class ListMapTest {
@@ -29,6 +33,7 @@ public class ListMapTest {
     public void testChanges() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
         LiveList<Integer> lengths = LiveList.map(strings, String::length);
+        assertLinesMatch(Stream.of("1", "2", "3"), lengths.stream().map(String::valueOf));
 
         List<Integer> removed = new ArrayList<>();
         List<Integer> added = new ArrayList<>();
@@ -39,10 +44,23 @@ public class ListMapTest {
             }
         });
 
+        // Set an item
         strings.set(1, "4444");
+        assertLinesMatch(Stream.of("1", "4", "3"), lengths.stream().map(String::valueOf));
+        assertEquals(Collections.singletonList(2), removed);
+        assertEquals(Collections.singletonList(4), added);
 
-        assertEquals(Arrays.asList(2), removed);
-        assertEquals(Arrays.asList(4), added);
+        // Add an item
+        strings.add("7777777");
+        assertLinesMatch(Stream.of("1", "4", "3", "7"), lengths.stream().map(String::valueOf));
+        assertEquals(Collections.singletonList(2), removed);
+        assertEquals(Arrays.asList(4, 7), added);
+
+        // Remove an item
+        strings.remove(1);
+        assertLinesMatch(Stream.of("1", "3", "7"), lengths.stream().map(String::valueOf));
+        assertEquals(Arrays.asList(2, 4), removed);
+        assertEquals(Arrays.asList(4, 7), added);
     }
 
     @Test
@@ -98,5 +116,41 @@ public class ListMapTest {
             strings.set(1, "4444");
             fn.setValue(s -> s.length() * s.length());
         });
+    }
+
+    @Test
+    @DisplayName("Index list receives the item and the index")
+    public void testIndexedList() {
+        ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
+        // Live map receives index,item and returns %d-%d index item
+        LiveList<String> lengths = LiveList.map(strings, (index, item) -> String.format("%d-%d", index, item.length()));
+        assertLinesMatch(Stream.of("0-1", "1-2", "2-3"), lengths.stream());
+
+        List<String> removed = new ArrayList<>();
+        List<String> added = new ArrayList<>();
+        lengths.observeChanges(ch -> {
+            for(ListModification<? extends String> mod: ch.getModifications()) {
+                removed.addAll(mod.getRemoved());
+                added.addAll(mod.getAddedSubList());
+            }
+        });
+
+        // Set a value in the list and check changes
+        strings.set(1, "4444");
+        assertLinesMatch(Stream.of("0-1", "1-4", "2-3"), lengths.stream());
+        assertEquals(Collections.singletonList("1-4"), added);
+        assertEquals(Collections.singletonList("1-2"), removed);
+
+        // Add an entry to the list and check changes
+        strings.add("7777777");
+        assertLinesMatch(Stream.of("0-1", "1-4", "2-3", "3-7"), lengths.stream());
+        assertEquals(Arrays.asList("1-4", "3-7"), added);
+        assertEquals(Collections.singletonList("1-2"), removed);
+
+        // Remove an entry to the list and check changes (note that 3-7 becomes 2-7)
+        strings.remove(2);
+        assertLinesMatch(Stream.of("0-1", "1-4", "2-7"), lengths.stream());
+        assertEquals(Arrays.asList("1-4", "3-7"), added);
+        assertEquals(Arrays.asList("1-2", "2-3"), removed);
     }
 }

@@ -35,57 +35,43 @@ tasks.register('sourcesJar', Jar) {
 
 artifacts {
     archives jar
-
     archives javadocJar
     archives sourcesJar
 }
 
-signing {
-    sign configurations.archives
-}
+publishing {
+    publications {
+        ReactFX(MavenPublication) {
+            from components.java
 
-signArchives.onlyIf {
-    project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')
-}
+            groupId = 'org.reactfx'
+            artifactId = 'reactfx'
+            version = '2.0'
 
-
-def doUploadArchives = project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')
-if(doUploadArchives) {
-    uploadArchives {
-        repositories.mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-              authentication(userName: sonatypeUsername, password: sonatypePassword)
+            pom.withXml {
+                asNode().appendNode('packaging', 'jar')
             }
 
-            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-
-            pom.project {
-                name 'ReactFX'
+            pom {
+                name = 'ReactFX'
+                description = 'Reactive event streams for JavaFX'
+                url = 'http://www.reactfx.org/'
                 packaging 'jar'
-                description 'Reactive event streams for JavaFX'
-                url 'http://www.reactfx.org/'
-               
-                scm {
-                    url 'scm:git@github.com:TomasMikula/ReactFX.git'
-                    connection 'scm:git@github.com:TomasMikula/ReactFX.git'
-                    developerConnection 'scm:git@github.com:TomasMikula/ReactFX.git'
-                }
-               
                 licenses {
                     license {
-                        name 'The BSD 2-Clause License'
-                        url 'http://opensource.org/licenses/BSD-2-Clause'
-                        distribution 'repo'
+                        name = 'The BSD 2-Clause License'
+                        url = 'http://opensource.org/licenses/BSD-2-Clause'
+                        distribution = 'repo'
                     }
                 }
-               
+                scm {
+                    url = 'scm:git@github.com:TomasMikula/ReactFX.git'
+                    connection = 'scm:git@github.com:TomasMikula/ReactFX.git'
+                    developerConnection = 'scm:git@github.com:TomasMikula/ReactFX.git'
+                }
                 developers {
                     developer {
-                        name 'Tomas Mikula'
+                        name = 'Tomas Mikula'
                     }
                 }
             }
@@ -93,4 +79,29 @@ if(doUploadArchives) {
     }
 }
 
-uploadArchives.onlyIf { doUploadArchives }
+def isSnapshot = version.endsWith("-SNAPSHOT")
+repositories {
+    maven {
+        name = "ReactFX"
+        url = uri(isSnapshot ? "https://oss.sonatype.org/content/repositories/snapshots"
+                             : "https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+        credentials {
+            username = project.findProperty('sonatypeUsername')
+            password = project.findProperty('sonatypePassword')
+        }
+    }
+}
+
+def doUploadArchives = project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')
+tasks.withType(PublishToMavenRepository).configureEach {
+    onlyIf { doUploadArchives }
+}
+
+signing {
+    sign configurations.archives
+    sign publishing.publications.ReactFX
+}
+
+signArchives.onlyIf {
+    project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')
+}

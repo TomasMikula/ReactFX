@@ -1,14 +1,13 @@
 plugins {
-    id 'biz.aQute.bnd.builder' version '5.0.1'
+    id 'biz.aQute.bnd.builder' version '6.4.0'
 }
 
 subprojects {
-    version = '2.0-SNAPSHOT'
+    version = '2.1-SNAPSHOT'
 
     apply plugin: 'java'
     apply plugin: 'eclipse'
-    apply plugin: 'biz.aQute.bnd.builder'
-    //apply plugin: 'osgi'
+    apply plugin: 'biz.aQute.bnd.builder' // replaces 'osgi'
 
     repositories {
         mavenCentral()

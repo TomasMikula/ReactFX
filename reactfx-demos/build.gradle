@@ -1,3 +1,7 @@
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
+
 dependencies {
     implementation project(":reactfx")
 }
@@ -6,7 +10,12 @@ tasks.register('fatJar', Jar) {
     dependsOn tasks.named('classes')
     archiveAppendix.set('fat')
     from sourceSets.main.output
-    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+}
+
+javafx {
+    version = "18"
+    modules = ['javafx.controls', 'javafx.swing', 'javafx.base', 'javafx.web']
 }
 
 assemble.dependsOn fatJar
@@ -14,11 +23,11 @@ assemble.dependsOn fatJar
 tasks.register('AndGateDemo', JavaExec) {
     dependsOn tasks.named('classes')
     mainClass.set('org.reactfx.inhibeans.demo.AndGateDemo')
-    classpath = files(sourceSets.main.output, configurations.runtime)
+    classpath = files(sourceSets.main.output, configurations.runtimeClasspath)
 }
 
 tasks.register('FibTest', JavaExec) {
     dependsOn tasks.named('classes')
     mainClass.set('org.reactfx.inhibeans.demo.FibTest')
-    classpath = files(sourceSets.main.output, configurations.runtime)
+    classpath = files(sourceSets.main.output, configurations.runtimeClasspath)
 }

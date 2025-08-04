@@ -22,8 +22,8 @@ class IndexedMappedList<E, F> extends AbstractMappedList<E, F> {
     }
 
     @Override
-    public F get(int index) {
-        return mapper.apply(index, getSource().get(index));
+    protected F apply(int index, E elem) {
+        return mapper.apply(index, elem);
     }
 
     @Override

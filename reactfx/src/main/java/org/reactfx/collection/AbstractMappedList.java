@@ -14,12 +14,15 @@ abstract class AbstractMappedList<E, F> extends LiveListBase<F> implements Unmod
     }
 
     @Override
-    public int size() {
-        return source.size();
+    public F get(int index) {
+        return apply(index, source.get(index));
     }
 
-    protected ObservableList<? extends E> getSource() {
-        return source;
+    abstract protected F apply(int index, E elem);
+
+    @Override
+    public int size() {
+        return source.size();
     }
 
     @Override

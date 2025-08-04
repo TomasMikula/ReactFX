@@ -20,20 +20,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.reactfx.value.Var;
 
 public class ListMapTest {
-
-    @Test
-    public void testGet() {
-        ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
-        LiveList<Integer> lengths = LiveList.map(strings, String::length);
-
-        assertEquals(Arrays.asList(1, 2, 3), lengths);
-    }
-
     @Test
     public void testChanges() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
         LiveList<Integer> lengths = LiveList.map(strings, String::length);
-        assertLinesMatch(Stream.of("1", "2", "3"), lengths.stream().map(String::valueOf));
+        assertEquals(Arrays.asList(1, 2, 3), lengths);
 
         List<Integer> removed = new ArrayList<>();
         List<Integer> added = new ArrayList<>();
@@ -46,19 +37,19 @@ public class ListMapTest {
 
         // Set an item
         strings.set(1, "4444");
-        assertLinesMatch(Stream.of("1", "4", "3"), lengths.stream().map(String::valueOf));
+        assertEquals(Arrays.asList(1, 4, 3), lengths);
         assertEquals(Collections.singletonList(2), removed);
         assertEquals(Collections.singletonList(4), added);
 
         // Add an item
         strings.add("7777777");
-        assertLinesMatch(Stream.of("1", "4", "3", "7"), lengths.stream().map(String::valueOf));
+        assertEquals(Arrays.asList(1, 4, 3, 7), lengths);
         assertEquals(Collections.singletonList(2), removed);
         assertEquals(Arrays.asList(4, 7), added);
 
         // Remove an item
         strings.remove(1);
-        assertLinesMatch(Stream.of("1", "3", "7"), lengths.stream().map(String::valueOf));
+        assertEquals(Arrays.asList(1, 3, 7), lengths);
         assertEquals(Arrays.asList(2, 4), removed);
         assertEquals(Arrays.asList(4, 7), added);
     }
@@ -66,25 +57,37 @@ public class ListMapTest {
     @Test
     public void testLaziness() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
-        IntegerProperty evaluations = new SimpleIntegerProperty(0);
-        LiveList<Integer> lengths = LiveList.map(strings, s -> {
-            evaluations.set(evaluations.get() + 1);
-            return s.length();
+        IntegerProperty evaluationsCounter = new SimpleIntegerProperty(0);
+        LiveList<Integer> lengths = LiveList.map(strings, elem -> {
+            evaluationsCounter.set(evaluationsCounter.get() + 1);
+            return elem.length();
         });
 
         lengths.observeChanges(ch -> {});
         strings.remove(1);
 
-        assertEquals(0, evaluations.get());
+        assertEquals(0, evaluationsCounter.get());
+
+        // Get the first element and the counter has increased
+        assertEquals(1, lengths.get(0).intValue());
+        assertEquals(1, evaluationsCounter.get());
+
+        // Get the second element, it will evaluate one item
+        assertEquals(3, lengths.get(1).intValue());
+        assertEquals(2, evaluationsCounter.get());
+
+        // Get again the first, it will reevaluate it
+        assertEquals(1, lengths.get(0).intValue());
+        assertEquals(3, evaluationsCounter.get());
     }
 
     @Test
     public void testLazinessOnChangeAccumulation() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
-        IntegerProperty evaluations = new SimpleIntegerProperty(0);
-        LiveList<Integer> lengths = LiveList.map(strings, s -> {
-            evaluations.set(evaluations.get() + 1);
-            return s.length();
+        IntegerProperty evaluationsCounter = new SimpleIntegerProperty(0);
+        LiveList<Integer> lengths = LiveList.map(strings, elem -> {
+            evaluationsCounter.set(evaluationsCounter.get() + 1);
+            return elem.length();
         });
         SuspendableList<Integer> suspendable = lengths.suspendable();
 
@@ -94,7 +97,7 @@ public class ListMapTest {
             strings.set(1, "abcd");
         });
 
-        assertEquals(0, evaluations.get());
+        assertEquals(0, evaluationsCounter.get());
     }
 
     @Test
@@ -119,7 +122,6 @@ public class ListMapTest {
     }
 
     @Test
-    @DisplayName("Index list receives the item and the index")
     public void testIndexedList() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
         // Live map receives index,item and returns %d-%d index item
@@ -153,4 +155,33 @@ public class ListMapTest {
         assertEquals(Arrays.asList("1-4", "3-7"), added);
         assertEquals(Arrays.asList("1-2", "2-3"), removed);
     }
+
+    @Test
+    @DisplayName("testLazyIndexedList")
+    public void testLazyIndexedList() {
+        ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
+        IntegerProperty evaluationsCounter = new SimpleIntegerProperty(0);
+        LiveList<String> lengths = LiveList.map(strings, (index, elem) -> {
+            evaluationsCounter.set(evaluationsCounter.get() + 1);
+            return String.format("%d-%d", index, elem.length());
+        });
+
+        lengths.observeChanges(ch -> {});
+        strings.remove(1);
+
+        assertEquals(0, evaluationsCounter.get());
+
+        // Get the first element and the counter has increased
+        assertEquals("0-1", lengths.get(0));
+        assertEquals(1, evaluationsCounter.get());
+
+        // Get the second element, it will evaluate one item
+        assertEquals("1-3", lengths.get(1));
+        assertEquals(2, evaluationsCounter.get());
+
+        // Get again the first, it will reevaluate it
+        assertEquals("0-1", lengths.get(0));
+        assertEquals(3, evaluationsCounter.get());
+    }
+
 }

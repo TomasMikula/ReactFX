@@ -1,14 +1,24 @@
-apply plugin: 'maven'
-apply plugin: 'signing'
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'org.jreleaser' version '1.19.0'
+    id 'org.openjfx.javafxplugin' version '0.1.0'
+}
 
 group = 'org.reactfx'
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
-    testCompile group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
-    testCompile group: 'org.junit.contrib', name: 'junit-theories', version: '4.12'
-    testCompile group: 'com.pholser', name: 'junit-quickcheck-core', version: '0.4'
-    testCompile group: 'com.pholser', name: 'junit-quickcheck-generators', version: '0.4'
+    // Test dependencies
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+    testImplementation group: 'org.hamcrest', name: 'hamcrest-library', version: '1.3'
+    testImplementation group: 'org.junit.contrib', name: 'junit-theories', version: '4.12'
+    testImplementation group: 'com.pholser', name: 'junit-quickcheck-core', version: '0.4'
+    testImplementation group: 'com.pholser', name: 'junit-quickcheck-generators', version: '0.4'
+}
+
+javafx {
+    version = "18"
+    modules = ['javafx.controls', 'javafx.swing']
 }
 
 javadoc {
@@ -22,73 +32,90 @@ javadoc {
     ]
 }
 
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from 'build/docs/javadoc'
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
-task sourcesJar(type: Jar) {
-    from sourceSets.main.allSource
-    classifier = 'sources'
-}
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
 
-artifacts {
-    archives jar
+            groupId = 'org.reactfx'
+            artifactId = 'reactfx'
 
-    archives javadocJar
-    archives sourcesJar
-}
-
-signing {
-    sign configurations.archives
-}
-
-signArchives.onlyIf {
-    project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')
-}
-
-def doUploadArchives = project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')
-if(doUploadArchives) {
-    uploadArchives {
-        repositories.mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
-              authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-
-            snapshotRepository(url: 'https://oss.sonatype.org/content/repositories/snapshots') {
-                authentication(userName: sonatypeUsername, password: sonatypePassword)
-            }
-
-            pom.project {
-                name 'ReactFX'
+            pom {
+                name = 'ReactFX'
+                description = 'Reactive event streams for JavaFX'
+                url = 'http://www.reactfx.org/'
+                inceptionYear = '2013'
                 packaging 'jar'
-                description 'Reactive event streams for JavaFX'
-                url 'http://www.reactfx.org/'
-               
-                scm {
-                    url 'scm:git@github.com:TomasMikula/ReactFX.git'
-                    connection 'scm:git@github.com:TomasMikula/ReactFX.git'
-                    developerConnection 'scm:git@github.com:TomasMikula/ReactFX.git'
-                }
-               
                 licenses {
                     license {
-                        name 'The BSD 2-Clause License'
-                        url 'http://opensource.org/licenses/BSD-2-Clause'
-                        distribution 'repo'
+                        name = 'The BSD 2-Clause License'
+                        url = 'http://opensource.org/licenses/BSD-2-Clause'
+                        distribution = 'repo'
                     }
                 }
-               
+                scm {
+                    url = 'scm:git@github.com:TomasMikula/ReactFX.git'
+                    connection = 'scm:git@github.com:TomasMikula/ReactFX.git'
+                    developerConnection = 'scm:git@github.com:TomasMikula/ReactFX.git'
+                }
                 developers {
                     developer {
-                        name 'Tomas Mikula'
+                        name = 'Tomas Mikula'
                     }
                 }
             }
         }
     }
+
+    repositories {
+        maven {
+            url = layout.buildDirectory.dir('staging-deploy')
+        }
+    }
 }
 
-uploadArchives.onlyIf { doUploadArchives }
+// deploy artifacts with `gradle build publish jreleaserDeploy`
+jreleaser {
+  signing {
+    active = 'ALWAYS'
+    armored = true
+    mode = 'FILE'
+    // set the following in ~/.jreleaser/config.properties
+    //   JRELEASER_GPG_PUBLIC_KEY=/path/to/public.gpg
+    //   JRELEASER_GPG_SECRET_KEY=/path/to/secret.gpg
+    //   JRELEASER_GPG_PASSPHRASE=<passphrase>
+  }
+  deploy {
+    maven {
+      mavenCentral {
+        'release-deploy' {
+          active = 'RELEASE'
+          url = 'https://central.sonatype.com/api/v1/publisher'
+          stagingRepository('build/staging-deploy')
+        }
+        // set the following properties in  ~/.jreleaser/config.properties
+        //   JRELEASER_MAVENCENTRAL_USERNAME
+        //   JRELEASER_MAVENCENTRAL_PASSWORD
+      }
+      nexus2 {
+        'snapshot-deploy' {
+          active = 'SNAPSHOT'
+          snapshotUrl = 'https://central.sonatype.com/repository/maven-snapshots/'
+          applyMavenCentralRules = true
+          snapshotSupported = true
+          closeRepository = true
+          releaseRepository = true
+          stagingRepository('build/staging-deploy')
+        }
+        // set the following properties in  ~/.jreleaser/config.properties
+        //   JRELEASER_NEXUS2_USERNAME
+        //   JRELEASER_NEXUS2_PASSWORD
+      }
+    }
+  }
+}

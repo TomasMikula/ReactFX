@@ -1,21 +1,34 @@
-dependencies {
-    compile project(":reactfx")
+plugins {
+    id 'org.openjfx.javafxplugin' version '0.1.0'
 }
 
-task fatJar(type: Jar, dependsOn: classes) {
-    appendix = 'fat'
+dependencies {
+    implementation project(":reactfx")
+}
+
+tasks.register('fatJar', Jar) {
+    archiveClassifier = 'fat'
     from sourceSets.main.output
-    from { configurations.runtime.collect { it.isDirectory() ? it : zipTree(it) } }
+    dependsOn configurations.runtimeClasspath
+    from { configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) } }
+    duplicatesStrategy = 'warn'
+}
+
+javafx {
+    version = "18"
+    modules = ['javafx.controls', 'javafx.swing', 'javafx.base', 'javafx.web']
 }
 
 assemble.dependsOn fatJar
 
-task AndGateDemo(type: JavaExec, dependsOn: classes) {
-    main = 'org.reactfx.inhibeans.demo.AndGateDemo'
-    classpath = files(sourceSets.main.output, configurations.runtime)
+tasks.register('AndGateDemo', JavaExec) {
+    dependsOn tasks.named('classes')
+    mainClass.set('org.reactfx.inhibeans.demo.AndGateDemo')
+    classpath = files(sourceSets.main.output, configurations.runtimeClasspath)
 }
 
-task FibTest(type: JavaExec, dependsOn: classes) {
-    main = 'org.reactfx.inhibeans.demo.FibTest'
-    classpath = files(sourceSets.main.output, configurations.runtime)
+tasks.register('FibTest', JavaExec) {
+    dependsOn tasks.named('classes')
+    mainClass.set('org.reactfx.inhibeans.demo.FibTest')
+    classpath = files(sourceSets.main.output, configurations.runtimeClasspath)
 }

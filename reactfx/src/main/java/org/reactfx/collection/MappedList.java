@@ -1,6 +1,7 @@
 package org.reactfx.collection;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javafx.beans.value.ObservableValue;
@@ -10,35 +11,52 @@ import org.reactfx.Subscription;
 import org.reactfx.util.Lists;
 import org.reactfx.value.Val;
 
-/**
- * The mapped list is applying a mapping {@link Function} taking as input the element from the source method
- * and mapping the result to be used for the mapped list content
- * @param <E> the type of elements from the source
- * @param <F> the output type of the {@link Function} mapping the elements
- */
-class MappedList<E, F> extends AbstractMappedList<E, F> {
-    private final Function<? super E, ? extends F> mapper;
+class MappedList<E, F> extends LiveListBase<F>
+        implements UnmodifiableByDefaultLiveList<F> {
+    private final ObservableList<? extends E> source;
+    private final BiFunction<Integer, ? super E, ? extends F> mapper;
 
     public MappedList(
             ObservableList<? extends E> source,
             Function<? super E, ? extends F> mapper) {
-        super(source);
+        this(source, (index, elem) -> mapper.apply(elem));
+    }
+
+    public MappedList(
+            ObservableList<? extends E> source,
+            BiFunction<Integer, ? super E, ? extends F> mapper) {
+        this.source = source;
         this.mapper = mapper;
     }
 
     @Override
-    protected F apply(int index, E elem) {
-        return mapper.apply(elem);
+    public F get(int index) {
+        return mapper.apply(index, source.get(index));
     }
 
     @Override
-    protected void sourceChanged(QuasiListChange<? extends E> change) {
+    public int size() {
+        return source.size();
+    }
+
+    @Override
+    protected Subscription observeInputs() {
+        return LiveList.<E>observeQuasiChanges(source, this::sourceChanged);
+    }
+
+    private void sourceChanged(QuasiListChange<? extends E> change) {
         notifyObservers(mappedChangeView(change, mapper));
     }
 
     static <E, F> QuasiListChange<F> mappedChangeView(
             QuasiListChange<? extends E> change,
             Function<? super E, ? extends F> mapper) {
+        return mappedChangeView(change, (index, elem) -> mapper.apply(elem));
+    }
+
+    static <E, F> QuasiListChange<F> mappedChangeView(
+            QuasiListChange<? extends E> change,
+            BiFunction<Integer, ? super E, ? extends F> mapper) {
         return new QuasiListChange<F>() {
 
             @Override
@@ -58,7 +76,7 @@ class MappedList<E, F> extends AbstractMappedList<E, F> {
 
                     @Override
                     public List<? extends F> getRemoved() {
-                        return Lists.mappedView(mod.getRemoved(), mapper);
+                        return Lists.mappedView(mod.getRemoved(), elem -> mapper.apply(mod.getFrom(), elem));
                     }
                 });
             }
@@ -68,7 +86,7 @@ class MappedList<E, F> extends AbstractMappedList<E, F> {
 }
 
 class DynamicallyMappedList<E, F> extends LiveListBase<F>
-implements UnmodifiableByDefaultLiveList<F> {
+        implements UnmodifiableByDefaultLiveList<F> {
     private final ObservableList<? extends E> source;
     private final Val<? extends Function<? super E, ? extends F>> mapper;
 

@@ -306,7 +306,7 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
     static <E, F> LiveList<F> map(
             ObservableList<? extends E> list,
             BiFunction<Integer, ? super E, ? extends F> f) {
-        return new IndexedMappedList<>(list, f);
+        return new MappedList<>(list, f);
     }
 
     static <E, F> LiveList<F> mapDynamic(

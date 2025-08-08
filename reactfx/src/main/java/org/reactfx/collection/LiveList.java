@@ -297,12 +297,19 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return Val.create(() -> list.size(), list);
     }
 
+    /**
+     * If you wish to use the index of the element in your mapping function, check {@link #map(ObservableList, BiFunction)}.
+     * @param f a mapping function taking the element from source as input and producing a result
+     */
     static <E, F> LiveList<F> map(
             ObservableList<? extends E> list,
             Function<? super E, ? extends F> f) {
         return new MappedList<>(list, f);
     }
 
+    /**
+     * @param f a mapping function taking the index and the element from source as input and producing a result
+     */
     static <E, F> LiveList<F> map(
             ObservableList<? extends E> list,
             BiFunction<Integer, ? super E, ? extends F> f) {

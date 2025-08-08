@@ -12,7 +12,7 @@ import org.reactfx.util.Lists;
 import org.reactfx.value.Val;
 
 class MappedList<E, F> extends LiveListBase<F>
-        implements UnmodifiableByDefaultLiveList<F> {
+implements UnmodifiableByDefaultLiveList<F> {
     private final ObservableList<? extends E> source;
     private final BiFunction<Integer, ? super E, ? extends F> mapper;
 
@@ -86,7 +86,7 @@ class MappedList<E, F> extends LiveListBase<F>
 }
 
 class DynamicallyMappedList<E, F> extends LiveListBase<F>
-        implements UnmodifiableByDefaultLiveList<F> {
+implements UnmodifiableByDefaultLiveList<F> {
     private final ObservableList<? extends E> source;
     private final Val<? extends Function<? super E, ? extends F>> mapper;
 

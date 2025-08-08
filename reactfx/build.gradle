@@ -1,9 +1,9 @@
 plugins {
+    id 'java-library'
+    id 'maven-publish'
+    id 'org.jreleaser' version '1.19.0'
     id 'org.openjfx.javafxplugin' version '0.1.0'
 }
-
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
 
 group = 'org.reactfx'
 
@@ -32,40 +32,24 @@ javadoc {
     ]
 }
 
-tasks.register('javadocJar', Jar) {
-    dependsOn tasks.named('javadoc')
-    archiveClassifier.set('javadoc')
-    from 'build/docs/javadoc'
-}
-
-tasks.register('sourcesJar', Jar) {
-    archiveClassifier.set('sources')
-    from sourceSets.main.allSource
-}
-
-artifacts {
-    archives jar
-    archives javadocJar
-    archives sourcesJar
+java {
+    withJavadocJar()
+    withSourcesJar()
 }
 
 publishing {
     publications {
-        ReactFX(MavenPublication) {
+        maven(MavenPublication) {
             from components.java
 
             groupId = 'org.reactfx'
             artifactId = 'reactfx'
-            version = '2.0'
-
-            pom.withXml {
-                asNode().appendNode('packaging', 'jar')
-            }
 
             pom {
                 name = 'ReactFX'
                 description = 'Reactive event streams for JavaFX'
                 url = 'http://www.reactfx.org/'
+                inceptionYear = '2013'
                 packaging 'jar'
                 licenses {
                     license {
@@ -87,31 +71,51 @@ publishing {
             }
         }
     }
-}
 
-def isSnapshot = version.endsWith("-SNAPSHOT")
-repositories {
-    maven {
-        name = "ReactFX"
-        url = uri(isSnapshot ? "https://oss.sonatype.org/content/repositories/snapshots"
-                             : "https://oss.sonatype.org/service/local/staging/deploy/maven2/")
-        credentials {
-            username = project.findProperty('sonatypeUsername')
-            password = project.findProperty('sonatypePassword')
+    repositories {
+        maven {
+            url = layout.buildDirectory.dir('staging-deploy')
         }
     }
 }
 
-def doUploadArchives = project.hasProperty('sonatypeUsername') && project.hasProperty('sonatypePassword')
-tasks.withType(PublishToMavenRepository).configureEach {
-    onlyIf { doUploadArchives }
-}
-
-signing {
-    sign configurations.archives
-    sign publishing.publications.ReactFX
-}
-
-signArchives.onlyIf {
-    project.hasProperty('signing.keyId') && project.hasProperty('signing.password') && project.hasProperty('signing.secretKeyRingFile')
+// deploy artifacts with `gradle build publish jreleaserDeploy`
+jreleaser {
+  signing {
+    active = 'ALWAYS'
+    armored = true
+    mode = 'FILE'
+    // set the following in ~/.jreleaser/config.properties
+    //   JRELEASER_GPG_PUBLIC_KEY=/path/to/public.gpg
+    //   JRELEASER_GPG_SECRET_KEY=/path/to/secret.gpg
+    //   JRELEASER_GPG_PASSPHRASE=<passphrase>
+  }
+  deploy {
+    maven {
+      mavenCentral {
+        'release-deploy' {
+          active = 'RELEASE'
+          url = 'https://central.sonatype.com/api/v1/publisher'
+          stagingRepository('build/staging-deploy')
+        }
+        // set the following properties in  ~/.jreleaser/config.properties
+        //   JRELEASER_MAVENCENTRAL_USERNAME
+        //   JRELEASER_MAVENCENTRAL_PASSWORD
+      }
+      nexus2 {
+        'snapshot-deploy' {
+          active = 'SNAPSHOT'
+          snapshotUrl = 'https://central.sonatype.com/repository/maven-snapshots/'
+          applyMavenCentralRules = true
+          snapshotSupported = true
+          closeRepository = true
+          releaseRepository = true
+          stagingRepository('build/staging-deploy')
+        }
+        // set the following properties in  ~/.jreleaser/config.properties
+        //   JRELEASER_NEXUS2_USERNAME
+        //   JRELEASER_NEXUS2_PASSWORD
+      }
+    }
+  }
 }

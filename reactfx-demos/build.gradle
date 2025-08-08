@@ -7,10 +7,11 @@ dependencies {
 }
 
 tasks.register('fatJar', Jar) {
-    dependsOn tasks.named('classes')
-    archiveAppendix.set('fat')
+    archiveClassifier = 'fat'
     from sourceSets.main.output
-    from { configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
+    dependsOn configurations.runtimeClasspath
+    from { configurations.runtimeClasspath.findAll { it.name.endsWith('jar') }.collect { zipTree(it) } }
+    duplicatesStrategy = 'warn'
 }
 
 javafx {

@@ -1,11 +1,9 @@
 .gradle/
 build/
-gradle.properties
 .classpath
 .project
 .settings/
 .idea/
-
 gradle/
 gradlew
 gradle.bat

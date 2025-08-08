@@ -1,6 +1,8 @@
 ReactFX
 =======
 
+![Maven Central Version](https://img.shields.io/maven-central/v/org.reactfx/reactfx)
+
 ReactFX is an exploration of (functional) reactive programming techniques for JavaFX. These techniques usually result in more concise code, less side effects and less inversion of control, all of which improve the readability of code.
 
 Initial inspiration came from the [Principles of Reactive Programming](https://www.coursera.org/course/reactive) course and the [RxJava library](https://github.com/Netflix/RxJava/wiki). There are, however, important [differences from RxJava](https://github.com/TomasMikula/ReactFX/wiki/ReactFX-vs-ReactiveX).

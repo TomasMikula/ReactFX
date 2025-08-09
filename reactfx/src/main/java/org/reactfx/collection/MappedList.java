@@ -76,7 +76,7 @@ implements UnmodifiableByDefaultLiveList<F> {
 
                     @Override
                     public List<? extends F> getRemoved() {
-                        return Lists.mappedView(mod.getRemoved(), elem -> mapper.apply(mod.getFrom(), elem));
+                        return Lists.mappedView(mod.getRemoved(), (index, elem) -> mapper.apply(mod.getFrom() + index, elem));
                     }
                 });
             }

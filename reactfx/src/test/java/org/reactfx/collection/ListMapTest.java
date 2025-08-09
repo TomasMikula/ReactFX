@@ -122,6 +122,29 @@ public class ListMapTest {
     }
 
     @Test
+    public void removingMultipleElements() {
+        ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
+        // Live map receives index,item and returns %d-%d index item
+        LiveList<String> lengths = LiveList.map(strings, (index, item) -> String.format("%d-%d", index, item.length()));
+        assertLinesMatch(Stream.of("0-1", "1-2", "2-3"), lengths.stream());
+
+        List<String> removed = new ArrayList<>();
+        List<String> added = new ArrayList<>();
+        lengths.observeChanges(ch -> {
+            for(ListModification<? extends String> mod: ch.getModifications()) {
+                removed.addAll(mod.getRemoved());
+                added.addAll(mod.getAddedSubList());
+            }
+        });
+
+        // Remove an entry to the list and check changes (note that 3-7 becomes 2-7)
+        strings.removeAll("22", "333");
+        assertLinesMatch(Stream.of("0-1"), lengths.stream());
+        assertTrue(added.isEmpty());
+        assertEquals(Arrays.asList("1-2", "2-3"), removed);
+    }
+
+    @Test
     public void testIndexedList() {
         ObservableList<String> strings = FXCollections.observableArrayList("1", "22", "333");
         // Live map receives index,item and returns %d-%d index item

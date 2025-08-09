@@ -10,6 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public final class Lists {
@@ -179,6 +180,23 @@ public final class Lists {
             @Override
             public F get(int index) {
                 return f.apply(source.get(index));
+            }
+
+            @Override
+            public int size() {
+                return source.size();
+            }
+        };
+    }
+
+    public static <E, F> List<F> mappedView(
+            List<? extends E> source,
+            BiFunction<Integer, ? super E, ? extends F> f) {
+        return new AbstractList<F>() {
+
+            @Override
+            public F get(int index) {
+                return f.apply(index, source.get(index));
             }
 
             @Override

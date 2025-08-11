@@ -160,25 +160,24 @@ public class ListMapTest {
         integers.removeAll(3, 5, 12);
         assertEquals(Arrays.asList(20, 10, 11), integers);
         assertEquals(Arrays.asList(20, 20, 33), mapped);
-        assertEquals(Arrays.asList(8, 3, 15, 48), changes.removed);
+        assertEquals(Arrays.asList(8, 3, 10, 48), changes.removed);
 
         // Conditional removal
         integers.removeIf(i -> i % 2 == 0);
         assertEquals(Collections.singletonList(11), integers);
         assertEquals(Collections.singletonList(11), mapped);
-        assertEquals(Arrays.asList(8, 3, 15, 48, 20, 20), changes.removed);
+        assertEquals(Arrays.asList(8, 3, 10, 48, 20, 10), changes.removed);
 
         // Remove all
         integers.clear();
         assertTrue(mapped.isEmpty());
         assertEquals(Arrays.asList(60, 40, 55, 72), changes.added);
-        assertEquals(Arrays.asList(8, 3, 15, 48, 20, 20, 11), changes.removed);
+        assertEquals(Arrays.asList(8, 3, 10, 48, 20, 10, 11), changes.removed);
     }
 
     @Test
     public void removeMultipleElementsFromIndexList() {
         ObservableList<Integer> integers = FXCollections.observableArrayList(3, 4, 5, 6, 7, 8);
-        // Live map receives index,item and returns %d-%d index item
         LiveList<Integer> mapped = LiveList.map(integers, (index, item) -> (index + 1) * item);
         assertEquals(Arrays.asList(3, 8, 15, 24, 35, 48), mapped);
         ChangeObserver<Integer> changes = new ChangeObserver<>(mapped);
@@ -188,13 +187,33 @@ public class ListMapTest {
         assertEquals(Arrays.asList(4, 8), integers);
         assertEquals(Arrays.asList(4, 16), mapped);
         assertTrue(changes.added.isEmpty());
-        assertEquals(Arrays.asList(3, 15, 24, 35), changes.removed);
+        assertEquals(Arrays.asList(3, 10, 12, 14), changes.removed);
+
+        // Remove elements one by one is giving the same result
+        integers.clear();
+        assertTrue(integers.isEmpty());
+        assertTrue(mapped.isEmpty());
+        assertTrue(changes.added.isEmpty());
+        assertEquals(Arrays.asList(3, 10, 12, 14, 4, 8), changes.removed);
+
+        integers.addAll(3, 4, 5, 6, 7, 8);
+        assertEquals(Arrays.asList(3, 4, 5, 6, 7, 8), integers);
+        assertEquals(Arrays.asList(3, 8, 15, 24, 35, 48), changes.added);
+        assertEquals(Arrays.asList(3, 10, 12, 14, 4, 8), changes.removed);
+
+        integers.remove(Integer.valueOf(3)); // Using 'Integer' to make sure it removes the element, not the index
+        integers.remove(Integer.valueOf(5));
+        integers.remove(Integer.valueOf(6));
+        integers.remove(Integer.valueOf(7));
+        assertEquals(Arrays.asList(4, 8), integers);
+        assertEquals(Arrays.asList(4, 16), mapped);
+        assertEquals(Arrays.asList(3, 8, 15, 24, 35, 48), changes.added);
+        assertEquals(Arrays.asList(3, 10, 12, 14, 4, 8, 3, 10, 12, 14), changes.removed);
     }
 
     @Test
     public void removeMultipleElementsFromIndexListUsingPredicate() {
         ObservableList<Integer> integers = FXCollections.observableArrayList(3, 4, 5, 6, 7, 8);
-        // Live map receives index,item and returns %d-%d index item
         LiveList<Integer> mapped = LiveList.map(integers, (index, item) -> (index + 1) * item);
         assertEquals(Arrays.asList(3, 8, 15, 24, 35, 48), mapped);
         ChangeObserver<Integer> changes = new ChangeObserver<>(mapped);
@@ -204,7 +223,7 @@ public class ListMapTest {
         assertEquals(Arrays.asList(3, 5, 7), integers);
         assertEquals(Arrays.asList(3, 10, 21), mapped);
         assertTrue(changes.added.isEmpty());
-        assertEquals(Arrays.asList(8, 24, 48), changes.removed);
+        assertEquals(Arrays.asList(8, 18, 32), changes.removed);
     }
 
     @Test
@@ -219,7 +238,7 @@ public class ListMapTest {
         assertEquals(Arrays.asList(1, 3, 4, 5, 8), integers);
         assertEquals(Arrays.asList(1, 6, 12, 20, 40), mapped);
         assertEquals(Arrays.asList(1, 6, 12, 20, 40), changes.added);
-        assertEquals(Arrays.asList(8, 10, 3, 12, 20), changes.removed);
+        assertEquals(Arrays.asList(8, 5, 1, 3, 4), changes.removed);
     }
 
     @Test
@@ -234,7 +253,7 @@ public class ListMapTest {
         assertEquals(Arrays.asList(1, 2, 3), integers);
         assertEquals(Arrays.asList(1, 4, 9), mapped);
         assertEquals(Arrays.asList(1, 4, 9), changes.added);
-        assertEquals(Arrays.asList(8, 10, 3, 12, 20), changes.removed);
+        assertEquals(Arrays.asList(8, 5, 1, 3, 4), changes.removed);
     }
 
     @Test
@@ -250,7 +269,7 @@ public class ListMapTest {
         assertLinesMatch(Stream.of("1"), strings.stream());
         assertLinesMatch(Stream.of("0-1"), lengths.stream());
         assertTrue(changes.added.isEmpty());
-        assertEquals(Arrays.asList("1-2", "2-3"), changes.removed);
+        assertEquals(Arrays.asList("1-2", "1-3"), changes.removed);
     }
 
     @Test

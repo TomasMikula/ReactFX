@@ -3,6 +3,7 @@ package org.reactfx.collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -21,6 +22,7 @@ import org.reactfx.collection.LiveList.QuasiChangeObserver;
 import org.reactfx.collection.LiveList.QuasiModificationObserver;
 import org.reactfx.util.AccumulatorSize;
 import org.reactfx.util.Experimental;
+import org.reactfx.util.Tuple2;
 import org.reactfx.util.WrapperBase;
 import org.reactfx.value.Val;
 
@@ -179,6 +181,10 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return map(this, f);
     }
 
+    default <F> LiveList<F> map(BiFunction<Integer, ? super E, ? extends F> f) {
+        return map(this, f);
+    }
+
     default <F> LiveList<F> mapDynamic(
             ObservableValue<? extends Function<? super E, ? extends F>> f) {
         return mapDynamic(this, f);
@@ -291,9 +297,22 @@ extends ObservableList<E>, Observable<LiveList.Observer<? super E, ?>> {
         return Val.create(() -> list.size(), list);
     }
 
+    /**
+     * If you wish to use the index of the element in your mapping function, check {@link #map(ObservableList, BiFunction)}.
+     * @param f a mapping function taking the element from source as input and producing a result
+     */
     static <E, F> LiveList<F> map(
             ObservableList<? extends E> list,
             Function<? super E, ? extends F> f) {
+        return new MappedList<>(list, f);
+    }
+
+    /**
+     * @param f a mapping function taking the index and the element from source as input and producing a result
+     */
+    static <E, F> LiveList<F> map(
+            ObservableList<? extends E> list,
+            BiFunction<Integer, ? super E, ? extends F> f) {
         return new MappedList<>(list, f);
     }
 

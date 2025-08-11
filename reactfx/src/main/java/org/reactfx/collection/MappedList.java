@@ -1,6 +1,7 @@
 package org.reactfx.collection;
 
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import javafx.beans.value.ObservableValue;
@@ -13,18 +14,24 @@ import org.reactfx.value.Val;
 class MappedList<E, F> extends LiveListBase<F>
 implements UnmodifiableByDefaultLiveList<F> {
     private final ObservableList<? extends E> source;
-    private final Function<? super E, ? extends F> mapper;
+    private final BiFunction<Integer, ? super E, ? extends F> mapper;
 
     public MappedList(
             ObservableList<? extends E> source,
             Function<? super E, ? extends F> mapper) {
+        this(source, (index, elem) -> mapper.apply(elem));
+    }
+
+    public MappedList(
+            ObservableList<? extends E> source,
+            BiFunction<Integer, ? super E, ? extends F> mapper) {
         this.source = source;
         this.mapper = mapper;
     }
 
     @Override
     public F get(int index) {
-        return mapper.apply(source.get(index));
+        return mapper.apply(index, source.get(index));
     }
 
     @Override
@@ -44,6 +51,12 @@ implements UnmodifiableByDefaultLiveList<F> {
     static <E, F> QuasiListChange<F> mappedChangeView(
             QuasiListChange<? extends E> change,
             Function<? super E, ? extends F> mapper) {
+        return mappedChangeView(change, (index, elem) -> mapper.apply(elem));
+    }
+
+    static <E, F> QuasiListChange<F> mappedChangeView(
+            QuasiListChange<? extends E> change,
+            BiFunction<Integer, ? super E, ? extends F> mapper) {
         return new QuasiListChange<F>() {
 
             @Override
@@ -63,7 +76,7 @@ implements UnmodifiableByDefaultLiveList<F> {
 
                     @Override
                     public List<? extends F> getRemoved() {
-                        return Lists.mappedView(mod.getRemoved(), mapper);
+                        return Lists.mappedView(mod.getRemoved(), (index, elem) -> mapper.apply(mod.getFrom(), elem));
                     }
                 });
             }
